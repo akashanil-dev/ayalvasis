@@ -76,6 +76,9 @@ describe('executor', () => {
     const shell = make();
     expect((await shell.run('whoami')).stdout).toBe('ada\n');
     expect((await shell.run('sudo whoami')).stdout).toBe('root\n');
+    // Options after the command belong to the command, not to sudo.
+    expect(await shell.run('sudo head -n 1 /etc/shadow')).toMatchObject({ code: 0, stdout: 'root:*:20000:0:99999:7:::\n' });
+    expect(await shell.run('sudo -x whoami')).toMatchObject({ code: 1 });
   });
 
   it('honors tutor actor capability grants', async () => {

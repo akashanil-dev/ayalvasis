@@ -30,7 +30,20 @@ const THEME = {
   brightWhite: '#f0f6fc',
 };
 
-export default function TerminalView({ system, windowId }: AppViewProps) {
+/**
+ * Typing into a terminal from elsewhere on the page (Vasi, the tutor): dispatch this event on `window` with
+ * the target window id and the keystrokes. The terminal sets `accepted` once it is ready to take them.
+ */
+export const TERMINAL_TYPE_EVENT = 'tuxos:terminal-type';
+export interface TerminalTypeDetail {
+  windowId: string;
+  data: string;
+  accepted: boolean;
+}
+
+export default function TerminalView({ system, windowId, args }: AppViewProps) {
+  // Vasi's own terminal runs his commands as the tutor, so they never count towards the learner's lessons.
+  const owner = args?.owner === 'vasi' ? 'vasi' : 'learner';
   const container = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
 
@@ -59,9 +72,19 @@ export default function TerminalView({ system, windowId }: AppViewProps) {
     observer?.observe(element);
 
     let disposed = false;
+    let typeHere: ((data: string) => void) | undefined;
+    const onType = (event: Event) => {
+      const detail = (event as CustomEvent<TerminalTypeDetail>).detail;
+      if (detail.windowId !== windowId || !typeHere) return;
+      detail.accepted = true;
+      typeHere(detail.data);
+    };
+    window.addEventListener(TERMINAL_TYPE_EVENT, onType);
     const windowActions = {
       close: () => void system.dispatch('session.close', { id: windowId }),
-      setTitle: (title: string) => void system.dispatch('session.setTitle', { id: windowId, title }),
+      setTitle: (title: string) => void system.dispatch('session.setTitle', {
+        id: windowId, title: owner === 'vasi' ? `Vasi's terminal — ${title}` : title,
+      }),
     };
     const screen = {
       write: (data: string) => term.write(data),
@@ -69,7 +92,7 @@ export default function TerminalView({ system, windowId }: AppViewProps) {
       get cols() { return term.cols; },
     };
     void (async () => {
-      const session = await system.createTerminal();
+      const session = owner === 'vasi' ? await system.tutor().createTerminal() : await system.createTerminal();
       if (disposed) return;
       const motd = await system.dispatch<string>('fs.read', { path: '/etc/motd' });
       const controller = new TerminalController(screen, session, windowActions);
@@ -77,15 +100,22 @@ export default function TerminalView({ system, windowId }: AppViewProps) {
         controller.input(data).catch((cause: unknown) => setError(String(cause)));
       });
       await controller.start(motd.ok ? motd.value : undefined);
+      // Typed keys arrive one at a time; queue them so a slow command can't let later keys jump ahead.
+      let queue = Promise.resolve();
+      typeHere = (data) => {
+        term.focus();
+        queue = queue.then(() => controller.input(data)).catch((cause: unknown) => setError(String(cause)));
+      };
       term.focus();
     })().catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
 
     return () => {
       disposed = true;
+      window.removeEventListener(TERMINAL_TYPE_EVENT, onType);
       observer?.disconnect();
       term.dispose();
     };
-  }, [system, windowId]);
+  }, [system, windowId, owner]);
 
   return <div className="terminal-view">
     {error && <p className="terminal-error" role="alert">Terminal error: {error}</p>}

@@ -54,13 +54,23 @@ This template has no application code or required technology stack. The document
   condition over what happened (`ran`, `opened`, `cwd`) and the system's state (`exists`, `missing`,
   `contains`, `mode`), combinable with `all`/`any`/`not`. Shell commands are logged as `shell.ran` events,
   which is what `ran` checks see. Every lesson carries a solution that tests replay ("lesson CI").
-- **AI tutor** (`packages/tutor` + `apps/api`): Vasi, a tutor puppet with real control of the system.
+- **AI tutor** (`packages/tutor` + `apps/api`): Vasi, a penguin teacher with full control of the computer.
+  - Persona (in `apps/api/src/prompt.ts`): kind and patient, and a teacher, not a helper who does your work.
+    He shows, then hands the keyboard back; he may set up exercises or rescue a broken system, and says what he
+    did. Lessons only count the learner's own actions, because the kernel records everything Vasi does as the
+    `tutor` actor.
   - The browser keeps the conversation. `apps/api`, a dependency-free Node server, holds the OpenAI key,
     adds the tutor's instructions and makes one model call per request, so it is stateless and scales out.
-  - When the model calls a tool, the browser runs it through the kernel as the `tutor` actor. Its autonomy
-    level decides the tools offered and the capabilities granted: **Guide** (look, point, open apps),
-    **Demo** (also run commands in its own shell), **Drive** (also write files and start lessons). It is never
-    granted `user:switch`, so it can't use sudo, and lessons only count the learner's own actions.
+  - Agent tools: `look_at_screen` reads the screen like a screen reader (buttons, fields and icons with ids);
+    `click`, `type_text` and `press_keys` act on it with Vasi's own drawn pointer (a web page can't move the
+    real mouse); `type_in_terminal` types commands live into "Vasi's terminal"; plus files, windows,
+    desktop/wallpaper and every module action (e.g. `learn-linux__start`). The browser side is
+    `apps/web/src/tutor/screen-agent.ts`.
+  - Root: Vasi starts as an ordinary user. `request_sudo` shows an authentication dialog with his reason; if the
+    learner allows it and types a password, he is granted `user:switch` until logout or until the learner
+    clicks Revoke. If they deny it, he is told so and takes it with good humour. TuxOS accounts have no real
+    password, so any password is accepted (the dialog says so).
+  - While Vasi works, a bar shows what he is doing with a **Stop** button (or Esc) that hands control back.
   - Every module action becomes a tool automatically (e.g. `learn-linux__start`), so new modules extend
     what the tutor can do without tutor changes.
 - **Module host** (`packages/module-host`): validates manifests, registers lazy command stubs,
@@ -146,9 +156,11 @@ invalidate the old credential.
   - **chmod Arcade:** alternating questions (rwx to octal, octal to rwx with toggle buttons), streak bonuses,
     an explanation of each wrong answer, and the best score saved in `~/.local/share/tuxos/`.
   - **AI tutor (Vasi):** a penguin puppet in the corner opens a chat. Vasi looks at the learner's recent
-    commands and screen before answering, can open apps, point at icons and windows (with a highlight), run
-    demonstration commands in its own shell, and start lessons, depending on the autonomy level the learner
-    picks. Each action shows in the chat as it happens. After two failed commands in a row, a nudge offers
+    commands and the screen before answering, and can use the computer himself: his own pointer glides to
+    what he clicks, he types into fields and into his own visible terminal, presses shortcuts, arranges
+    windows, switches desktops, writes files and starts lessons. He asks for sudo (with the learner's
+    password) when he needs root. Each action shows in the chat as it happens, and Stop (or Esc) takes control
+    back. After two failed commands in a row, a nudge offers
     help; nothing is sent to the AI until the learner asks. Errors (no key, quota, service down) are shown in
     plain words.
   - **AI-designed learning backend:** `/api/learning/plan` creates a seven-day terminal-first syllabus with

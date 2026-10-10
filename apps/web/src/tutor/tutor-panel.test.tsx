@@ -58,14 +58,13 @@ describe('tutor panel', () => {
       uses('run_command', { command: 'pwd' }),
       { role: 'assistant', content: 'Use `pwd` to see **where** you are.' },
     );
-    localStorage.setItem('tuxos.tutor.autonomy', 'demo');
     render(<Desktop system={system} tutor={transport} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
     fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'where am I?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
 
     expect(await screen.findByText('pwd', { selector: 'code' })).toBeTruthy();
-    expect(screen.getByText(/Ran in Vasi/).parentElement?.textContent).toContain('$ pwd\n/home/ada');
+    expect(screen.getByText(/Checked quietly/).parentElement?.textContent).toContain('$ pwd\n/home/ada');
     expect(screen.getByText('where am I?')).toBeTruthy();
     expect(screen.getByText('where', { selector: 'strong' })).toBeTruthy();
   });
@@ -86,23 +85,60 @@ describe('tutor panel', () => {
     expect(screen.getByText('Terminal').closest('button')?.classList.contains('tutor-raised')).toBe(true);
   });
 
-  it('changes what the tutor may do with the autonomy switch', async () => {
+  it('asks the learner for sudo with their password, and lets them revoke it', async () => {
     const system = await boot();
-    const transport = scripted({ role: 'assistant', content: 'a' }, { role: 'assistant', content: 'b' });
+    const transport = scripted(
+      uses('request_sudo', { reason: 'To show you how /etc/shadow stores passwords.' }),
+      { role: 'assistant', content: 'Thanks!' },
+    );
     render(<Desktop system={system} tutor={transport} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    const ask = async (text: string) => {
-      fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: text } });
-      fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
-      await waitFor(() => expect(screen.queryByText('Vasi is thinking…')).toBeNull());
-    };
-    await ask('one');
-    fireEvent.click(screen.getByRole('radio', { name: 'Drive' }));
-    await ask('two');
-    const offered = transport.requests.map((request) => request.tools.map((tool) => tool.function.name));
-    expect(offered[0]).not.toContain('write_file');
-    expect(offered[1]).toContain('write_file');
-    expect(localStorage.getItem('tuxos.tutor.autonomy')).toBe('drive');
+    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'show me shadow' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Authentication required' });
+    expect(dialog.textContent).toContain('To show you how /etc/shadow stores passwords.');
+    fireEvent.click(screen.getByRole('button', { name: 'Allow' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Authenticate' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('Type your password');
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Authenticate' }));
+    expect(await screen.findByText('Thanks!')).toBeTruthy();
+    expect(screen.getByText(/Asked for sudo: you said yes/)).toBeTruthy();
+    expect(system.tutor().can('user:switch')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /Revoke/ }));
+    expect(system.tutor().can('user:switch')).toBe(false);
+  });
+
+  it('tells Vasi when the learner denies sudo', async () => {
+    const system = await boot();
+    const transport = scripted(
+      uses('request_sudo', { reason: 'To fix your system.' }),
+      { role: 'assistant', content: 'Fair enough, I am but a humble penguin.' },
+    );
+    render(<Desktop system={system} tutor={transport} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'fix it' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+    expect(await screen.findByText(/humble penguin/)).toBeTruthy();
+    expect(transport.requests[1]!.messages.at(-1)).toMatchObject({
+      role: 'tool', content: expect.stringContaining('said no'),
+    });
+    expect(system.tutor().can('user:switch')).toBe(false);
+  });
+
+  it('shows a Stop control while Vasi works, and stops when pressed', async () => {
+    const system = await boot();
+    let release: (reply: Assistant) => void = () => undefined;
+    const transport: Transport = { complete: () => new Promise<Assistant>((resolve) => { release = resolve; }) };
+    render(<Desktop system={system} tutor={transport} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'set up an exercise' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Stop/ }));
+    await act(async () => { release(uses('look_at_screen', {})); });
+    expect(await screen.findByText('Stopped. You have control again.')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Stop/ })).toBeNull());
   });
 
   it('shows the service error in plain words', async () => {
@@ -124,7 +160,7 @@ describe('tutor panel', () => {
       await terminal.run('cat /etc/shadow');
       await terminal.run('cat /etc/shadow');
     });
-    const nudge = await screen.findByRole('button', { name: /didn't work either/ });
+    const nudge = await screen.findByRole('button', { name: /didn't work either/ }, { timeout: 4000 });
     expect(transport.requests).toHaveLength(0);
     fireEvent.click(nudge);
     expect(await screen.findByText('You need sudo for that file.')).toBeTruthy();

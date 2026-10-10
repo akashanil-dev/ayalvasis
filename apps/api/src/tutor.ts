@@ -15,7 +15,8 @@ export interface Reply {
   body: unknown;
 }
 
-const LIMITS = { messages: 60, tools: 40, content: 20_000 };
+// An agent turn (look, click, type, look again…) adds several messages per step, so allow long conversations.
+const LIMITS = { messages: 160, tools: 60, content: 20_000 };
 const ROLES = new Set(['user', 'assistant', 'tool']);
 
 export async function handleTutor(body: unknown, config: TutorConfig, fetcher: typeof fetch = fetch): Promise<Reply> {

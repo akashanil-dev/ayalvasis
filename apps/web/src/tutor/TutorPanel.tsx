@@ -1,16 +1,11 @@
 import type { SystemClient } from '@tuxos/system';
-import type { Autonomy, Transport } from '@tuxos/tutor';
+import type { Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
 import { PointerOverlay } from './PointerOverlay';
 import { Puppet } from './Puppet';
+import { SudoDialog } from './SudoDialog';
 import { useStuckNudge } from './useStuckNudge';
-import { useTutor, type Entry } from './useTutor';
-
-const LEVELS: { id: Autonomy; label: string; help: string }[] = [
-  { id: 'guide', label: 'Guide', help: 'Vasi looks, explains, opens apps and points at things.' },
-  { id: 'demo', label: 'Demo', help: 'Vasi may also run commands in its own terminal to show you how.' },
-  { id: 'drive', label: 'Drive', help: 'Vasi may also start lessons and write files for you.' },
-];
+import { useTutor, type CursorState, type Entry } from './useTutor';
 
 export function TutorPanel({ system, transport }: { system: SystemClient; transport: Transport }) {
   const tutor = useTutor(system, transport);
@@ -23,6 +18,15 @@ export function TutorPanel({ system, transport }: { system: SystemClient; transp
     log.current?.lastElementChild?.scrollIntoView?.({ block: 'end' });
   }, [tutor.entries.length, tutor.busy]);
 
+  // Escape takes back control. Only a real key press counts: Vasi's own key presses are synthetic.
+  const { busy, stop } = tutor;
+  useEffect(() => {
+    if (!busy) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape' && event.isTrusted) stop(); };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [busy, stop]);
+
   const ask = (question: string) => {
     setOpen(true);
     dismiss();
@@ -31,25 +35,28 @@ export function TutorPanel({ system, transport }: { system: SystemClient; transp
 
   return <>
     <PointerOverlay pointer={tutor.pointer} onDone={tutor.clearPointer} />
+    <VasiCursor cursor={tutor.cursor} />
+    {tutor.busy && <div className="vasi-control" role="status">
+      <span className="vasi-control-dot" />
+      <span>{tutor.acting ? 'Vasi is using the computer' : 'Vasi is thinking…'}</span>
+      <button onClick={tutor.stop}>Stop <kbd>Esc</kbd></button>
+    </div>}
+    {tutor.sudoRequest && <SudoDialog system={system} request={tutor.sudoRequest} />}
     {open && <section className="tutor-panel" aria-label="Vasi, your Linux tutor">
       <header>
         <strong>Vasi</strong>
-        <span>your Linux neighbour</span>
+        <span>your Linux teacher</span>
+        {tutor.hasSudo && <button
+          className="tutor-sudo"
+          title="Vasi can use sudo. Click to take it back."
+          onClick={tutor.revokeSudo}
+        >sudo · Revoke</button>}
         <button aria-label="Close tutor" onClick={() => setOpen(false)}>×</button>
       </header>
-      <div className="tutor-levels" role="radiogroup" aria-label="How much Vasi may do">
-        {LEVELS.map((level) => <button
-          key={level.id}
-          role="radio"
-          aria-checked={tutor.autonomy === level.id}
-          title={level.help}
-          onClick={() => tutor.setAutonomy(level.id)}
-        >{level.label}</button>)}
-      </div>
-      <p className="tutor-level-help">{LEVELS.find((level) => level.id === tutor.autonomy)?.help}</p>
       <ol className="tutor-log" ref={log}>
         {!tutor.entries.length && <li className="tutor-hello">
-          Hi! I&apos;m Vasi. Ask me anything about Linux, or what went wrong with a command.
+          Hi! I&apos;m Vasi, your Linux teacher. Ask me anything, or ask me to show you how something works.
+          I can use this computer too, but you&apos;ll do the learning.
         </li>}
         {tutor.entries.map((entry, index) => <EntryView key={index} entry={entry} />)}
         {tutor.busy && <li className="tutor-thinking" role="status">Vasi is thinking…</li>}
@@ -83,6 +90,19 @@ export function TutorPanel({ system, transport }: { system: SystemClient; transp
   </>;
 }
 
+/** Vasi's own pointer: it glides to what he is about to click, and ripples when he clicks. */
+function VasiCursor({ cursor }: { cursor: CursorState }) {
+  if (!cursor.visible) return null;
+  return <div
+    className={`vasi-cursor ${cursor.clicking ? 'clicking' : ''}`}
+    style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}
+    aria-hidden="true"
+  >
+    <svg viewBox="0 0 24 24"><path d="M4 2l15 11-6.5 1.2L9.8 21z" /></svg>
+    <span>Vasi</span>
+  </div>;
+}
+
 function EntryView({ entry }: { entry: Entry }) {
   if (entry.kind === 'error') return <li className="tutor-error" role="alert">{entry.text}</li>;
   if (entry.kind === 'tool') return <li className="tutor-tool"><ToolSummary entry={entry} /></li>;
@@ -95,9 +115,15 @@ function ToolSummary({ entry }: { entry: Extract<Entry, { kind: 'tool' }> }) {
   const failed = result?.error ? <span className="tutor-tool-error"> — {result.error}</span> : null;
   const arg = (key: string) => String(entry.args[key] ?? '');
   switch (entry.name) {
+    case 'type_in_terminal':
+      return <>
+        <span>⌨ Typed in a terminal</span>
+        <pre><code>$ {arg('command')}{'\n'}{result.stdout}{result.stderr}</code></pre>
+        {failed}
+      </>;
     case 'run_command':
       return <>
-        <span>⌨ Ran in Vasi&apos;s terminal</span>
+        <span>🔍 Checked quietly</span>
         <pre><code>$ {arg('command')}{'\n'}{result.stdout}{result.stderr}</code></pre>
         {failed}
       </>;
@@ -107,6 +133,15 @@ function ToolSummary({ entry }: { entry: Extract<Entry, { kind: 'tool' }> }) {
     case 'list_directory': return <span>📁 Looked in <code>{arg('path')}</code>{failed}</span>;
     case 'write_file': return <span>✏️ Wrote <code>{arg('path')}</code>{failed}</span>;
     case 'close_window': return <span>✖ Closed a window{failed}</span>;
+    case 'click': return <span>🖱 {entry.args.double_click ? 'Double-clicked' : 'Clicked'} something{failed}</span>;
+    case 'type_text': return <span>⌨ Typed <code>{arg('text')}</code>{failed}</span>;
+    case 'press_keys': return <span>⌨ Pressed <kbd>{arg('keys')}</kbd>{failed}</span>;
+    case 'manage_window': return <span>🪟 {arg('action')} a window{failed}</span>;
+    case 'change_appearance': return <span>🎨 Changed the desktop{failed}</span>;
+    case 'request_sudo': {
+      const granted = (entry.result as { granted?: boolean })?.granted;
+      return <span>🔐 Asked for sudo: {granted ? 'you said yes' : 'you said no'}{failed}</span>;
+    }
     case 'look_at_screen': return <span>👀 Looked at your screen{failed}</span>;
     case 'recent_activity': return <span>🕘 Checked your recent commands{failed}</span>;
     default: return <span>⚙ {entry.name.replace('__', ': ').replace(/_/g, ' ')}{failed}</span>;

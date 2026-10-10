@@ -4,6 +4,8 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T05:00:28+05:30 | AI coding assistant | Vasi as a teaching agent | Designed and implemented the teacher persona, agent tools, screen agent with drawn pointer, sudo request dialog, Stop control, terminal typing channel, sudo option fix and tests across `packages/tutor`, `apps/web`, `apps/api`, `modules/terminal` and `packages/shell`. | Pending | `npm run typecheck` passed; 24 test files and 270 tests passed; `npm run build` passed; agent flow checked in headless Chromium against a scripted model stand-in. |
+
 | 2026-10-11T04:10:23+05:30 | Codex | AI-designed terminal learning backend | Added server-side syllabus generation/evaluation endpoints, Linux/Docker trainer personas, persistent AI course state, terminal slash commands, structured validation, and deterministic fallback compatibility. | Pending | `npm run check`: 22 files and 250 tests passed; `npm run build` passed. |
 | 2026-10-11T04:14:36+05:30 | Codex | Module-local learning memory and model routing | Added bounded per-module memory cache, memory-aware AI requests, and independent environment-configurable model selection. | Pending | `npm run check`: 22 files and 251 tests passed; `npm run build` passed; `git diff --check` passed. |
 

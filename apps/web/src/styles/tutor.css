@@ -101,40 +101,6 @@
   font-size: 18px;
 }
 
-.tutor-levels {
-  display: flex;
-  gap: 4px;
-  margin: 10px 14px 0;
-  padding: 3px;
-  border-radius: var(--radius-small);
-  background: var(--surface);
-}
-
-.tutor-levels button {
-  flex: 1;
-  padding: 5px;
-  border: 0;
-  border-radius: var(--radius-small);
-  background: transparent;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.tutor-levels button:hover {
-  background: var(--hover);
-}
-
-.tutor-levels button[aria-checked="true"] {
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-
-.tutor-level-help {
-  margin: 6px 14px 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .tutor-log {
   flex: 1;
   margin: 8px 0 0;
@@ -277,7 +243,6 @@
   color: #dfe6ef;
 }
 
-.de-cde .tutor-levels,
 .de-cde .tutor-panel input {
   border: 0;
   box-shadow: inset 1px 1px #5a5a5a, inset -1px -1px #fff;
@@ -287,7 +252,6 @@
   background: #e8e8e8;
 }
 
-.de-cde .tutor-levels button[aria-checked="true"],
 .de-cde .tutor-panel form button {
   color: #fff;
   box-shadow: inset 1px 1px #fff, inset -1px -1px #555;
@@ -353,4 +317,245 @@
   .tutor-puppet.pointing .puppet-wing {
     animation: none;
   }
+}
+
+.tutor-sudo {
+  padding: 2px 8px !important;
+  border: 1px solid var(--danger) !important;
+  border-radius: 999px;
+  color: var(--danger) !important;
+  font-size: 11.5px !important;
+  font-weight: 700;
+}
+
+/* Vasi's own pointer: an arrow in his accent colour with a name tag, gliding between targets. */
+.vasi-cursor {
+  position: fixed;
+  z-index: 30000;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transition: transform 450ms cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.vasi-cursor svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: -2px 0 0 -4px;
+  fill: #f5a524;
+  stroke: #241f31;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 45%));
+}
+
+.vasi-cursor span {
+  position: absolute;
+  top: 20px;
+  left: 14px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f5a524;
+  color: #241f31;
+  font: 700 11px var(--font-ui);
+  white-space: nowrap;
+}
+
+/* The click ripple. */
+.vasi-cursor::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #f5a524;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.vasi-cursor.clicking::before {
+  animation: vasi-click 300ms ease-out;
+}
+
+@keyframes vasi-click {
+  from { opacity: 1; transform: scale(0.3); }
+  to { opacity: 0; transform: scale(1.4); }
+}
+
+/* While Vasi works: what he is doing, and the learner's Stop. */
+.vasi-control {
+  position: absolute;
+  z-index: 29000;
+  top: calc(var(--area-top, 0px) + 10px);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--window-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
+  font: 600 13px var(--font-ui);
+  transform: translateX(-50%);
+  animation: splash-in 200ms ease;
+}
+
+.vasi-control-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f5a524;
+  animation: vasi-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vasi-pulse {
+  50% { opacity: 0.3; }
+}
+
+.vasi-control button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+}
+
+.vasi-control kbd {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 25%);
+  font: 11px var(--font-mono);
+}
+
+/* The sudo request, like a desktop's authentication dialog. */
+.sudo-backdrop {
+  position: absolute;
+  z-index: 31000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+  animation: splash-in 150ms ease;
+}
+
+.sudo-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(440px, 100%);
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--window-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
+  font-family: var(--font-ui);
+  user-select: text;
+}
+
+.sudo-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.sudo-avatar {
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+
+.sudo-head h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.sudo-head p,
+.sudo-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sudo-note.error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.sudo-reason {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid #f5a524;
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  line-height: 1.45;
+}
+
+.sudo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sudo-field input {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: inherit;
+}
+
+.sudo-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sudo-buttons button {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--window-fg);
+  font-weight: 600;
+}
+
+.sudo-buttons .sudo-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.de-cde .sudo-dialog,
+.de-cde .vasi-control {
+  border: 0;
+  border-radius: 0;
+}
+
+.de-cde .sudo-buttons button {
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #555;
+}
+
+.de-cde .sudo-buttons .sudo-primary {
+  color: #fff;
+}
+
+.de-hyprland .sudo-dialog,
+.de-hyprland .vasi-control {
+  border: 2px solid #cba6f7;
 }

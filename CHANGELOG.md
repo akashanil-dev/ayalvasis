@@ -4,6 +4,36 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T05:00:28+05:30 — Vasi becomes a teaching agent with full control
+
+- Changed:
+  - Vasi has a teacher persona: kind, patient, shows then hands the keyboard back, never does lesson steps for
+    the learner, may set up exercises and rescue a broken system (`apps/api/src/prompt.ts`).
+  - The Guide / Demo / Drive autonomy switch is gone: Vasi always has every tool.
+  - New agent tools (`packages/tutor/src/tools.ts`): `look_at_screen` now lists clickable and typeable elements
+    with ids; `click`, `type_text`, `press_keys`, `type_in_terminal` (types live into a visible "Vasi's
+    terminal" whose commands run as the tutor), `manage_window`, `change_appearance` and `request_sudo`.
+  - The browser side (`apps/web/src/tutor/screen-agent.ts`) reads the screen like a screen reader and acts with
+    Vasi's own drawn pointer (gliding arrow with a name tag and click ripple) and synthetic events.
+  - Sudo: `request_sudo` shows an authentication dialog with Vasi's reason, then a password prompt; allowing it
+    grants `user:switch` until logout or Revoke. Denial is reported to Vasi, who is told to take it with humour.
+  - A "Vasi is using the computer · Stop (Esc)" bar; Stop ends the current answer without further actions.
+  - Longer agent turns: up to 16 model rounds per question, the current question is always kept in the request
+    even when trimming history, and the API accepts up to 160 messages and 60 tools.
+  - Terminal app: a `tuxos:terminal-type` window event lets Vasi type into a terminal; windows opened with
+    `owner: 'vasi'` run a tutor shell and are titled "Vasi's terminal".
+  - Fixed: `sudo` read options meant for the command (`sudo head -n 2 f` failed); options now end at the command.
+- Why: The team wants Vasi to act like a teacher at the learner's shoulder who can use the computer himself.
+- Validation: `npm run typecheck` passed. `npx vitest run`: 24 test files, 270 tests passed (new tests for the
+  agent tools, sudo granted/denied/revoked, Stop, long turns, the screen agent and sudo option parsing).
+  `npm run build` passed. In headless Chromium with a scripted stand-in for the model API: Vasi looked at the
+  screen, double-clicked Files, typed `ls -l /etc` in his terminal, asked for sudo (allowed with a password, then
+  ran `sudo head -n 2 /etc/shadow`) and, in a second run, was denied and answered with a joke.
+- Limitations: not yet tried against the real model, so how well it follows the persona and uses element ids is
+  untested. Any password is accepted because TuxOS accounts have none. Clicks and typing outside Vasi's own
+  terminal run as the learner, so the persona (not the kernel) keeps him from doing lesson work through the UI.
+  `head` and `tail` still accept only `-n N`, not the `-N` shorthand.
+
 ## 2026-10-11T04:14:36+05:30 — Module-local learning memory and model routing
 
 - What changed: Added bounded local memory files per learning module, memory-aware planning/hints/answers/evaluation, and independent environment-configurable model routing for Linux, Docker, Terminal, and chmod-arcade.

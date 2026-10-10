@@ -68,13 +68,14 @@ function sudo(): CommandDefinition {
   return {
     name: 'sudo', summary: 'Run a command as root', usage: 'sudo COMMAND [ARG ...]',
     async run(ctx) {
-      const parsed = options(ctx);
-      if (parsed.unknown) return invalidOption(ctx, 'sudo', `-${parsed.unknown}`);
-      if (!parsed.args.length) {
+      // Like real sudo, options end at the command: in `sudo head -2 f`, the -2 belongs to head.
+      const args = ctx.args[0] === '--' ? ctx.args.slice(1) : ctx.args;
+      if (args[0]?.startsWith('-') && args[0] !== '-') return invalidOption(ctx, 'sudo', args[0].slice(0, 2));
+      if (!args.length) {
         ctx.stderr('sudo: command required\n');
         return 1;
       }
-      const result = await (ctx.shell as ShellInternals).runAsCommand(parsed.args, ctx.stdin, 'root');
+      const result = await (ctx.shell as ShellInternals).runAsCommand(args, ctx.stdin, 'root');
       ctx.stdout(result.stdout);
       ctx.stderr(result.stderr);
       return result.code;
