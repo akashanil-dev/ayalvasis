@@ -1,0 +1,99 @@
+.app-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  min-height: 160px;
+  overflow: hidden;
+  border: 1px solid #536486;
+  border-radius: 12px;
+  background: #111827;
+  box-shadow: 0 22px 70px #0008;
+}
+
+.app-window.focused {
+  border-color: #9d9aff;
+  box-shadow: 0 22px 70px #0009, 0 0 0 1px #7771ff66;
+}
+
+.app-window header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding-left: 15px;
+  background: #202a43;
+  color: #eef3ff;
+  cursor: grab;
+  user-select: none;
+}
+
+.app-window header div {
+  display: flex;
+}
+
+.app-window header button {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  background: transparent;
+  color: #dce5fa;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.app-window header button:hover {
+  background: #ffffff18;
+}
+
+.window-content {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    #8190b3 51%,
+    transparent 62%,
+    #8190b3 63%,
+    transparent 74%
+  );
+  cursor: nwse-resize;
+}
+
+.about-view h2 {
+  margin-top: 0;
+}
+
+.about-mark {
+  color: #a9a0ff;
+  font-size: 42px;
+}
+
+.about-view p {
+  color: #aeb9cf;
+}
+
+.about-view dl {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.about-view dt {
+  color: #8998b7;
+}
+
+.about-view dd {
+  margin: 0;
+}

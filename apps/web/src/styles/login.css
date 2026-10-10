@@ -1,0 +1,60 @@
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 15%, #26305a, #0b1020 58%);
+}
+
+.login-card {
+  width: min(420px, 90vw);
+  padding: 42px;
+  text-align: center;
+  background: #151c31dd;
+  border: 1px solid #35405f;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px #0008;
+}
+
+.login-card h1 {
+  margin: 25px 0 8px;
+  font-size: 27px;
+}
+
+.login-card p {
+  color: #a5b0c9;
+}
+
+.login-card form {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+  text-align: left;
+}
+
+.login-card label {
+  color: #b4bfd7;
+  font-size: 13px;
+}
+
+.login-card input {
+  padding: 12px;
+  border: 1px solid #465273;
+  border-radius: 9px;
+  background: #0c1223;
+  color: white;
+}
+
+.form-error {
+  color: #ff9eab !important;
+  font-size: 13px;
+}
+
+.login-card form button {
+  margin-top: 8px;
+}
+
+.saved-button {
+  margin-top: 18px;
+  background: transparent !important;
+  color: #9edfff !important;
+}

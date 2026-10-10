@@ -1,0 +1,13 @@
+{
+  "name": "@ayalvasis/system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@ayalvasis/kernel": "*",
+    "@ayalvasis/module-host": "*",
+    "@ayalvasis/sdk": "*",
+    "@ayalvasis/shell": "*"
+  }
+}

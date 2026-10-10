@@ -53,19 +53,30 @@ This template has no application code or required technology stack. The document
   activates dependency chains, grants declared capabilities, and reports activation state/events.
   It depends on the kernel and shell; adding a module only requires registering its manifest and
   loader with the host.
-- **Modules** (`modules/*`, planned): each one adds desktop apps, shell commands and lessons through a manifest.
+- **System client** (`packages/system`): the single UI-facing API for boot, persistence, events,
+  sessions, terminals and module activation. Session reads are direct cloned state reads, while `onChange`
+  reports successful mutations. It runs on the main thread for now; a Web Worker is planned.
+- **Web app** (`apps/web`): a Vite + React desktop with boot/login screens, module icons, a launcher,
+  clock, kernel-backed windows and lazy app views.
+- **Modules** (`modules/*`): each one adds desktop apps and shell commands through a manifest. The About
+  module proves app activation, `uname`, and a view reading system information through dispatch.
 
 ### Run the project
 
 1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
 2. Dependency installation: `npm install`
 3. Environment setup: none needed yet.
-4. Start the project: there is no browser app to start yet; the kernel and shell libraries can be exercised through their tests.
+4. Start the project: `npm run dev`, then open the URL printed by Vite (normally `http://localhost:5173`).
 5. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
 
 ### Current status
 
 - Working features:
+  - **Browser desktop:** boot/login flow, saved-system continuation, CSS wallpaper, module app icons,
+    launcher, clock, lazy About view and accessible kernel-backed windows.
+  - **System client:** local in-process boot/restore, debounced injected-storage persistence, event
+    subscriptions, module activation, session API and terminal API. A Web Worker is planned.
+  - **About module:** contributes the About app and `uname` command, including `uname -a` hostname output.
   - **Kernel:** action registry, `dispatch` with capability checks, an event log with subscribers and a size limit, and JSON snapshots and restore. A failed action leaves the state unchanged.
     Actions receive permission-bound filesystem helpers through `ActionContext.fs`; raw VFS mutators
     are not part of the kernel package API.
@@ -86,7 +97,9 @@ This template has no application code or required technology stack. The document
     long listings use the virtual filesystem's fixed UTC clock values.
   - The module host and SDK contract are implemented, with hello, notes, failure, and missing-command
     fixtures proving the contract. Failed module activation rolls back registered actions, commands
-    and capability grants. A browser UI, production modules and tutor are still pending.
-- Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/) (Apache-2.0) and [Vitest](https://vitest.dev/) (MIT), both development-only.
+    and capability grants.
+- Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/),
+  [Vitest](https://vitest.dev/), [React](https://react.dev/) and [Vite](https://vite.dev/). No public
+  datasets or external APIs are used.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

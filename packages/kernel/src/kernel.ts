@@ -210,6 +210,7 @@ function createActionFs(state: KernelState, user: string, now: number): ActionFs
 
 function restoreState(state: KernelState): KernelState {
   const restored = structuredClone(state);
+  restored.session ??= { windows: [], focusedId: null, nextId: 1 };
   const fill = (node: import('./vfs').VNode): void => {
     node.mtime ??= 0;
     if (node.kind === 'dir') for (const child of Object.values(node.children)) fill(child);

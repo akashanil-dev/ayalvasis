@@ -4,6 +4,37 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T01:25:54+05:30 — Desktop event stream and window interaction fixes
+
+- Changed:
+  - Made `SystemClient.session()` read a cloned kernel session directly and added filtered `onChange` listeners.
+  - Removed recursive desktop refreshes caused by dispatching `session.list` while handling kernel events.
+  - Split the web app into screens, desktop controls and pointer/session hooks.
+  - Added cached lazy view components, captured drag/resize interactions, position clamping, maximize/restore,
+    focus filtering and a 30-second panel clock.
+  - Added a separately exported About manifest and dynamic module loading; Vite emits separate module/view chunks.
+  - Added real-client integration and window-manager interaction coverage.
+- Why: Make the real desktop stable under kernel events and match the requested window-manager behavior.
+- Validation: `npm run check` — TypeScript passed; Vitest reported 8 files and 92 tests passed. `npm run build`
+  — TypeScript passed and Vite emitted separate JavaScript chunks for the module and view.
+- Limitations: The system remains on the main thread; the AI tutor and additional modules are not implemented.
+
+## 2026-10-11T01:18:26+05:30 — Browser desktop, sessions and local system client
+
+- Changed:
+  - Added kernel session state and window actions with focus, z-order, movement, resize clamping,
+    minimize/maximize, close, listing and legacy snapshot support.
+  - Added `@ayalvasis/system` with boot/restore, injected debounced persistence, module activation,
+    terminal sessions and session APIs.
+  - Added the Vite/React web desktop, boot/login flow, launcher, accessible window controls and lazy views.
+  - Added the About module with an app, `uname`, `uname -a` and a system-information view.
+  - Added kernel, system and browser interaction tests and updated workspace build scripts.
+- Why: Deliver the first runnable browser desktop while keeping all state changes in the kernel contract.
+- Validation: `npm run check` — TypeScript passed; Vitest reported 8 files and 88 tests passed. `npm run build`
+  — TypeScript passed and Vite produced the web bundle.
+- Limitations: The system is still on the main thread; the AI tutor, additional modules and production deployment
+  are not implemented.
+
 ## 2026-10-11T00:44:50+05:30 — Permission-bound module filesystem access and rollback
 
 - Changed:

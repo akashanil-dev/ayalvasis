@@ -1,4 +1,5 @@
 import type { Actor, KernelEvent } from '@ayalvasis/sdk';
+import type { KernelState } from './state';
 import { describe, expect, it } from 'vitest';
 import { createKernel, KernelError } from './index';
 
@@ -159,5 +160,55 @@ describe('snapshots', () => {
     expect(restored.dispatch({ type: 'fs.stat', payload: { path: '/home/ada' } })).toMatchObject({
       ok: true, value: { mtime: 0 },
     });
+  });
+});
+
+describe('session actions', () => {
+  it('opens, cascades, focuses and lists windows', () => {
+    const kernel = createKernel({ username: 'ada' });
+    const first = kernel.dispatch<string>({ type: 'session.open', payload: { appId: 'one', title: 'One' } });
+    const second = kernel.dispatch<string>({ type: 'session.open', payload: { appId: 'two', title: 'Two' } });
+    expect(first).toEqual({ ok: true, value: 'window-1' });
+    expect(second).toEqual({ ok: true, value: 'window-2' });
+    expect(kernel.dispatch({ type: 'session.list', payload: {} })).toMatchObject({
+      ok: true, value: { focusedId: 'window-2', windows: [{ x: 48, y: 40 }, { x: 72, y: 64 }] },
+    });
+  });
+
+  it('focuses, minimizes, maximizes, moves, resizes and closes', () => {
+    const kernel = createKernel({ username: 'ada' });
+    kernel.dispatch({ type: 'session.open', payload: { appId: 'one', title: 'One' } });
+    expect(kernel.dispatch({ type: 'session.minimize', payload: { id: 'window-1' } })).toMatchObject({ ok: true });
+    expect(kernel.dispatch({ type: 'session.focus', payload: { id: 'window-1' } })).toMatchObject({ ok: true });
+    kernel.dispatch({ type: 'session.toggleMaximize', payload: { id: 'window-1' } });
+    kernel.dispatch({ type: 'session.move', payload: { id: 'window-1', x: 10, y: 20 } });
+    kernel.dispatch({ type: 'session.resize', payload: { id: 'window-1', width: 1, height: 2 } });
+    expect(kernel.getState().session.windows[0]).toMatchObject({
+      minimized: false, maximized: true, x: 10, y: 20, width: 240, height: 160,
+    });
+    expect(kernel.dispatch({ type: 'session.close', payload: { id: 'window-1' } })).toMatchObject({ ok: true });
+    expect(kernel.getState().session.focusedId).toBeNull();
+  });
+
+  it('rejects unknown windows and invalid numbers', () => {
+    const kernel = createKernel({ username: 'ada' });
+    expect(kernel.dispatch({ type: 'session.focus', payload: { id: 'missing' } })).toMatchObject({
+      ok: false, error: { code: 'ENOENT' },
+    });
+    kernel.dispatch({ type: 'session.open', payload: { appId: 'x', title: 'X' } });
+    expect(kernel.dispatch({ type: 'session.move', payload: { id: 'window-1', x: NaN, y: 0 } })).toMatchObject({
+      ok: false, error: { code: 'EINVAL' },
+    });
+    expect(kernel.dispatch({ type: 'session.open', payload: {
+      appId: 'x', title: 'X', width: Infinity,
+    } })).toMatchObject({ ok: false, error: { code: 'EINVAL' } });
+  });
+
+  it('restores old snapshots with an empty session', () => {
+    const kernel = createKernel({ username: 'ada' });
+    const { session: ignored, ...legacyState } = structuredClone(kernel.getState());
+    void ignored;
+    const restored = createKernel({ snapshot: { version: 1, state: legacyState as KernelState } });
+    expect(restored.getState().session).toEqual({ windows: [], focusedId: null, nextId: 1 });
   });
 });

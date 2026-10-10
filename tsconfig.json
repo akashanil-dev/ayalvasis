@@ -4,6 +4,7 @@
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true,
@@ -11,5 +12,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["packages/*/src"]
+  "include": ["packages/*/src", "modules/*/src", "apps/*/src"]
 }

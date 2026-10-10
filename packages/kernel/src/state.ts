@@ -8,10 +8,30 @@ export interface UserAccount {
   home: string;
 }
 
+export interface Window {
+  id: string;
+  appId: string;
+  title: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  minimized: boolean;
+  maximized: boolean;
+  z: number;
+}
+
+export interface SessionState {
+  windows: Window[];
+  focusedId: string | null;
+  nextId: number;
+}
+
 export interface KernelState {
   hostname: string;
   users: Record<string, UserAccount>;
   fs: DirNode;
+  session: SessionState;
 }
 
 // Same rule as useradd's default NAME_REGEX on Debian.
@@ -48,5 +68,6 @@ export function createInitialState(username: string, hostname = 'ayalvasis', now
       usr: dir('root', 0o755, { bin: dir('root', 0o755, {}, now) }, now),
       var: dir('root', 0o755, { log: dir('root', 0o755, {}, now) }, now),
     }, now),
+    session: { windows: [], focusedId: null, nextId: 1 },
   };
 }

@@ -1,0 +1,120 @@
+.desktop-screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #111934, #182f43 45%, #0e1d2f);
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 104px);
+  gap: 20px;
+  padding: 28px;
+}
+
+.desktop-icon {
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #eef3ff;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.desktop-icon:hover {
+  background: #ffffff18;
+}
+
+.icon-glyph {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 17px;
+  background: #6c63ff;
+  font-size: 32px;
+  box-shadow: 0 10px 20px #0004;
+}
+
+.panel {
+  position: absolute;
+  z-index: 9999;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  background: #0c1223dd;
+  border-top: 1px solid #435174;
+  backdrop-filter: blur(16px);
+}
+
+.panel button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #dfe7fb;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.panel > button {
+  font-size: 20px;
+}
+
+.task-list {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.task-list button.active,
+.task-list button:hover {
+  background: #6c63ff66;
+}
+
+.panel time {
+  color: #aab5ce;
+  font-size: 13px;
+}
+
+.launcher {
+  position: absolute;
+  z-index: 10000;
+  bottom: 64px;
+  left: 14px;
+  width: 270px;
+  padding: 18px;
+  border: 1px solid #435174;
+  border-radius: 14px;
+  background: #111a30f5;
+  box-shadow: 0 18px 60px #0008;
+}
+
+.launcher h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #aab5ce;
+}
+
+.launcher button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  text-align: left;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.launcher button:hover {
+  background: #ffffff18;
+}
