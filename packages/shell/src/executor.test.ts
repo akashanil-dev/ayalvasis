@@ -73,7 +73,9 @@ describe('executor', () => {
     const shell = createShell(kernel, { actor: { kind: 'tutor', id: 't' } });
     const denied = await shell.run('touch note');
     expect(denied.code).toBe(1);
-    expect(denied.stderr).toContain('lacks capability fs:write');
+    expect(denied.stderr).toBe(
+      "touch: cannot touch 'note': Operation not permitted\n",
+    );
     kernel.grant({ kind: 'tutor', id: 't' }, ['fs:*']);
     expect((await shell.run('touch note')).code).toBe(0);
   });
@@ -87,6 +89,8 @@ describe('executor', () => {
 
   it('rejects duplicate command registration', () => {
     const shell = make();
-    expect(() => shell.register({ name: 'ls', summary: 'x', usage: 'ls', run: () => 0 })).toThrow('command already registered: ls');
+    expect(() => shell.register({
+      name: 'ls', summary: 'x', usage: 'ls', run: () => 0,
+    })).toThrow('command already registered: ls');
   });
 });

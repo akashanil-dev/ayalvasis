@@ -10,6 +10,7 @@ import {
   type ShellInternals,
   type ShellOptions,
 } from './commands';
+import { strerror } from './commands/helpers';
 
 export class ShellImpl implements ShellInternals {
   cwd: string;
@@ -109,7 +110,7 @@ export class ShellImpl implements ShellInternals {
         const [rawPath] = this.expandWord(redirection.word, user);
         const path = resolvePath(rawPath!, this.cwd);
         const result = this.dispatch<string>('fs.read', { path }, user);
-        if (!result.ok) return { stdout: '', stderr: `${definition.name}: ${result.error.message}\n`, code: 1 };
+        if (!result.ok) return { stdout: '', stderr: `bash: ${rawPath}: ${strerror(result.error.code)}\n`, code: 1 };
         stdin = result.value;
       }
     }
@@ -137,7 +138,7 @@ export class ShellImpl implements ShellInternals {
           { path, content: stdout, append: redirection.op === '>>' },
           user,
         );
-        if (!result.ok) return { stdout: '', stderr: `${definition.name}: ${result.error.message}\n`, code: 1 };
+        if (!result.ok) return { stdout: '', stderr: `bash: ${rawPath}: ${strerror(result.error.code)}\n`, code: 1 };
         stdout = '';
       }
     }

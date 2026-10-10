@@ -63,14 +63,19 @@ This template has no application code or required technology stack. The document
   - **Kernel:** action registry, `dispatch` with capability checks, an event log with subscribers and a size limit, and JSON snapshots and restore. A failed action leaves the state unchanged.
   - **Virtual filesystem:**
     - stat, read, list, write/append, mkdir (with `-p` behaviour), remove (with recursive), chmod
+    - deterministic modification times, Linux-style parent-directory updates, and backward-compatible snapshots
     - Unix owner/other permissions, including execute permission to enter a directory, with root overrides
   - **Tests:** covered by Vitest unit tests.
   - **Shell:** parser, command executor, pipelines, redirections, variables, globs, conditional operators, permissions-aware built-ins, and module command registration.
+  - **GNU fidelity:** errno diagnostics preserve typed paths; `cp`/`mv` support directory targets;
+    `ls` supports hidden entries, `-d`, and long listings; text commands accept `-` for stdin.
+    Text commands also process multiple file operands with GNU-style headers and totals.
 - Known limitations:
   - Group permissions aren't modelled.
   - Each state-changing action copies the whole state, which is fine at learner-sized filesystems; this can be revisited if it gets slow.
   - The shell intentionally implements only the command/options listed in its package task; it is not a complete Bash or POSIX shell.
-  - Some GNU formatting and shell-language edge cases remain simplified for the teaching filesystem.
+  - Some GNU formatting and shell-language edge cases remain simplified for the teaching filesystem;
+    long listings use the virtual filesystem's fixed UTC clock values.
   - There is no UI, module host or tutor yet.
 - Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/) (Apache-2.0) and [Vitest](https://vitest.dev/) (MIT), both development-only.
 

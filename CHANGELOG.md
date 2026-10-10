@@ -4,6 +4,64 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T00:37:34+05:30 — Parser and multi-file text command fidelity
+
+- Changed:
+  - Corrected double-quoted backslash handling to preserve non-special escapes while
+    allowing Bash’s special double-quote escapes.
+  - Added Bash-compatible multi-file behavior for `cat`, `sort`, `head`, `tail`, and `wc`;
+    grep multi-file prefixes remain covered.
+  - Added parser, double-quoted echo, and multi-operand regression tests.
+- Why: Match Bash quoting and GNU text-command behavior when learners use realistic pipelines
+  and more than one input file.
+- Validation: `npm run check` — TypeScript typecheck passed; Vitest reported 5 test files
+  and 56 tests passed.
+- Limitations: This remains the focused command subset documented above.
+
+## 2026-10-11T00:36:20+05:30 — Echo and stdin operand fidelity
+
+- Changed:
+  - Restored Bash-compatible `echo` behavior: `-n`, `-e`, `-E`, combined options,
+    escapes, octal values, and `\c` termination.
+  - Made lone `-` read standard input for `cat`, `head`, `tail`, `wc`, `sort`, and `grep`.
+  - Added regression tests and wrapped the remaining long executor assertion.
+- Why: Option validation must not change Bash echo semantics, and learners commonly pipe
+  text through commands using `-` as the stdin operand.
+- Validation: `npm run check` — TypeScript typecheck passed; Vitest reported 5 test files
+  and 54 tests passed.
+- Limitations: This remains the focused command subset documented above.
+
+## 2026-10-11T00:34:18+05:30 — Shell option and listing fidelity fixes
+
+- Changed:
+  - Corrected `ls -l` block totals to use 4 KiB allocation units.
+  - Added supported-option validation for every built-in, GNU diagnostics, Bash-style
+    `cd` and `export` errors, and `--` operand handling.
+  - Added `ls -d` for listing directory operands themselves.
+  - Wrapped kernel test expectations to keep test source lines within 120 characters.
+- Why: Match the supported shell's option parsing and directory listing behavior more
+  closely to GNU tools and Bash.
+- Validation: `npm run check` — TypeScript typecheck passed; Vitest reported 5 test
+  files and 52 tests passed.
+- Limitations: Unsupported commands and options remain outside this focused teaching-shell subset.
+
+## 2026-10-11T00:27:06+05:30 — GNU filesystem fidelity and modification times
+
+- Changed:
+  - Added deterministic `mtime` values to kernel files, directories, stats and snapshots,
+    including legacy snapshot backfill.
+  - Updated filesystem mutations so writes, creates and parent directory entry changes
+    follow Linux-style timestamp behavior.
+  - Added errno-based GNU diagnostics with typed shell paths, directory-target `cp`/`mv`,
+    and directory self-move protection.
+  - Improved `ls` hidden-entry ordering, byte sorting, long-format metadata, UTC dates,
+    link counts, totals and alignment.
+  - Added regression tests for timestamps, snapshot compatibility, diagnostics, copy/move behavior and listing formats.
+- Why: Learners compare the pretend shell with a real GNU/Linux terminal, so supported
+  behavior must expose familiar output and metadata.
+- Validation: `npm run check` — TypeScript typecheck passed; Vitest reported 5 test files and 50 tests passed.
+- Limitations: This remains the focused command subset documented above; unsupported Bash and GNU options are unchanged.
+
 ## 2026-10-11T00:02:14+05:30 — Bash-like teaching shell final fixes
 
 - Changed:

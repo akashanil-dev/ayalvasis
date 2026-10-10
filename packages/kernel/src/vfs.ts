@@ -9,6 +9,7 @@ export interface FileNode {
   owner: string;
   mode: number;
   content: string;
+  mtime: number;
 }
 
 export interface DirNode {
@@ -16,6 +17,7 @@ export interface DirNode {
   owner: string;
   mode: number;
   children: Record<string, VNode>;
+  mtime: number;
 }
 
 export type VNode = FileNode | DirNode;
@@ -26,17 +28,18 @@ export interface Stat {
   owner: string;
   mode: number;
   size: number;
+  mtime: number;
 }
 
 type Access = 'r' | 'w' | 'x';
 const BITS: Record<Access, number> = { r: 4, w: 2, x: 1 };
 
-export function file(owner: string, mode: number, content = ''): FileNode {
-  return { kind: 'file', owner, mode, content };
+export function file(owner: string, mode: number, content = '', mtime = 0): FileNode {
+  return { kind: 'file', owner, mode, content, mtime };
 }
 
-export function dir(owner: string, mode: number, children: Record<string, VNode> = {}): DirNode {
-  return { kind: 'dir', owner, mode, children };
+export function dir(owner: string, mode: number, children: Record<string, VNode> = {}, mtime = 0): DirNode {
+  return { kind: 'dir', owner, mode, children, mtime };
 }
 
 /** Turn a path into a clean absolute one, resolving ".", ".." and repeated slashes. */
@@ -96,8 +99,8 @@ function parentOf(root: DirNode, path: string, user: string): { parent: DirNode;
 }
 
 function statOf(name: string, node: VNode): Stat {
-  const size = node.kind === 'file' ? node.content.length : Object.keys(node.children).length;
-  return { name, kind: node.kind, owner: node.owner, mode: node.mode, size };
+  const size = node.kind === 'file' ? node.content.length : 4096;
+  return { name, kind: node.kind, owner: node.owner, mode: node.mode, size, mtime: node.mtime };
 }
 
 export function stat(root: DirNode, path: string, user: string): Stat {
@@ -112,20 +115,22 @@ export function readFile(root: DirNode, path: string, user: string): string {
   return node.content;
 }
 
-export function writeFile(root: DirNode, path: string, user: string, content: string, append = false): void {
+export function writeFile(root: DirNode, path: string, user: string, content: string, append = false, now = 0): void {
   const { parent, name } = parentOf(root, path, user);
   const existing = parent.children[name];
   if (existing?.kind === 'dir') throw new KernelError('EISDIR', `${path}: Is a directory`);
   if (existing) {
     demand(existing, user, 'w', path);
     existing.content = append ? existing.content + content : content;
+    existing.mtime = now;
     return;
   }
   demand(parent, user, 'w', path);
-  parent.children[name] = file(user, 0o644, content);
+  parent.children[name] = file(user, 0o644, content, now);
+  parent.mtime = now;
 }
 
-export function makeDir(root: DirNode, path: string, user: string, parents = false): void {
+export function makeDir(root: DirNode, path: string, user: string, parents = false, now = 0): void {
   if (parents) {
     let current = '';
     for (const name of segments(path)) {
@@ -135,7 +140,8 @@ export function makeDir(root: DirNode, path: string, user: string, parents = fal
       if (existing?.kind === 'file') throw new KernelError('ENOTDIR', `${current}: Not a directory`);
       if (!existing) {
         demand(parent, user, 'w', current);
-        parent.children[name] = dir(user, 0o755);
+        parent.children[name] = dir(user, 0o755, {}, now);
+        parent.mtime = now;
       }
     }
     return;
@@ -143,7 +149,8 @@ export function makeDir(root: DirNode, path: string, user: string, parents = fal
   const { parent, name } = parentOf(root, path, user);
   if (parent.children[name]) throw new KernelError('EEXIST', `${path}: File exists`);
   demand(parent, user, 'w', path);
-  parent.children[name] = dir(user, 0o755);
+  parent.children[name] = dir(user, 0o755, {}, now);
+  parent.mtime = now;
 }
 
 export function listDir(root: DirNode, path: string, user: string): Stat[] {
@@ -152,10 +159,10 @@ export function listDir(root: DirNode, path: string, user: string): Stat[] {
   demand(node, user, 'r', path);
   return Object.entries(node.children)
     .map(([name, child]) => statOf(name, child))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
 }
 
-export function remove(root: DirNode, path: string, user: string, recursive = false): void {
+export function remove(root: DirNode, path: string, user: string, recursive = false, now = 0): void {
   const { parent, name } = parentOf(root, path, user);
   const node = parent.children[name];
   if (!node) throw new KernelError('ENOENT', `${path}: No such file or directory`);
@@ -165,6 +172,7 @@ export function remove(root: DirNode, path: string, user: string, recursive = fa
   }
   demand(parent, user, 'w', path);
   delete parent.children[name];
+  parent.mtime = now;
 }
 
 export function changeMode(root: DirNode, path: string, user: string, mode: number): void {

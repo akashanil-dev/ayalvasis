@@ -11,6 +11,7 @@ export interface ActionContext {
   actor: Actor;
   /** The Linux user the action runs as. */
   user: string;
+  now: number;
 }
 
 export interface ActionDefinition<P = unknown, R = unknown> {
@@ -57,13 +58,14 @@ export class Kernel {
   private seq = 0;
 
   constructor(options: KernelOptions) {
+    this.now = options.now ?? Date.now;
     if (options.snapshot) {
       if (options.snapshot.version !== SNAPSHOT_VERSION) {
         throw new KernelError('EINVAL', `unsupported snapshot version: ${options.snapshot.version}`);
       }
-      this.state = structuredClone(options.snapshot.state);
+      this.state = restoreState(options.snapshot.state);
     } else if (options.username) {
-      this.state = createInitialState(options.username);
+      this.state = createInitialState(options.username, 'ayalvasis', this.now());
     } else {
       throw new KernelError('EINVAL', 'a kernel needs a username or a snapshot');
     }
@@ -71,7 +73,6 @@ export class Kernel {
     if (!user) throw new KernelError('EINVAL', 'the system has no regular user');
     this.sessionUser = user;
     this.logLimit = options.logLimit ?? 1000;
-    this.now = options.now ?? Date.now;
     // The learner and the system itself can do anything the system allows; others need grants.
     this.grant({ kind: 'user', id: user }, ['*']);
     this.grant(SYSTEM, ['*']);
@@ -104,6 +105,7 @@ export class Kernel {
   }
 
   dispatch<R = unknown>(action: Action, options: DispatchOptions = {}): DispatchResult<R> {
+    const now = this.now();
     const actor = options.actor ?? { kind: 'user', id: this.sessionUser };
     const user = options.user ?? this.sessionUser;
     const definition = this.definitions.get(action.type);
@@ -116,12 +118,12 @@ export class Kernel {
     } else if (!this.state.users[user]) {
       result = failure('EINVAL', `no such user: ${user}`);
     } else {
-      result = this.run<R>(definition, { state: this.state, actor, user }, action.payload);
+      result = this.run<R>(definition, { state: this.state, actor, user, now }, action.payload);
     }
 
     this.record({
       seq: ++this.seq,
-      time: this.now(),
+      time: now,
       actor,
       user,
       action,
@@ -168,6 +170,16 @@ export class Kernel {
     if (this.log.length > this.logLimit) this.log.splice(0, this.log.length - this.logLimit);
     for (const listener of this.listeners) listener(event);
   }
+}
+
+function restoreState(state: KernelState): KernelState {
+  const restored = structuredClone(state);
+  const fill = (node: import('./vfs').VNode): void => {
+    node.mtime ??= 0;
+    if (node.kind === 'dir') for (const child of Object.values(node.children)) fill(child);
+  };
+  fill(restored.fs);
+  return restored;
 }
 
 function actorKey(actor: Actor): string {

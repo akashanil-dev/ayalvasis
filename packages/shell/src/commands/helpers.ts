@@ -7,19 +7,41 @@ export interface Stat {
   owner: string;
   mode: number;
   size: number;
+  mtime: number;
 }
 
-export function options(ctx: CommandContext): { flags: Set<string>; args: string[] } {
+export function options(ctx: CommandContext, supported = ''): {
+  flags: Set<string>; args: string[]; unknown?: string;
+} {
   const flags = new Set<string>();
   const args: string[] = [];
+  let parsing = true;
   for (const arg of ctx.args) {
-    if (arg.startsWith('-') && arg !== '-') {
-      for (const flag of arg.slice(1)) flags.add(flag);
+    if (arg === '--') {
+      parsing = false;
+      continue;
+    }
+    if (parsing && arg.startsWith('-') && arg !== '-') {
+      for (const flag of arg.slice(1)) {
+        if (!supported.includes(flag)) return { flags, args, unknown: flag };
+        flags.add(flag);
+      }
     } else {
       args.push(arg);
     }
   }
   return { flags, args };
+}
+
+export function invalidOption(
+  ctx: CommandContext, name: string, option: string, code = 1, bashBuiltin = false,
+): number {
+  if (bashBuiltin) ctx.stderr(`bash: ${name}: ${option}: invalid option\n`);
+  else {
+    ctx.stderr(`${name}: invalid option -- '${option.slice(-1)}'\n`);
+    ctx.stderr(`Try '${name} --help' for more information.\n`);
+  }
+  return code;
 }
 
 export function stat(ctx: CommandContext, path: string): DispatchResult<Stat> {
@@ -31,9 +53,21 @@ export function read(ctx: CommandContext, path: string): string | undefined {
   return result.ok ? result.value : undefined;
 }
 
+export function readResult(ctx: CommandContext, path: string): DispatchResult<string> {
+  return ctx.dispatch<string>('fs.read', { path });
+}
+
 export function report(ctx: CommandContext, name: string, result: DispatchResult<unknown>): number {
-  if (!result.ok) ctx.stderr(`${name}: ${result.error.message}\n`);
+  if (!result.ok) ctx.stderr(`${name}: ${strerror(result.error.code)}\n`);
   return result.ok ? 0 : 1;
+}
+
+export function strerror(code: string): string {
+  return ({
+    ENOENT: 'No such file or directory', EACCES: 'Permission denied', EEXIST: 'File exists',
+    ENOTDIR: 'Not a directory', EISDIR: 'Is a directory', ENOTEMPTY: 'Directory not empty',
+    EPERM: 'Operation not permitted', EINVAL: 'Invalid argument',
+  } as Record<string, string>)[code] ?? 'Input/output error';
 }
 
 export function lines(text: string): string[] {

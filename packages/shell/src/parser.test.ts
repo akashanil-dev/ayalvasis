@@ -23,6 +23,17 @@ describe('parser', () => {
     expect(parsed.pipelines[0]!.commands[1]!.redirections).toHaveLength(2);
   });
 
+  it('keeps non-special double-quote backslashes', () => {
+    const parsed = parse(String.raw`echo "a\tb\n"`);
+    expect(parsed.pipelines[0]!.commands[0]!.words[1]).toEqual({
+      segments: [{ type: 'text', value: 'a\\tb\\n', quoted: 'double' }],
+    });
+    const escaped = parse(String.raw`echo "say \"hi\" \$HOME \\"`);
+    expect(escaped.pipelines[0]!.commands[0]!.words[1]).toEqual({
+      segments: [{ type: 'text', value: 'say "hi" $HOME \\', quoted: 'double' }],
+    });
+  });
+
   it.each(['| ls', 'ls &&', 'echo >', 'echo "unterminated'])('rejects syntax: %s', (line) => {
     expect(() => parse(line)).toThrow(/^bash:/);
   });

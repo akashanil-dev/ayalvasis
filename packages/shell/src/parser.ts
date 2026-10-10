@@ -123,8 +123,14 @@ function tokenize(line: string): Token[] {
         quote = undefined;
         index += 1;
       } else if (character === '\\' && line[index + 1] !== undefined) {
-        addText(line[index + 1]!, 'double');
-        index += 2;
+        const next = line[index + 1]!;
+        if ('$`"\\\n'.includes(next)) {
+          if (next !== '\n') addText(next, 'double');
+          index += 2;
+        } else {
+          addText('\\', 'double');
+          index += 1;
+        }
       } else if (character === '$') {
         const variable = variableAt(line, index);
         if (!variable) {

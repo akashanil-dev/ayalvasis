@@ -49,24 +49,27 @@ export const fsActions: ActionDefinition[] = [
     capability: 'fs:write',
     description: 'Create or overwrite a file, or append to it.',
     mutates: true,
-    run: ({ state, user }, payload) =>
-      vfs.writeFile(state.fs, path(payload), user, field(payload, 'content', 'string')!, field(payload, 'append', 'boolean', true)),
+    run: ({ state, user, now }, payload) =>
+      vfs.writeFile(
+        state.fs, path(payload), user, field(payload, 'content', 'string')!,
+        field(payload, 'append', 'boolean', true), now,
+      ),
   },
   {
     type: 'fs.mkdir',
     capability: 'fs:write',
     description: 'Create a directory, and its parents too when "parents" is true.',
     mutates: true,
-    run: ({ state, user }, payload) =>
-      vfs.makeDir(state.fs, path(payload), user, field(payload, 'parents', 'boolean', true)),
+    run: ({ state, user, now }, payload) =>
+      vfs.makeDir(state.fs, path(payload), user, field(payload, 'parents', 'boolean', true), now),
   },
   {
     type: 'fs.remove',
     capability: 'fs:write',
     description: 'Delete a file, or a directory and everything in it when "recursive" is true.',
     mutates: true,
-    run: ({ state, user }, payload) =>
-      vfs.remove(state.fs, path(payload), user, field(payload, 'recursive', 'boolean', true)),
+    run: ({ state, user, now }, payload) =>
+      vfs.remove(state.fs, path(payload), user, field(payload, 'recursive', 'boolean', true), now),
   },
   {
     type: 'fs.chmod',

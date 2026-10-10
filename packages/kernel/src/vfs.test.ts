@@ -32,6 +32,21 @@ describe('files and directories', () => {
     expect(vfs.stat(root, '/home/ada/todo.txt', 'ada')).toMatchObject({ owner: 'ada', mode: 0o644 });
   });
 
+  it('updates file and parent directory mtimes on writes and entry changes', () => {
+    const root = fresh();
+    const homeBefore = vfs.stat(root, '/home/ada', 'ada').mtime;
+    vfs.writeFile(root, '/home/ada/todo.txt', 'ada', 'hi', false, 10);
+    expect(vfs.stat(root, '/home/ada/todo.txt', 'ada').mtime).toBe(10);
+    expect(vfs.stat(root, '/home/ada', 'ada').mtime).toBe(10);
+    vfs.writeFile(root, '/home/ada/todo.txt', 'ada', '!', true, 20);
+    expect(vfs.stat(root, '/home/ada/todo.txt', 'ada').mtime).toBe(20);
+    vfs.makeDir(root, '/home/ada/new', 'ada', false, 30);
+    expect(vfs.stat(root, '/home/ada', 'ada').mtime).toBe(30);
+    vfs.remove(root, '/home/ada/new', 'ada', true, 40);
+    expect(vfs.stat(root, '/home/ada', 'ada').mtime).toBe(40);
+    expect(homeBefore).toBe(0);
+  });
+
   it('makes nested directories with parents and refuses duplicates without it', () => {
     const root = fresh();
     vfs.makeDir(root, '/home/ada/a/b/c', 'ada', true);
