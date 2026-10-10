@@ -1,6 +1,7 @@
 import type { SystemClient } from '@ayalvasis/system';
 import { useEffect, useState } from 'react';
 import { useSession } from '../hooks/useSession';
+import { AppIcon } from '../desktop/AppIcon';
 import { Launcher } from '../desktop/Launcher';
 import { Panel } from '../desktop/Panel';
 import { WindowFrame } from '../desktop/WindowFrame';
@@ -10,12 +11,17 @@ export function Desktop({ system }: { system: SystemClient }) {
   const [launcher, setLauncher] = useState(false);
 
   useEffect(() => {
-    const close = (event: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setLauncher(false);
+      // The shortcut Ubuntu and most Linux desktops use to open a terminal.
+      if (event.ctrlKey && event.altKey && event.key.toLowerCase() === 't') {
+        event.preventDefault();
+        void system.openApp('terminal');
+      }
     };
-    window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
-  }, []);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [system]);
 
   const open = (appId: string) => {
     setLauncher(false);
@@ -30,11 +36,12 @@ export function Desktop({ system }: { system: SystemClient }) {
         onDoubleClick={() => open(app.id)}
         onKeyDown={(event) => { if (event.key === 'Enter') open(app.id); }}
       >
-        <span className="icon-glyph">{app.icon}</span>
+        <AppIcon name={app.icon} />
         <span>{app.title}</span>
       </button>)}
     </div>
-    {session.windows.filter((window) => !window.minimized).map((window) => <WindowFrame
+    {/* Minimized windows stay mounted (just hidden) so apps like Terminal keep their state. */}
+    {session.windows.map((window) => <WindowFrame
       key={window.id}
       system={system}
       window={window}

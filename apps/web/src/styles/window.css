@@ -48,7 +48,12 @@
 
 .window-content {
   flex: 1;
+  min-height: 0;
   overflow: auto;
+}
+
+/* Apps fill their window edge to edge; simple text views add their own padding. */
+.about-view {
   padding: 24px;
 }
 

@@ -35,7 +35,7 @@ This template has no application code or required technology stack. The document
 - **Short description:** A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor guides each learner and can operate the system itself. Every activity (Learn Linux, Learn Docker, games) is a module that shows up as a desktop icon.
 - **Team:** TODO — participant names and GitHub handles; maximum 4 members.
 - **Working demo:** TODO — link or local demo instructions.
-- **Technology stack:** TypeScript, npm workspaces, Vitest.
+- **Technology stack:** TypeScript, npm workspaces, React, Vite, xterm.js, Vitest.
 
 ### Architecture
 
@@ -58,8 +58,12 @@ This template has no application code or required technology stack. The document
   reports successful mutations. It runs on the main thread for now; a Web Worker is planned.
 - **Web app** (`apps/web`): a Vite + React desktop with boot/login screens, module icons, a launcher,
   clock, kernel-backed windows and lazy app views.
-- **Modules** (`modules/*`): each one adds desktop apps and shell commands through a manifest. The About
-  module proves app activation, `uname`, and a view reading system information through dispatch.
+- **Modules** (`modules/*`): each one adds desktop apps and shell commands through a manifest, and its code
+  loads only when first used. Current modules:
+  - **Terminal**: xterm.js on a per-window shell, with a tested line editor and the `clear` command.
+  - **Files**: a point-and-click file manager over the same filesystem.
+  - **Text Editor**: opens, edits and saves files, explaining permission errors.
+  - **About**: system information and the `uname` command.
 
 ### Run the project
 
@@ -76,7 +80,20 @@ This template has no application code or required technology stack. The document
     launcher, clock, lazy About view and accessible kernel-backed windows.
   - **System client:** local in-process boot/restore, debounced injected-storage persistence, event
     subscriptions, module activation, session API and terminal API. A Web Worker is planned.
+  - **Terminal:** one bash-like shell per window with the prompt `user@host:dir$ `, the motd on start, Tab
+    completion of commands and paths (a second Tab lists candidates), Up/Down history, line editing
+    (arrows, Home/End, Ctrl+A/E/U), Ctrl+C, Ctrl+L, Ctrl+D, `exit` and `clear`. The window title follows
+    the current directory. Ctrl+Alt+T opens a terminal from anywhere on the desktop.
+  - **Files:** browse folders, Back/Up, typed locations, New Folder/New File with name checks, Delete with
+    confirmation, Ctrl+H for hidden files, kernel errors shown inline, and live refresh when files change
+    from anywhere (for example the terminal). Double-clicking a file opens it in the Text Editor.
+  - **Text Editor:** opens a window's file, dirty marker in the title, Ctrl+S to save, Save As for new
+    documents, a prompt before closing with unsaved changes, and a sudo tip on permission errors.
   - **About module:** contributes the About app and `uname` command, including `uname -a` hostname output.
+  - **Shared commands:** every terminal has its own cwd, environment and history but shares one command
+    registry, so commands a module installs work in all of them.
+  - **Saving** never blocks the learner: changes are written after a 500 ms pause, and storage failures are
+    reported to listeners instead of failing the command.
   - **Kernel:** action registry, `dispatch` with capability checks, an event log with subscribers and a size limit, and JSON snapshots and restore. A failed action leaves the state unchanged.
     Actions receive permission-bound filesystem helpers through `ActionContext.fs`; raw VFS mutators
     are not part of the kernel package API.
@@ -91,6 +108,11 @@ This template has no application code or required technology stack. The document
     Text commands also process multiple file operands with GNU-style headers and totals.
 - Known limitations:
   - Group permissions aren't modelled.
+  - `ls -l` shows times in UTC rather than the browser's time zone.
+  - The terminal redraws an edited line with a carriage return, so a line longer than the terminal width
+    redraws imperfectly. A command's error output is shown after its normal output, not interleaved.
+  - Commands run to completion before the prompt returns; there are no background jobs or long-running
+    interactive programs yet.
   - Each state-changing action copies the whole state, which is fine at learner-sized filesystems; this can be revisited if it gets slow.
   - The shell intentionally implements only the command/options listed in its package task; it is not a complete Bash or POSIX shell.
   - Some GNU formatting and shell-language edge cases remain simplified for the teaching filesystem;
@@ -99,7 +121,8 @@ This template has no application code or required technology stack. The document
     fixtures proving the contract. Failed module activation rolls back registered actions, commands
     and capability grants.
 - Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/),
-  [Vitest](https://vitest.dev/), [React](https://react.dev/) and [Vite](https://vite.dev/). No public
-  datasets or external APIs are used.
+  [Vitest](https://vitest.dev/), [React](https://react.dev/), [Vite](https://vite.dev/) and
+  [xterm.js](https://xtermjs.org/) (MIT) with its fit addon. The Terminal uses the Tango colour palette.
+  No public datasets or external APIs are used.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

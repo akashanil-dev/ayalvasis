@@ -1,6 +1,6 @@
 import type { Window as SessionWindow } from '@ayalvasis/kernel';
 import type { SystemClient } from '@ayalvasis/system';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { usePointerDrag } from '../hooks/usePointerDrag';
 import { getLazyView } from '../views';
 
@@ -26,6 +26,12 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
   const dragOrigin = useRef({ x: 0, y: 0 });
   const resizeOrigin = useRef({ width: 0, height: 0, x: 0, y: 0 });
   const View = getLazyView(window.appId);
+  const closeGuard = useRef<(() => boolean) | null>(null);
+  const setCloseGuard = useCallback((guard: (() => boolean) | null) => { closeGuard.current = guard; }, []);
+  const close = () => {
+    if (closeGuard.current && !closeGuard.current()) return;
+    void system.dispatch('session.close', { id: window.id });
+  };
 
   useEffect(() => {
     setPreview(geometryOf(window));
@@ -78,7 +84,8 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
 
   return <section
     className={`app-window ${focused ? 'focused' : ''}`}
-    style={{ ...style, zIndex: window.z }}
+    style={{ ...style, zIndex: window.z, display: window.minimized ? 'none' : undefined }}
+    aria-hidden={window.minimized || undefined}
     onPointerDown={focus}
   >
     <header
@@ -104,14 +111,14 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
         >□</WindowButton>
         <WindowButton
           label={`Close ${window.title}`}
-          onClick={() => void system.dispatch('session.close', { id: window.id })}
+          onClick={close}
           onPointerDown={stopPointer}
         >×</WindowButton>
       </div>
     </header>
     <div className="window-content">
       {View ? <Suspense fallback={<p>Loading app...</p>}>
-        <View system={system} windowId={window.id} />
+        <View system={system} windowId={window.id} args={window.args} setCloseGuard={setCloseGuard} />
       </Suspense> : <p>No view registered for {window.appId}</p>}
     </div>
     <button

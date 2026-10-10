@@ -28,15 +28,30 @@
   background: #ffffff18;
 }
 
-.icon-glyph {
+.app-icon {
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 17px;
-  background: #6c63ff;
-  font-size: 32px;
-  box-shadow: 0 10px 20px #0004;
+  width: 56px;
+  height: 56px;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.app-icon svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 35%));
+}
+
+.desktop-icon:focus-visible {
+  outline: 2px solid #99c1f1;
+  outline-offset: 2px;
+}
+
+.launcher .app-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
 }
 
 .panel {

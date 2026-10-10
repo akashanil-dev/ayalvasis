@@ -1,7 +1,14 @@
 import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@ayalvasis/kernel';
 import { createModuleHost, type ModuleHost } from '@ayalvasis/module-host';
 import type { AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest } from '@ayalvasis/sdk';
-import { createShell, type RunResult, type Shell } from '@ayalvasis/shell';
+import {
+  createCommandRegistry,
+  createShell,
+  type CommandRegistry,
+  type Completion,
+  type RunResult,
+  type Shell,
+} from '@ayalvasis/shell';
 
 export interface KeyValueStorage {
   get(key: string): Promise<string | null>;
@@ -14,9 +21,13 @@ export interface ModuleEntry {
   load: () => Promise<ModuleDefinition>;
 }
 
+/** One terminal window's shell: its own cwd, env and history, sharing the system's commands. */
 export interface TerminalSession {
   run(line: string): Promise<RunResult>;
   cwd(): Promise<string>;
+  prompt(): Promise<string>;
+  complete(line: string, cursor: number): Promise<Completion>;
+  history(): Promise<string[]>;
 }
 
 export interface SystemClient {
@@ -24,76 +35,76 @@ export interface SystemClient {
   hasSave(): Promise<string | null>;
   dispatch<R>(type: string, payload: unknown): Promise<DispatchResult<R>>;
   subscribe(listener: (event: KernelEvent) => void): () => void;
+  /** Successful state changes only (file writes, window moves...), from any source. */
   onChange(listener: (event: KernelEvent) => void): () => void;
+  /** Called when saving to storage fails. The system keeps running; the learner should be told. */
+  onSaveError(listener: (error: Error) => void): () => void;
+  /** Save now instead of waiting for the debounce. Rejects if storage fails. */
+  flush(): Promise<void>;
+  user(): Promise<string>;
+  hostname(): Promise<string>;
   session(): Promise<SessionState>;
   apps(): Promise<(AppContribution & { moduleId: string })[]>;
-  openApp(appId: string): Promise<DispatchResult<string>>;
+  openApp(appId: string, args?: Record<string, string>): Promise<DispatchResult<string>>;
   createTerminal(): Promise<TerminalSession>;
   reset(): Promise<void>;
 }
 
 const SAVE_KEY = 'ayalvasis.save';
+const SAVE_DELAY_MS = 500;
+
+interface Running {
+  kernel: Kernel;
+  registry: CommandRegistry;
+  host: ModuleHost;
+  unsubscribe: () => void;
+}
 
 export function createLocalSystem(options: { storage: KeyValueStorage; modules: ModuleEntry[] }): SystemClient {
-  let kernel: Kernel | undefined;
-  let shell: Shell | undefined;
-  let host: ModuleHost | undefined;
-  let unsubscribe: (() => void) | undefined;
+  let running: Running | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let pendingSave: Promise<void> | undefined;
-  let resolveSave: (() => void) | undefined;
-  let rejectSave: ((error: unknown) => void) | undefined;
   const changeListeners = new Set<(event: KernelEvent) => void>();
+  const saveErrorListeners = new Set<(error: Error) => void>();
 
-  const requireKernel = (): Kernel => {
-    if (!kernel) throw new Error('system has not booted');
-    return kernel;
+  const current = (): Running => {
+    if (!running) throw new Error('system has not booted');
+    return running;
   };
 
-  const armSave = (): void => {
+  const writeSave = async (): Promise<void> => {
+    const { kernel } = current();
+    await options.storage.set(SAVE_KEY, JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }));
+  };
+
+  // Saving never blocks the learner: changes are batched and written after a short pause.
+  const scheduleSave = (): void => {
     if (timer) clearTimeout(timer);
-    timer = setTimeout(async () => {
+    timer = setTimeout(() => {
       timer = undefined;
-      try {
-        const current = requireKernel();
-        await options.storage.set(SAVE_KEY, JSON.stringify({ username: current.user, snapshot: current.snapshot() }));
-        resolveSave?.();
-        pendingSave = undefined;
-      } catch (error) {
-        rejectSave?.(error);
-      }
-    }, 500);
-  };
-
-  const save = (): Promise<void> => {
-    if (pendingSave) { armSave(); return pendingSave; }
-    pendingSave = new Promise<void>((resolve, reject) => { resolveSave = resolve; rejectSave = reject; });
-    void pendingSave.catch(() => undefined);
-    armSave();
-    return pendingSave;
+      writeSave().catch((cause: unknown) => {
+        const error = cause instanceof Error ? cause : new Error(String(cause));
+        for (const listener of saveErrorListeners) listener(error);
+      });
+    }, SAVE_DELAY_MS);
   };
 
   const boot = async (username: string): Promise<void> => {
-    const saved = await options.storage.get(SAVE_KEY);
-    let snapshot: KernelSnapshot | undefined;
-    if (saved) {
-      const parsed = JSON.parse(saved) as { username?: string; snapshot?: KernelSnapshot };
-      if (parsed.username === username) snapshot = parsed.snapshot;
-    }
-    unsubscribe?.();
-    kernel = createKernel(snapshot ? { snapshot } : { username });
-    shell = createShell(kernel);
-    host = createModuleHost({ kernel, shell });
-    options.modules.forEach((entry) => host!.add(entry.manifest, entry.load));
-    unsubscribe = kernel.subscribe((event) => {
+    const snapshot = await savedSnapshot(options.storage, username);
+    running?.unsubscribe();
+    const kernel = createKernel(snapshot ? { snapshot } : { username });
+    const registry = createCommandRegistry();
+    const host = createModuleHost({ kernel, shell: createShell(kernel, { registry }) });
+    for (const entry of options.modules) host.add(entry.manifest, entry.load);
+    const unsubscribe = kernel.subscribe((event) => {
       if (!event.ok || !event.mutates) return;
-      void save();
+      scheduleSave();
       for (const listener of changeListeners) listener(event);
     });
+    running = { kernel, registry, host, unsubscribe };
     await host.start();
   };
 
-  return {
+  const client: SystemClient = {
     boot,
     async hasSave() {
       const saved = await options.storage.get(SAVE_KEY);
@@ -101,58 +112,96 @@ export function createLocalSystem(options: { storage: KeyValueStorage; modules: 
       return (JSON.parse(saved) as { username?: string }).username ?? null;
     },
     async dispatch<R>(type: string, payload: unknown) {
-      const result = requireKernel().dispatch<R>({ type, payload });
-      if (result.ok && requireKernel().events().at(-1)?.mutates) await save();
-      return result;
+      return current().kernel.dispatch<R>({ type, payload });
     },
     subscribe(listener) {
-      return requireKernel().subscribe(listener);
+      return current().kernel.subscribe(listener);
     },
     onChange(listener) {
       changeListeners.add(listener);
       return () => changeListeners.delete(listener);
     },
+    onSaveError(listener) {
+      saveErrorListeners.add(listener);
+      return () => saveErrorListeners.delete(listener);
+    },
+    async flush() {
+      if (timer) clearTimeout(timer);
+      timer = undefined;
+      await writeSave();
+    },
+    async user() {
+      return current().kernel.user;
+    },
+    async hostname() {
+      return current().kernel.getState().hostname;
+    },
     async session() {
-      return structuredClone(requireKernel().getState().session);
+      return structuredClone(current().kernel.getState().session);
     },
     async apps() {
-      if (!host) throw new Error('system has not booted');
-      return host.apps();
+      return current().host.apps();
     },
-    async openApp(appId) {
-      if (!host) throw new Error('system has not booted');
+    async openApp(appId, args) {
+      const { host } = current();
       try {
         await host.openApp(appId);
       } catch (error) {
         return { ok: false, error: { code: 'EIO', message: error instanceof Error ? error.message : String(error) } };
       }
       const app = host.apps().find((candidate) => candidate.id === appId);
-      return this.dispatch<string>('session.open', {
-        appId, title: app?.title ?? appId, width: 720, height: 480,
+      return client.dispatch<string>('session.open', {
+        appId, title: app?.title ?? appId, width: 720, height: 480, ...(args ? { args } : {}),
       });
     },
     async createTerminal() {
-      if (!shell) throw new Error('system has not booted');
-      const activeShell = shell;
-      return {
-        async run(line: string) {
-          const result = await activeShell.run(line);
-          if (requireKernel().events().at(-1)?.mutates) await save();
-          return result;
-        },
-        cwd: async () => activeShell.cwd,
-      };
+      const { kernel, registry } = current();
+      return terminalSession(kernel, createShell(kernel, { registry }));
     },
     async reset() {
       if (timer) clearTimeout(timer);
-      rejectSave?.(new Error('system reset'));
-      pendingSave = undefined;
-      unsubscribe?.();
+      timer = undefined;
+      running?.unsubscribe();
+      running = undefined;
       changeListeners.clear();
-      kernel = undefined;
-      shell = undefined;
-      host = undefined;
       await options.storage.remove(SAVE_KEY);
     },
   };
+  return client;
+}
+
+async function savedSnapshot(storage: KeyValueStorage, username: string): Promise<KernelSnapshot | undefined> {
+  const saved = await storage.get(SAVE_KEY);
+  if (!saved) return undefined;
+  const parsed = JSON.parse(saved) as { username?: string; snapshot?: KernelSnapshot };
+  return parsed.username === username ? parsed.snapshot : undefined;
+}
+
+function terminalSession(kernel: Kernel, shell: Shell): TerminalSession {
+  return {
+    run: (line) => shell.run(line),
+    cwd: async () => shell.cwd,
+    prompt: async () => bashPrompt(kernel.user, kernel.getState().hostname, shell.cwd, shell.env.HOME ?? ''),
+    complete: async (line, cursor) => shell.complete(line, cursor),
+    history: async () => shell.history(),
+  };
+}
+
+/** bash's default prompt, `\u@\h:\w\$ `: home shown as ~, and # instead of $ for root. */
+export function bashPrompt(user: string, hostname: string, cwd: string, home: string): string {
+  const inHome = home && (cwd === home || cwd.startsWith(`${home}/`));
+  const dir = inHome ? `~${cwd.slice(home.length)}` : cwd;
+  return `${user}@${hostname}:${dir}${user === 'root' ? '#' : '$'} `;
+}
+
+/** What the desktop passes to every app window's view. */
+export interface AppViewProps {
+  system: SystemClient;
+  windowId: string;
+  args?: Record<string, string>;
+  /**
+   * Ask before the learner closes this window from its title bar. The guard returns false to keep it open,
+   * e.g. after the learner declines to discard unsaved changes. Pass null to remove it.
+   */
+  setCloseGuard?(guard: (() => boolean) | null): void;
 }

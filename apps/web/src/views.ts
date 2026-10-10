@@ -1,11 +1,15 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import type { SystemClient } from '@ayalvasis/system';
+import type { AppViewProps } from '@ayalvasis/system';
 
-export interface AppViewProps { system: SystemClient; windowId: string }
+export type { AppViewProps } from '@ayalvasis/system';
 type ViewModule = { default: ComponentType<AppViewProps> };
 
+// Each app's window content, loaded only when its first window opens.
 export const views: Record<string, () => Promise<ViewModule>> = {
   about: () => import('@ayalvasis/module-about/view'),
+  terminal: () => import('@ayalvasis/module-terminal/view'),
+  files: () => import('@ayalvasis/module-files/view'),
+  editor: () => import('@ayalvasis/module-editor/view'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();

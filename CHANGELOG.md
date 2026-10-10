@@ -4,6 +4,27 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T01:44:48+05:30 — Terminal, Files and Text Editor apps
+
+- Changed:
+  - Shell: a shared command registry so each terminal window has its own shell (cwd, env, history) while
+    module commands work in all of them; Tab completion of commands and paths; command history.
+  - Kernel: windows remember what they were opened with (`args`), a `session.setTitle` action, a welcome
+    `/etc/motd`, and a root-only `/etc/shadow`.
+  - System client: saving no longer makes commands wait for the 500 ms debounce; storage failures go to
+    `onSaveError` listeners and `flush()`. Added per-terminal sessions with prompt, completion and history.
+  - New modules: Terminal (xterm.js, a tested line editor, `clear`, `exit`), Files and Text Editor.
+  - Desktop: SVG app icons, Ctrl+Alt+T, minimized windows stay mounted so apps keep their state, apps fill
+    their windows, a close guard for unsaved work, a proper `index.html`, and xterm pre-bundled in dev.
+  - Fixed: the boot screen's timer sent a learner who skipped boot and logged in quickly back to login.
+- Why: Give learners the three core apps (terminal, file manager, editor) as plain modules on the desktop,
+  and fix problems found by driving the app in a real browser.
+- Validation: `npm run check` — type check passed; Vitest reported 13 test files and 144 tests passed.
+  `npm run build` passed, with each app's code in its own lazily loaded chunk. Drove the dev server in
+  Chromium: login, Ctrl+Alt+T, `ls -la`, Tab completion, redirection, Files navigation, opening and saving
+  a file in Text Editor, and the edit visible from the restored terminal, with no console errors.
+- Limitations: `ls -l` shows UTC times; long edited lines redraw imperfectly; stderr is shown after stdout.
+
 ## 2026-10-11T01:25:54+05:30 — Desktop event stream and window interaction fixes
 
 - Changed:

@@ -204,6 +204,25 @@ describe('session actions', () => {
     } })).toMatchObject({ ok: false, error: { code: 'EINVAL' } });
   });
 
+  it('stores the arguments a window was opened with, and validates them', () => {
+    const kernel = createKernel({ username: 'ada' });
+    kernel.dispatch({ type: 'session.open', payload: { appId: 'editor', title: 'Edit', args: { path: '/etc/motd' } } });
+    expect(kernel.getState().session.windows[0]?.args).toEqual({ path: '/etc/motd' });
+    expect(kernel.dispatch({ type: 'session.open', payload: { appId: 'x', title: 'X', args: { n: 1 } } }))
+      .toMatchObject({ ok: false, error: { code: 'EINVAL' } });
+    expect(kernel.dispatch({ type: 'session.open', payload: { appId: 'x', title: 'X', args: ['a'] } }))
+      .toMatchObject({ ok: false, error: { code: 'EINVAL' } });
+  });
+
+  it('renames a window', () => {
+    const kernel = createKernel({ username: 'ada' });
+    kernel.dispatch({ type: 'session.open', payload: { appId: 'terminal', title: 'Terminal' } });
+    kernel.dispatch({ type: 'session.setTitle', payload: { id: 'window-1', title: 'ada@ayalvasis: ~' } });
+    expect(kernel.getState().session.windows[0]?.title).toBe('ada@ayalvasis: ~');
+    expect(kernel.dispatch({ type: 'session.setTitle', payload: { id: 'nope', title: 'x' } }))
+      .toMatchObject({ ok: false, error: { code: 'ENOENT' } });
+  });
+
   it('restores old snapshots with an empty session', () => {
     const kernel = createKernel({ username: 'ada' });
     const { session: ignored, ...legacyState } = structuredClone(kernel.getState());

@@ -3,9 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite", "build": "vite build" },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
   "dependencies": {
     "@ayalvasis/module-about": "*",
+    "@ayalvasis/module-editor": "*",
+    "@ayalvasis/module-files": "*",
+    "@ayalvasis/module-terminal": "*",
     "@ayalvasis/sdk": "*",
     "@ayalvasis/system": "*",
     "react": "^19.1.0",

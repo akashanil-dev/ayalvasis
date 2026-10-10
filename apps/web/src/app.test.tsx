@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SessionState } from '@ayalvasis/kernel';
 import type { KernelEvent } from '@ayalvasis/sdk';
@@ -77,6 +77,10 @@ function fakeSystem(): TestSystem {
     dispatch,
     subscribe: (listener) => { allListeners.add(listener); return () => allListeners.delete(listener); },
     onChange: (listener) => { changeListeners.add(listener); return () => changeListeners.delete(listener); },
+    onSaveError: () => () => undefined,
+    flush: vi.fn(async () => undefined),
+    user: vi.fn(async () => 'ada'),
+    hostname: vi.fn(async () => 'ayalvasis'),
     session: vi.fn(async () => structuredClone(state)),
     apps: vi.fn(async () => [{ id: 'about', moduleId: 'about', title: 'About this system', icon: 'ⓘ' }]),
     openApp: vi.fn(async () => {
@@ -99,7 +103,10 @@ function memoryStorage(): KeyValueStorage {
 }
 
 describe('web desktop', () => {
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
   it('shows the kernel username validation error on login', async () => {
     const system = fakeSystem();
     render(<App system={system} />);
@@ -107,6 +114,18 @@ describe('web desktop', () => {
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'Bad User' } });
     fireEvent.click(screen.getByRole('button', { name: 'Start system' }));
     expect((await screen.findByRole('alert')).textContent).toContain('invalid username');
+  });
+
+  it('stays on the desktop when the learner skips boot and logs in quickly', async () => {
+    vi.useFakeTimers();
+    const system = fakeSystem();
+    render(<App system={system} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Skip boot' }));
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'ada' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start system' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(screen.queryByRole('button', { name: 'Start system' })).toBeNull();
+    vi.useRealTimers();
   });
 
   it('shows about, opens a window, closes it, and follows direct dispatch events', async () => {

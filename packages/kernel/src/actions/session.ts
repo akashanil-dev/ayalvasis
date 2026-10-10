@@ -19,6 +19,15 @@ function field(
   return value as string | number;
 }
 
+function args(payload: unknown): Record<string, string> | undefined {
+  const value = (payload as Record<string, unknown> | null)?.args;
+  if (value === undefined) return undefined;
+  const valid = typeof value === 'object' && value !== null && !Array.isArray(value)
+    && Object.values(value).every((entry) => typeof entry === 'string');
+  if (!valid) throw new KernelError('EINVAL', '"args" must be an object of strings');
+  return { ...(value as Record<string, string>) };
+}
+
 function id(payload: unknown): string {
   return field(payload, 'id', 'string') as string;
 }
@@ -56,6 +65,8 @@ export const sessionActions: ActionDefinition[] = [
         appId, title, width, height, x: 48 + index * 24, y: 40 + index * 24,
         minimized: false, maximized: false, z: topZ(state.session),
       };
+      const windowArgs = args(payload);
+      if (windowArgs) window.args = windowArgs;
       state.session.windows.push(window);
       state.session.focusedId = window.id;
       return window.id;
@@ -72,6 +83,12 @@ export const sessionActions: ActionDefinition[] = [
         state.session.focusedId = next?.id ?? null;
       }
       return undefined;
+    },
+  },
+  {
+    type: 'session.setTitle', capability: 'session:control', description: 'Change a window title.', mutates: true,
+    run: ({ state }, payload) => {
+      find(state.session, id(payload)).title = field(payload, 'title', 'string') as string;
     },
   },
   {

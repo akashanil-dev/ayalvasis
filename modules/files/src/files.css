@@ -1,0 +1,131 @@
+.files-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface, #1f1d27);
+  color: var(--text, #e8e6ef);
+  font-size: 14px;
+  outline: none;
+}
+
+.files-toolbar,
+.files-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+
+.files-toolbar button,
+.files-bar button {
+  padding: 5px 10px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 6%);
+  color: inherit;
+  cursor: pointer;
+}
+
+.files-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.files-bar button.danger {
+  background: #a51d2d;
+  border-color: #c01c28;
+}
+
+.files-path {
+  flex: 1;
+}
+
+.files-path input,
+.files-bar input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 6px;
+  background: rgb(0 0 0 / 25%);
+  color: inherit;
+  font-family: ui-monospace, "DejaVu Sans Mono", monospace;
+}
+
+.files-bar label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+}
+
+.files-confirm {
+  background: rgb(165 29 45 / 18%);
+}
+
+.files-error {
+  color: #ff9b9b;
+}
+
+.files-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.files-table th {
+  position: sticky;
+  top: 0;
+  padding: 6px 10px;
+  background: var(--surface, #1f1d27);
+  color: rgb(255 255 255 / 55%);
+  font-weight: 500;
+  text-align: left;
+}
+
+.files-table td {
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.files-table tbody tr {
+  cursor: default;
+}
+
+.files-table tbody tr:hover {
+  background: rgb(255 255 255 / 5%);
+}
+
+.files-table tbody tr.selected {
+  background: #3584e4;
+  color: #fff;
+}
+
+.files-table tbody tr:focus-visible {
+  outline: 2px solid #99c1f1;
+  outline-offset: -2px;
+}
+
+.files-kind {
+  margin-right: 8px;
+}
+
+.files-empty {
+  flex: 1;
+  margin: 0;
+  padding: 24px;
+  color: rgb(255 255 255 / 55%);
+  text-align: center;
+}
+
+.files-scroll,
+.files-view > .files-empty {
+  flex: 1;
+  overflow: auto;
+}
+
+.files-status {
+  padding: 5px 10px;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+  color: rgb(255 255 255 / 55%);
+  font-size: 12px;
+}

@@ -1,4 +1,5 @@
 import type { AppContribution } from '@ayalvasis/sdk';
+import { AppIcon } from './AppIcon';
 
 interface LauncherProps {
   apps: (AppContribution & { moduleId: string })[];
@@ -9,7 +10,7 @@ export function Launcher({ apps, open }: LauncherProps) {
   return <div className="launcher" onPointerDown={(event) => event.stopPropagation()}>
     <h2>Applications</h2>
     {apps.map((app) => <button key={app.id} onClick={() => open(app.id)}>
-      {app.icon} {app.title}
+      <AppIcon name={app.icon} /> {app.title}
     </button>)}
   </div>;
 }

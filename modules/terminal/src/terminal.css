@@ -1,0 +1,20 @@
+.terminal-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #171421;
+}
+
+.terminal-screen {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 0 0 8px;
+}
+
+.terminal-error {
+  margin: 0;
+  padding: 6px 10px;
+  background: #5c1a1a;
+  color: #ffd7d7;
+  font-size: 13px;
+}

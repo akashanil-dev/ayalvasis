@@ -1,46 +1,66 @@
-import { Kernel, resolvePath } from '@ayalvasis/kernel';
+import { Kernel, resolvePath, type Stat } from '@ayalvasis/kernel';
 import type { Actor, DispatchResult } from '@ayalvasis/sdk';
 import { parse, type ParsedCommand, type ParsedList, type ParsedWord, type WordSegment } from './parser';
-import {
-  builtinCommands,
-  type CommandContext,
-  type CommandDefinition,
-  type RunResult,
-  type Shell,
-  type ShellInternals,
-  type ShellOptions,
+import type {
+  CommandContext,
+  CommandDefinition,
+  Completion,
+  RunResult,
+  ShellInternals,
+  ShellOptions,
 } from './commands';
 import { strerror } from './commands/helpers';
+import { complete } from './complete';
+import { createCommandRegistry, type CommandRegistry } from './registry';
+
+const HISTORY_LIMIT = 500;
 
 export class ShellImpl implements ShellInternals {
   cwd: string;
   env: Record<string, string>;
   private readonly actor?: Actor;
-  private readonly definitions = new Map<string, CommandDefinition>();
+  private readonly registry: CommandRegistry;
+  private readonly lines: string[] = [];
   private lastStatus = 0;
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
+    this.registry = options.registry ?? createCommandRegistry();
     this.cwd = `/home/${kernel.user}`;
     this.env = { HOME: this.cwd, USER: kernel.user, PWD: this.cwd, PATH: '/bin:/usr/bin' };
-    for (const command of builtinCommands()) this.register(command);
   }
 
   register(command: CommandDefinition): void {
-    if (this.definitions.has(command.name)) throw new Error(`command already registered: ${command.name}`);
-    this.definitions.set(command.name, command);
+    this.registry.register(command);
   }
 
   commands(): CommandDefinition[] {
-    return [...this.definitions.values()];
+    return this.registry.list();
   }
 
   run(line: string): Promise<RunResult> {
+    this.remember(line);
     return this.runInternal(line, this.kernel.user);
   }
 
+  history(): string[] {
+    return [...this.lines];
+  }
+
+  complete(line: string, cursor: number): Completion {
+    return complete({
+      cwd: this.cwd,
+      home: this.env.HOME ?? this.cwd,
+      commandNames: () => this.registry.list().map((command) => command.name),
+      list: (path) => {
+        const result = this.dispatch<Stat[]>('fs.list', { path }, this.kernel.user);
+        return result.ok ? result.value : undefined;
+      },
+    }, line, cursor);
+  }
+
   async runAsCommand(args: string[], stdin: string, user: string): Promise<RunResult> {
-    const definition = this.definitions.get(args[0]!);
+    const definition = this.registry.get(args[0]!);
     if (!definition) return { stdout: '', stderr: `${args[0]}: command not found\n`, code: 127 };
     return this.executeCommand(definition, args.slice(1), stdin, user);
   }
@@ -85,7 +105,7 @@ export class ShellImpl implements ShellInternals {
       const expanded = await this.expandWords(command.words, user);
       const name = expanded[0];
       if (!name) return { stdout: '', stderr: 'bash: syntax error near unexpected token `newline`\n', code: 2 };
-      const definition = this.definitions.get(name);
+      const definition = this.registry.get(name);
       if (!definition) return { stdout: '', stderr: `${name}: command not found\n`, code: 127 };
       const result = await this.executeCommand(definition, expanded.slice(1), input, user, command);
       stderr += result.stderr;
@@ -143,6 +163,13 @@ export class ShellImpl implements ShellInternals {
       }
     }
     return { stdout, stderr, code };
+  }
+
+  // Like bash's HISTCONTROL=ignoredups: blank lines and immediate repeats are not stored.
+  private remember(line: string): void {
+    if (!line.trim() || this.lines.at(-1) === line) return;
+    this.lines.push(line);
+    if (this.lines.length > HISTORY_LIMIT) this.lines.shift();
   }
 
   private dispatch<R>(type: string, payload: unknown, user: string): DispatchResult<R> {

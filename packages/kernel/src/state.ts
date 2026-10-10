@@ -19,6 +19,8 @@ export interface Window {
   minimized: boolean;
   maximized: boolean;
   z: number;
+  /** What the app was opened with, e.g. { path: '/etc/motd' } for the Text Editor. */
+  args?: Record<string, string>;
 }
 
 export interface SessionState {
@@ -34,6 +36,14 @@ export interface KernelState {
   session: SessionState;
 }
 
+// The "message of the day" a terminal prints when it opens, as Ubuntu's does.
+const MOTD = [
+  'Welcome to ayalvasis, a Linux system for learning.',
+  '',
+  ' * Type "help" to see the commands you can use.',
+  ' * Press Tab to complete a command or file name, and Up to repeat one.',
+].join('\n') + '\n';
+
 // Same rule as useradd's default NAME_REGEX on Debian.
 const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/;
 
@@ -44,6 +54,10 @@ export function createInitialState(username: string, hostname = 'ayalvasis', now
   const passwd = [
     'root:x:0:0:root:/root:/bin/bash',
     `${username}:x:1000:1000:${username}:/home/${username}:/bin/bash`,
+  ].join('\n');
+  const shadow = [
+    'root:*:20000:0:99999:7:::',
+    `${username}:$y$j9T$ayalvasis$notarealhash:20000:0:99999:7:::`,
   ].join('\n');
 
   return {
@@ -56,7 +70,10 @@ export function createInitialState(username: string, hostname = 'ayalvasis', now
       bin: dir('root', 0o755, {}, now),
       etc: dir('root', 0o755, {
         hostname: file('root', 0o644, hostname, now),
+        motd: file('root', 0o644, MOTD, now),
         passwd: file('root', 0o644, passwd, now),
+        // Password hashes live here, readable only by root, so `cat /etc/shadow` teaches permissions.
+        shadow: file('root', 0o600, shadow, now),
       }, now),
       home: dir('root', 0o755, {
         [username]: dir(username, 0o755, {

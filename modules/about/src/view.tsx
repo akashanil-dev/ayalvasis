@@ -1,10 +1,5 @@
-import type { SystemClient } from '@ayalvasis/system';
+import type { AppViewProps } from '@ayalvasis/system';
 import { useEffect, useState } from 'react';
-
-export interface AppViewProps {
-  system: SystemClient;
-  windowId: string;
-}
 
 export default function AboutView({ system }: AppViewProps) {
   const [details, setDetails] = useState({ hostname: '...', user: '...', kernel: '6.6.0-ayalvasis' });

@@ -16,6 +16,7 @@ export function builtinCommands(): CommandDefinition[] {
 export type {
   CommandContext,
   CommandDefinition,
+  Completion,
   RunResult,
   Shell,
   ShellInternals,

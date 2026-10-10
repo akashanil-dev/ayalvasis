@@ -1,0 +1,73 @@
+.editor-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e24;
+  color: #e8e6ef;
+}
+
+.editor-view textarea {
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: inherit;
+  font: 14px/1.5 "JetBrains Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+  tab-size: 4;
+}
+
+.editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  font-size: 13px;
+}
+
+.editor-bar label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-bar input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 6px;
+  background: rgb(0 0 0 / 25%);
+  color: inherit;
+  font-family: ui-monospace, monospace;
+}
+
+.editor-bar button {
+  padding: 5px 10px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 6%);
+  color: inherit;
+}
+
+.editor-problem {
+  background: rgb(165 29 45 / 22%);
+  color: #ffc7c7;
+}
+
+.editor-tip {
+  color: #f6d32d;
+}
+
+.editor-status {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+  color: rgb(255 255 255 / 55%);
+  font-size: 12px;
+}

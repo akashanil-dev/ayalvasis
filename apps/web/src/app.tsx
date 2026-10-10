@@ -11,7 +11,8 @@ export function App({ system }: { system: SystemClient }) {
   const [savedUser, setSavedUser] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setScreen('login'), 1500);
+    // Only leave the boot screen: if the learner already skipped it and logged in, stay where they are.
+    const timer = setTimeout(() => setScreen((current) => (current === 'boot' ? 'login' : current)), 1500);
     void system.hasSave().then(setSavedUser).catch(() => setSavedUser(null));
     return () => clearTimeout(timer);
   }, [system]);

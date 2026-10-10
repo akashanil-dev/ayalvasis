@@ -1,6 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { manifest } from '@ayalvasis/module-about/manifest';
+import { manifest as aboutManifest } from '@ayalvasis/module-about/manifest';
+import { manifest as editorManifest } from '@ayalvasis/module-editor/manifest';
+import { manifest as filesManifest } from '@ayalvasis/module-files/manifest';
+import { manifest as terminalManifest } from '@ayalvasis/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@ayalvasis/system';
 import { App } from './app';
 import './styles/boot.css';
@@ -26,11 +29,14 @@ const storage: KeyValueStorage = {
   },
 };
 
+// Only manifests load up front; each module's code is fetched the first time it is used.
 const system = createLocalSystem({
   storage,
-  modules: [{
-    manifest,
-    load: () => import('@ayalvasis/module-about').then((module) => module.about),
-  }],
+  modules: [
+    { manifest: terminalManifest, load: () => import('@ayalvasis/module-terminal').then((module) => module.terminal) },
+    { manifest: filesManifest, load: () => import('@ayalvasis/module-files').then((module) => module.files) },
+    { manifest: editorManifest, load: () => import('@ayalvasis/module-editor').then((module) => module.editor) },
+    { manifest: aboutManifest, load: () => import('@ayalvasis/module-about').then((module) => module.about) },
+  ],
 });
 createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} /></StrictMode>);
