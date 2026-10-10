@@ -6,11 +6,13 @@ import { manifest as filesManifest } from '@ayalvasis/module-files/manifest';
 import { manifest as learnLinuxManifest } from '@ayalvasis/module-learn-linux/manifest';
 import { manifest as terminalManifest } from '@ayalvasis/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@ayalvasis/system';
+import { httpTransport } from '@ayalvasis/tutor';
 import { App } from './app';
 import './styles/boot.css';
 import './styles/login.css';
 import './styles/desktop.css';
 import './styles/window.css';
+import './styles/tutor.css';
 
 const storage: KeyValueStorage = {
   async get(key) { try { return localStorage.getItem(key); } catch { return null; } },
@@ -44,4 +46,5 @@ const system = createLocalSystem({
     { manifest: aboutManifest, load: () => import('@ayalvasis/module-about').then((module) => module.about) },
   ],
 });
-createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} /></StrictMode>);
+const tutor = httpTransport('/api/tutor');
+createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} /></StrictMode>);

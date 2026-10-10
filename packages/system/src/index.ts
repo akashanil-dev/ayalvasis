@@ -1,6 +1,8 @@
 import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@ayalvasis/kernel';
 import { createModuleHost, type ModuleHost } from '@ayalvasis/module-host';
-import type { AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest } from '@ayalvasis/sdk';
+import type {
+  Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest,
+} from '@ayalvasis/sdk';
 import {
   createCommandRegistry,
   createShell,
@@ -47,10 +49,39 @@ export interface SystemClient {
   apps(): Promise<(AppContribution & { moduleId: string })[]>;
   openApp(appId: string, args?: Record<string, string>): Promise<DispatchResult<string>>;
   createTerminal(): Promise<TerminalSession>;
+  /** The AI tutor's own, permission-limited access to the system. */
+  tutor(): TutorAccess;
   reset(): Promise<void>;
 }
 
+export interface ActionInfo {
+  type: string;
+  description: string;
+  capability: string;
+  mutates: boolean;
+  params?: Record<string, unknown>;
+}
+
+/**
+ * Everything the tutor does goes through the kernel as the `tutor` actor, so the kernel's capability
+ * checks decide what it may do. It never acts as root unless granted `user:switch`.
+ */
+export interface TutorAccess {
+  readonly actor: Actor;
+  setCapabilities(capabilities: string[]): void;
+  can(capability: string): boolean;
+  dispatch<R>(type: string, payload: unknown): Promise<DispatchResult<R>>;
+  /** Open an app window as the tutor (activating its module first, like the desktop does). */
+  openApp(appId: string, args?: Record<string, string>): Promise<DispatchResult<string>>;
+  /** A shell of the tutor's own: commands run as the learner's Linux user, but checked as the tutor. */
+  createTerminal(): Promise<TerminalSession>;
+  actions(): ActionInfo[];
+  /** The most recent events, oldest first, for building the tutor's picture of what the learner did. */
+  recentEvents(limit: number): KernelEvent[];
+}
+
 const SAVE_KEY = 'ayalvasis.save';
+const TUTOR: Actor = { kind: 'tutor', id: 'tutor' };
 const SAVE_DELAY_MS = 500;
 
 interface Running {
@@ -157,6 +188,32 @@ export function createLocalSystem(options: { storage: KeyValueStorage; modules: 
     async createTerminal() {
       const { kernel, registry } = current();
       return terminalSession(kernel, createShell(kernel, { registry }));
+    },
+    tutor() {
+      const { kernel, registry } = current();
+      return {
+        actor: TUTOR,
+        setCapabilities: (capabilities) => kernel.grant(TUTOR, capabilities),
+        can: (capability) => kernel.can(TUTOR, capability),
+        dispatch: async <R>(type: string, payload: unknown) => kernel.dispatch<R>({ type, payload }, { actor: TUTOR }),
+        createTerminal: async () => terminalSession(kernel, createShell(kernel, { registry, actor: TUTOR })),
+        actions: () => kernel.actions().map(({ type, description, capability, mutates, params }) => ({
+          type, description, capability, mutates, ...(params ? { params } : {}),
+        })),
+        async openApp(appId, args) {
+          try {
+            await current().host.openApp(appId);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return { ok: false, error: { code: 'EIO', message } };
+          }
+          const app = current().host.apps().find((candidate) => candidate.id === appId);
+          return kernel.dispatch<string>({ type: 'session.open', payload: {
+            appId, title: app?.title ?? appId, width: 720, height: 480, ...(args ? { args } : {}),
+          } }, { actor: TUTOR });
+        },
+        recentEvents: (limit) => kernel.events().slice(-limit),
+      };
     },
     async reset() {
       if (timer) clearTimeout(timer);

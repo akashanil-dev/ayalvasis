@@ -86,6 +86,7 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
     className={`app-window ${focused ? 'focused' : ''}`}
     style={{ ...style, zIndex: window.z, display: window.minimized ? 'none' : undefined }}
     aria-hidden={window.minimized || undefined}
+    data-tutor-target={`window:${window.id}`}
     onPointerDown={focus}
   >
     <header

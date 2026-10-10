@@ -27,6 +27,11 @@ describe('conditions', () => {
     expect(satisfied({ ran: { command: 'sort' } }, ctx)).toBe(false);
   });
 
+  it('only counts what the learner did, not the tutor', () => {
+    const tutorRan = { ...ran('ls'), actor: { kind: 'tutor' as const, id: 'tutor' } };
+    expect(satisfied({ ran: { command: 'ls' } }, context([tutorRan]))).toBe(false);
+  });
+
   it('ignores failed dispatches', () => {
     expect(satisfied({ ran: { command: 'ls' } }, context([{ ...ran('ls'), ok: false }]))).toBe(false);
   });

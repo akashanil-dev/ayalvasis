@@ -52,13 +52,18 @@ function matchesRun(want: RanCondition, run: ShellRan): boolean {
     && (want.stderr === undefined || new RegExp(want.stderr, 'm').test(run.stderr));
 }
 
+// Only the learner's own actions count: when the tutor demonstrates a command, the step is still theirs to do.
+function byLearner(event: KernelEvent): boolean {
+  return event.ok && event.actor.kind === 'user';
+}
+
 function shellRuns(ctx: CheckContext): ShellRan[] {
-  return ctx.events.filter((event) => event.ok && event.action.type === 'shell.ran')
+  return ctx.events.filter((event) => byLearner(event) && event.action.type === 'shell.ran')
     .map((event) => event.action.payload as ShellRan);
 }
 
 function opened(ctx: CheckContext): string[] {
-  return ctx.events.filter((event) => event.ok && event.action.type === 'session.open')
+  return ctx.events.filter((event) => byLearner(event) && event.action.type === 'session.open')
     .map((event) => (event.action.payload as { appId: string }).appId);
 }
 

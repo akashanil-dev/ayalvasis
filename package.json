@@ -12,12 +12,14 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm test",
     "dev": "npm run dev --workspace @ayalvasis/web",
-    "build": "npm run typecheck && npm run build --workspace @ayalvasis/web"
+    "build": "npm run typecheck && npm run build --workspace @ayalvasis/web",
+    "api": "npm run start --workspace @ayalvasis/api"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   },

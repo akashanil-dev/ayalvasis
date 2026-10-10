@@ -35,7 +35,8 @@ This template has no application code or required technology stack. The document
 - **Short description:** A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor guides each learner and can operate the system itself. Every activity (Learn Linux, Learn Docker, games) is a module that shows up as a desktop icon.
 - **Team:** TODO — participant names and GitHub handles; maximum 4 members.
 - **Working demo:** TODO — link or local demo instructions.
-- **Technology stack:** TypeScript, npm workspaces, React, Vite, xterm.js, Vitest.
+- **Technology stack:** TypeScript, npm workspaces, React, Vite, xterm.js, Vitest, Node.js (API server),
+  OpenAI Chat Completions with tool calling (AI tutor).
 
 ### Architecture
 
@@ -53,6 +54,15 @@ This template has no application code or required technology stack. The document
   condition over what happened (`ran`, `opened`, `cwd`) and the system's state (`exists`, `missing`,
   `contains`, `mode`), combinable with `all`/`any`/`not`. Shell commands are logged as `shell.ran` events,
   which is what `ran` checks see. Every lesson carries a solution that tests replay ("lesson CI").
+- **AI tutor** (`packages/tutor` + `apps/api`): Vasi, a tutor puppet with real control of the system.
+  - The browser keeps the conversation. `apps/api`, a dependency-free Node server, holds the OpenAI key,
+    adds the tutor's instructions and makes one model call per request, so it is stateless and scales out.
+  - When the model calls a tool, the browser runs it through the kernel as the `tutor` actor. Its autonomy
+    level decides the tools offered and the capabilities granted: **Guide** (look, point, open apps),
+    **Demo** (also run commands in its own shell), **Drive** (also write files and start lessons). It is never
+    granted `user:switch`, so it can't use sudo, and lessons only count the learner's own actions.
+  - Every module action becomes a tool automatically (e.g. `learn-linux__start`), so new modules extend
+    what the tutor can do without tutor changes.
 - **Module host** (`packages/module-host`): validates manifests, registers lazy command stubs,
   activates dependency chains, grants declared capabilities, and reports activation state/events.
   It depends on the kernel and shell; adding a module only requires registering its manifest and
@@ -75,8 +85,12 @@ This template has no application code or required technology stack. The document
 
 1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
 2. Dependency installation: `npm install`
-3. Environment setup: none needed yet.
-4. Start the project: `npm run dev`, then open the URL printed by Vite (normally `http://localhost:5173`).
+3. Environment setup: for the AI tutor, copy `.env.example` to `.env` and set `OPENAI_API_KEY` (optionally
+   `OPENAI_MODEL`, default `gpt-4.1-mini`). Everything else works without it; the tutor then explains that it
+   isn't set up.
+4. Start the project: `npm run dev` for the desktop, then open the URL printed by Vite (normally
+   `http://localhost:5173`). In a second terminal, `npm run api` starts the tutor's API server on port 8787;
+   the dev server forwards `/api` to it.
 5. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
 
 ### Current status
@@ -100,6 +114,12 @@ This template has no application code or required technology stack. The document
     terminal or on the desktop, with hints on demand and an explanation after each step. Progress survives
     reloads and keeps tracking while the window is closed. Lesson start, quit, reset and status are kernel
     actions, so the AI tutor can drive lessons the same way.
+  - **AI tutor (Vasi):** a penguin puppet in the corner opens a chat. Vasi looks at the learner's recent
+    commands and screen before answering, can open apps, point at icons and windows (with a highlight), run
+    demonstration commands in its own shell, and start lessons, depending on the autonomy level the learner
+    picks. Each action shows in the chat as it happens. After two failed commands in a row, a nudge offers
+    help; nothing is sent to the AI until the learner asks. Errors (no key, quota, service down) are shown in
+    plain words.
   - **Security:** acting as another user (sudo) needs the `user:switch` capability, so neither modules nor the
     tutor can escalate to root unless granted it.
   - **About module:** contributes the About app and `uname` command, including `uname -a` hostname output.
@@ -126,6 +146,10 @@ This template has no application code or required technology stack. The document
   - `ls -l` shows times in UTC rather than the browser's time zone.
   - The terminal redraws an edited line with a carriage return, so a line longer than the terminal width
     redraws imperfectly. A command's error output is shown after its normal output, not interleaved.
+  - The AI tutor has been tested with a scripted model and, in a real browser, through the API server
+    against a local stand-in for the OpenAI API. It has not yet been run against a real OpenAI model in this
+    environment (no API key here), so answer quality is unverified.
+  - The tutor has no long-term memory of the learner between conversations.
   - Commands run to completion before the prompt returns; there are no background jobs or long-running
     interactive programs yet.
   - Each state-changing action copies the whole state, which is fine at learner-sized filesystems; this can be revisited if it gets slow.
@@ -138,6 +162,7 @@ This template has no application code or required technology stack. The document
 - Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/),
   [Vitest](https://vitest.dev/), [React](https://react.dev/), [Vite](https://vite.dev/) and
   [xterm.js](https://xtermjs.org/) (MIT) with its fit addon. The Terminal uses the Tango colour palette.
-  No public datasets or external APIs are used.
+  The AI tutor calls the [OpenAI API](https://platform.openai.com/docs/api-reference/chat) (Chat Completions
+  with tool calling) from the API server. No public datasets are used.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

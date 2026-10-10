@@ -79,6 +79,7 @@ function fakeSystem(): TestSystem {
     onChange: (listener) => { changeListeners.add(listener); return () => changeListeners.delete(listener); },
     onSaveError: () => () => undefined,
     flush: vi.fn(async () => undefined),
+    tutor: () => { throw new Error('the tutor is not used in this test'); },
     user: vi.fn(async () => 'ada'),
     hostname: vi.fn(async () => 'ayalvasis'),
     session: vi.fn(async () => structuredClone(state)),

@@ -1,12 +1,14 @@
 import type { SystemClient } from '@ayalvasis/system';
+import type { Transport } from '@ayalvasis/tutor';
 import { useEffect, useState } from 'react';
 import { useSession } from '../hooks/useSession';
 import { AppIcon } from '../desktop/AppIcon';
 import { Launcher } from '../desktop/Launcher';
 import { Panel } from '../desktop/Panel';
 import { WindowFrame } from '../desktop/WindowFrame';
+import { TutorPanel } from '../tutor/TutorPanel';
 
-export function Desktop({ system }: { system: SystemClient }) {
+export function Desktop({ system, tutor }: { system: SystemClient; tutor?: Transport }) {
   const { apps, session } = useSession(system);
   const [launcher, setLauncher] = useState(false);
 
@@ -33,6 +35,7 @@ export function Desktop({ system }: { system: SystemClient }) {
       {apps.map((app) => <button
         className="desktop-icon"
         key={app.id}
+        data-tutor-target={`app:${app.id}`}
         onDoubleClick={() => open(app.id)}
         onKeyDown={(event) => { if (event.key === 'Enter') open(app.id); }}
       >
@@ -49,5 +52,6 @@ export function Desktop({ system }: { system: SystemClient }) {
     />)}
     <Panel session={session} launcher={launcher} setLauncher={setLauncher} system={system} />
     {launcher && <Launcher apps={apps} open={open} />}
+    {tutor && <TutorPanel system={system} transport={tutor} />}
   </main>;
 }

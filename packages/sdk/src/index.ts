@@ -63,6 +63,8 @@ export interface ActionDefinition<P = unknown, R = unknown, C = any> {
   capability: Capability;
   description: string;
   mutates: boolean;
+  /** JSON Schema of the payload, so tools generated for the AI tutor say what to send. */
+  params?: Record<string, unknown>;
   run(ctx: C, payload: P): R;
 }
 

@@ -4,6 +4,32 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T02:07:45+05:30 — AI tutor (Vasi)
+
+- Changed:
+  - New `packages/tutor`: the agent loop (`TutorSession`), tools that run through the kernel as the `tutor`
+    actor, autonomy levels mapped to capability grants, tools generated from module actions, a snapshot of
+    the learner's recent commands with each question, a cap of 8 model calls per question, and an HTTP
+    transport with plain-language errors.
+  - New `apps/api`: a dependency-free Node server (`npm run api`) with `/api/health` and `/api/tutor`. It
+    holds the OpenAI key, adds the tutor's instructions, validates requests, rate-limits per client and
+    turns upstream failures into readable errors. `.env.example` lists its settings.
+  - Desktop: the Vasi puppet and chat panel, an autonomy switch, tool actions shown inline, a highlight for
+    things Vasi points at (lifting icons above windows), and a help nudge after two failed commands. The
+    Vite dev server forwards `/api` to the API server.
+  - System client: `tutor()` access with its own shell, app opening, capability grants and recent events.
+  - Lesson checks now count only the learner's actions, so the tutor's demonstrations don't complete steps.
+  - Actions can describe their parameters (`params`), which become the generated tools' schemas.
+- Why: The tutor puppet with real but limited control of the system is the core of the project's design.
+- Validation: `npm run check` — type check passed; Vitest reported 19 test files and 217 tests passed,
+  including scripted-model tutor tests against a real system and UI tests. `npm run build` passed. The API
+  server was started and its health, missing-key, bad-JSON and 404 responses checked with curl. In Chromium,
+  through the dev server and the API server pointed at a local stand-in for the OpenAI API: two failed
+  commands showed the nudge, and asking Vasi checked recent commands, highlighted the Terminal icon and
+  answered, with no console errors.
+- Limitations: not yet run against a real OpenAI model here (no key in this environment); no long-term
+  learner memory; the in-memory rate limit is per server process.
+
 ## 2026-10-11T01:54:26+05:30 — Lesson engine and Learn Linux
 
 - Changed:

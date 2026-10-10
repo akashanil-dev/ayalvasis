@@ -41,7 +41,12 @@ export function registerLessonActions(ctx: ModuleContext, runner: LessonRunner):
   });
   ctx.registerAction({
     type: `${ctx.id}.start`, capability: 'lessons:write', mutates: false,
-    description: 'Start (or restart) a lesson by id.',
+    description: 'Start (or restart) a lesson by id. Its id comes from the status action.',
+    params: {
+      type: 'object',
+      properties: { lesson: { type: 'string', description: 'Lesson id, e.g. "first-words"' } },
+      required: ['lesson'],
+    },
     run: (_actionCtx, payload) => {
       runner.start(lessonId(payload));
       return runner.status();

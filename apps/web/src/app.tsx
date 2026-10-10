@@ -1,4 +1,5 @@
 import type { SystemClient } from '@ayalvasis/system';
+import type { Transport } from '@ayalvasis/tutor';
 import { useEffect, useState } from 'react';
 import { Boot } from './screens/Boot';
 import { Desktop } from './screens/Desktop';
@@ -6,7 +7,7 @@ import { Login } from './screens/Login';
 
 export { Desktop } from './screens/Desktop';
 
-export function App({ system }: { system: SystemClient }) {
+export function App({ system, tutor }: { system: SystemClient; tutor?: Transport }) {
   const [screen, setScreen] = useState<'boot' | 'login' | 'desktop'>('boot');
   const [savedUser, setSavedUser] = useState<string | null>(null);
 
@@ -21,5 +22,5 @@ export function App({ system }: { system: SystemClient }) {
   if (screen === 'login') {
     return <Login system={system} savedUser={savedUser} onBoot={() => setScreen('desktop')} />;
   }
-  return <Desktop system={system} />;
+  return <Desktop system={system} tutor={tutor} />;
 }

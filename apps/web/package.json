@@ -15,6 +15,7 @@
     "@ayalvasis/module-terminal": "*",
     "@ayalvasis/sdk": "*",
     "@ayalvasis/system": "*",
+    "@ayalvasis/tutor": "*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
