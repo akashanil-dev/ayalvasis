@@ -21,4 +21,10 @@ __pycache__/
 Thumbs.db
 *.log
 
-# Add entries appropriate to your chosen language or framework.
+# TypeScript, Vite, Turborepo, Playwright and Wrangler output.
+*.tsbuildinfo
+.vite/
+.turbo/
+.wrangler/
+playwright-report/
+test-results/
