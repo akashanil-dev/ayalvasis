@@ -1,11 +1,13 @@
 // The desktop environments and wallpapers TuxOS offers. Shared by the desktop (which draws them) and the
-// Settings app (which lets the learner choose), so both always agree on what exists.
+// Settings app (which lets the learner choose), so both always agree on what exists. Every desktop is
+// available from the start: nothing has to be unlocked.
 
 export interface DesktopInfo {
   id: string;
   name: string;
+  version: string;
   /** Which login screen goes with it, as on a real distribution. */
-  greeter: 'sddm' | 'gdm';
+  greeter: 'sddm' | 'gdm' | 'dtlogin' | 'tuigreet';
   /** Where learners meet it in the real world. */
   usedBy: string;
   summary: string;
@@ -15,61 +17,69 @@ export const DESKTOPS: DesktopInfo[] = [
   {
     id: 'plasma',
     name: 'KDE Plasma',
+    version: 'Plasma 6',
     greeter: 'sddm',
-    usedBy: 'Kubuntu, KDE neon, Fedora KDE, SteamOS desktop mode',
-    summary: 'A taskbar at the bottom, an app launcher in the corner and icons on the desktop. '
-      + 'Feels familiar if you come from Windows.',
+    usedBy: 'Kubuntu, KDE neon, Fedora KDE, SteamOS',
+    summary: 'A taskbar and an app launcher, a lot like Windows.',
   },
   {
     id: 'gnome',
     name: 'GNOME',
+    version: 'GNOME 47',
     greeter: 'gdm',
     usedBy: 'Ubuntu, Fedora Workstation, Debian',
-    summary: 'A calm top bar and the Activities overview for finding windows and apps. '
-      + 'No desktop icons, no taskbar.',
+    summary: 'A top bar and the Activities overview. Calm and focused.',
+  },
+  {
+    id: 'cde',
+    name: 'CDE',
+    version: 'CDE 2.5',
+    greeter: 'dtlogin',
+    usedBy: 'Solaris, HP-UX, AIX',
+    summary: 'The 1990s Unix workstation desktop, with a Front Panel and four workspaces.',
+  },
+  {
+    id: 'hyprland',
+    name: 'Hyprland',
+    version: 'Hyprland 0.45',
+    greeter: 'tuigreet',
+    usedBy: 'Arch and other DIY setups',
+    summary: 'A tiling window manager you drive from the keyboard.',
   },
 ];
 
 export interface WallpaperInfo {
   id: string;
   name: string;
-  /** A CSS background value: gradients only, so wallpapers cost no downloads. */
+  /** A CSS background value for the full-size image. */
   background: string;
+  /** A CSS background value for the small preview in Settings. */
+  thumbnail: string;
 }
 
-export const WALLPAPERS: WallpaperInfo[] = [
-  {
-    id: 'aurora',
-    name: 'Aurora',
-    background: 'radial-gradient(ellipse at 20% 110%, #1b9e77aa 0%, transparent 55%), '
-      + 'radial-gradient(ellipse at 80% -10%, #7b5ce0aa 0%, transparent 55%), '
-      + 'linear-gradient(160deg, #0b1026 0%, #14234a 55%, #0d2a3a 100%)',
-  },
-  {
-    id: 'dunes',
-    name: 'Dunes',
-    background: 'radial-gradient(ellipse at 70% 120%, #e9864c 0%, transparent 60%), '
-      + 'linear-gradient(175deg, #3a1c4f 0%, #b44d5c 55%, #f0a35e 100%)',
-  },
-  {
-    id: 'ocean',
-    name: 'Deep Ocean',
-    background: 'radial-gradient(circle at 30% 30%, #1c71d8 0%, transparent 45%), '
-      + 'radial-gradient(circle at 75% 70%, #0b8f8f 0%, transparent 50%), linear-gradient(135deg, #061230, #021b2b)',
-  },
-  {
-    id: 'forest',
-    name: 'Forest',
-    background: 'radial-gradient(ellipse at 50% 120%, #2ec27e88 0%, transparent 60%), '
-      + 'linear-gradient(180deg, #0f2a1d 0%, #163d2b 50%, #0b1f17 100%)',
-  },
-  {
-    id: 'graphite',
-    name: 'Graphite',
-    background: 'radial-gradient(circle at 50% 40%, #3d3846 0%, #241f31 60%, #1a1622 100%)',
-  },
+const WALLPAPER_NAMES: [id: string, name: string][] = [
+  ['freedom', 'Free as in freedom'],
+  ['command', 'At your command'],
+  ['root', 'I am root'],
+  ['rabbit', 'White rabbit'],
+  ['tux', 'Tux'],
+  ['linus', 'Linus'],
+  ['topo', 'Contours'],
+  ['gnu-zen', 'GNU zen'],
+  ['gnu', 'GNU'],
 ];
 
+// The images live in apps/web/public/wallpapers, served from the site root.
+const image = (path: string) => `#1b2224 url("/wallpapers/${path}.webp") center / cover no-repeat`;
+
+export const WALLPAPERS: WallpaperInfo[] = WALLPAPER_NAMES.map(([id, name]) => ({
+  id,
+  name,
+  background: image(id),
+  thumbnail: image(`thumbs/${id}`),
+}));
+
 export const desktopById = (id: string): DesktopInfo => DESKTOPS.find((each) => each.id === id) ?? DESKTOPS[0]!;
+/** Unknown ids (such as the gradient wallpapers of older saves) fall back to the default wallpaper. */
 export const wallpaperById = (id: string): WallpaperInfo =>
   WALLPAPERS.find((each) => each.id === id) ?? WALLPAPERS[0]!;

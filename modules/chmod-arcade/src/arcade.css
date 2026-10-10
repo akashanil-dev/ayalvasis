@@ -44,7 +44,7 @@
   padding: 1px 6px;
   border-radius: 4px;
   background: rgb(0 0 0 / 35%);
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 .arcade-big {
@@ -56,7 +56,7 @@
 .arcade-mono,
 .arcade-input,
 .arcade-row button {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 .arcade-input {

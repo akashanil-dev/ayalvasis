@@ -3,16 +3,16 @@ import { useEffect, useState } from 'react';
 type Entry = { label: string; action: 'boot' | 'advanced' | 'memtest' | 'firmware' | 'back' | 'recovery' };
 
 const MAIN: Entry[] = [
-  { label: 'TuxOS', action: 'boot' },
-  { label: 'Advanced options for TuxOS', action: 'advanced' },
-  { label: 'Memory test (memtest86+x64.efi)', action: 'memtest' },
+  { label: 'TuxOS GNU/Linux', action: 'boot' },
+  { label: 'Advanced options for TuxOS GNU/Linux', action: 'advanced' },
+  { label: 'Memory test (memtest86+)', action: 'memtest' },
   { label: 'UEFI Firmware Settings', action: 'firmware' },
 ];
 
 const ADVANCED: Entry[] = [
-  { label: 'TuxOS, with Linux 6.10.0-tuxos', action: 'boot' },
-  { label: 'TuxOS, with Linux 6.10.0-tuxos (recovery mode)', action: 'recovery' },
-  { label: '← Back to the main menu', action: 'back' },
+  { label: 'TuxOS GNU/Linux, with Linux 6.10.0-tuxos', action: 'boot' },
+  { label: 'TuxOS GNU/Linux, with Linux 6.10.0-tuxos (recovery mode)', action: 'recovery' },
+  { label: '← Back', action: 'back' },
 ];
 
 const COUNTDOWN = 5;
@@ -57,25 +57,29 @@ export function Grub({ onBoot }: { onBoot(mode: 'normal' | 'recovery'): void }) 
   });
 
   return <main className="grub" onPointerDown={() => setSeconds(null)}>
-    <p className="grub-title">GNU GRUB  version 2.12</p>
-    <ul className="grub-menu" role="listbox" aria-label="Boot menu">
-      {menu.map((entry, index) => <li
-        key={entry.label}
-        role="option"
-        aria-selected={index === selected}
-        className={index === selected ? 'selected' : ''}
-        onClick={() => setSelected(index)}
-        onDoubleClick={() => choose(entry)}
-      >{index === selected ? '*' : ' '}{entry.label}</li>)}
-    </ul>
-    <div className="grub-help">
-      {message
-        ? <p role="status">{message}</p>
-        : <>
-          <p>Use the ↑ and ↓ keys to select which entry is highlighted.</p>
-          <p>Press enter to boot the selected OS (or double-click it).</p>
-          {seconds !== null && <p>The highlighted entry will be executed automatically in {seconds}s.</p>}
-        </>}
+    <div className="grub-frame">
+      <p className="grub-title">GNU GRUB  version 2.12</p>
+      <div className="grub-box">
+        <ul className="grub-menu" role="listbox" aria-label="Boot menu">
+          {menu.map((entry, index) => <li
+            key={entry.label}
+            role="option"
+            aria-selected={index === selected}
+            className={index === selected ? 'selected' : ''}
+            onClick={() => setSelected(index)}
+            onDoubleClick={() => choose(entry)}
+          >{index === selected ? '*' : ' '}{entry.label}</li>)}
+        </ul>
+      </div>
+      <div className="grub-help">
+        {message
+          ? <p role="status">{message}</p>
+          : <>
+            <p>Use the ↑ and ↓ keys to select which entry is highlighted.</p>
+            <p>Press enter to boot the selected OS (or double-click it).</p>
+            {seconds !== null && <p>The highlighted entry will be executed automatically in {seconds}s.</p>}
+          </>}
+      </div>
     </div>
   </main>;
 }

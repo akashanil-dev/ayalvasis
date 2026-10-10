@@ -1,6 +1,7 @@
 import type { Window as SessionWindow } from '@tuxos/kernel';
 import type { SystemClient } from '@tuxos/system';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { PopupMenu, type MenuItem } from '../desktops/shared/Menu';
 import { usePointerDrag } from '../hooks/usePointerDrag';
 import { getLazyView } from '../views';
 
@@ -9,37 +10,55 @@ export interface Insets {
   bottom: number;
 }
 
-interface WindowFrameProps {
-  system: SystemClient;
-  window: SessionWindow;
-  focused: boolean;
-  /** Space the desktop's panels take, which windows keep clear of. */
-  insets: Insets;
-  /** Window decorations: KDE's Breeze (icon, title, three buttons) or GNOME's Adwaita (title, close only). */
-  decoration: 'breeze' | 'adwaita';
-  icon?: React.ReactNode;
-}
-
-interface Geometry {
+export interface Geometry {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
+/**
+ * Window decorations, one per desktop environment: KDE's Breeze (icon, title, three buttons), GNOME's
+ * Adwaita (title, close only), CDE's Motif (window-menu button, title, minimise and maximise boxes) and
+ * Hyprland's bare border (no title bar at all on a wide screen).
+ */
+export type Decoration = 'breeze' | 'adwaita' | 'motif' | 'borderless';
+
+interface WindowFrameProps {
+  system: SystemClient;
+  window: SessionWindow;
+  focused: boolean;
+  /** Space the desktop's panels take, which windows keep clear of. */
+  insets: Insets;
+  decoration: Decoration;
+  icon?: React.ReactNode;
+  /** A tiling window manager's placement. Tiled windows can't be dragged, resized or maximised. */
+  tiled?: Geometry;
+  /** On another workspace: kept mounted, so apps keep their state, but not shown. */
+  offWorkspace?: boolean;
+  /** Ask to close this window. The app may refuse (unsaved changes), so this goes through the desktop. */
+  onClose(): void;
+  /** Lets an app veto closing, e.g. to ask about unsaved changes. */
+  setCloseGuard(guard: (() => boolean) | null): void;
+  /** Extra entries for CDE's window menu, such as moving the window to another workspace. */
+  windowMenu?: MenuItem[];
+}
+
 const MIN_WIDTH = 240;
 const MIN_HEIGHT = 160;
-export function WindowFrame({ system, window, focused, insets, decoration, icon }: WindowFrameProps) {
+
+export function WindowFrame(props: WindowFrameProps) {
+  const { system, window, focused, insets, decoration, icon, tiled, offWorkspace, onClose, setCloseGuard } = props;
   const [preview, setPreview] = useState<Geometry>(() => geometryOf(window));
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const dragOrigin = useRef({ x: 0, y: 0 });
   const resizeOrigin = useRef({ width: 0, height: 0, x: 0, y: 0 });
   const View = getLazyView(window.appId);
-  const closeGuard = useRef<(() => boolean) | null>(null);
-  const setCloseGuard = useCallback((guard: (() => boolean) | null) => { closeGuard.current = guard; }, []);
-  const close = () => {
-    if (closeGuard.current && !closeGuard.current()) return;
-    void system.dispatch('session.close', { id: window.id });
-  };
+  // Apps get one stable function for the window's whole life, whatever the desktop passes on each render.
+  const guardTarget = useRef(setCloseGuard);
+  guardTarget.current = setCloseGuard;
+  const guard = useCallback((next: (() => boolean) | null) => guardTarget.current(next), []);
+  const fixed = Boolean(tiled) || window.maximized;
 
   useEffect(() => {
     setPreview(geometryOf(window));
@@ -82,57 +101,72 @@ export function WindowFrame({ system, window, focused, insets, decoration, icon 
   const focus = () => {
     if (!focused) void system.dispatch('session.focus', { id: window.id });
   };
-  const stopPointer = (event: React.PointerEvent) => event.stopPropagation();
-  const style = window.maximized ? maximizedStyle(insets) : {
-    left: preview.x,
-    top: preview.y,
-    width: preview.width,
-    height: preview.height,
+  const minimize = () => void system.dispatch('session.minimize', { id: window.id });
+  const toggleMaximize = () => {
+    if (!tiled) void system.dispatch('session.toggleMaximize', { id: window.id });
   };
+  const stopPointer = (event: React.PointerEvent) => event.stopPropagation();
+  const box = tiled ?? (window.maximized ? maximizedGeometry(insets) : preview);
 
   return <section
-    className={`app-window deco-${decoration} ${focused ? 'focused' : ''} ${window.maximized ? 'maximized' : ''}`}
-    style={{ ...style, zIndex: window.z, display: window.minimized ? 'none' : undefined }}
-    aria-hidden={window.minimized || undefined}
+    className={`app-window app-${window.appId} deco-${decoration} ${focused ? 'focused' : ''} `
+      + `${window.maximized ? 'maximized' : ''} ${tiled ? 'tiled' : ''}`}
+    style={{
+      left: box.x,
+      top: box.y,
+      width: box.width,
+      height: box.height,
+      zIndex: window.z,
+      display: window.minimized || offWorkspace ? 'none' : undefined,
+    }}
+    aria-hidden={window.minimized || offWorkspace || undefined}
+    aria-label={window.title}
     data-tutor-target={`window:${window.id}`}
     onPointerDown={focus}
   >
     <header
       onPointerDown={(event) => {
+        if (fixed || (event.target as HTMLElement).closest('button')) return;
         dragOrigin.current = { x: pointerX(event) - preview.x, y: pointerY(event) - preview.y };
         drag.onPointerDown(event);
       }}
       onPointerMove={drag.onPointerMove}
       onPointerUp={drag.onPointerUp}
-      onDoubleClick={() => void system.dispatch('session.toggleMaximize', { id: window.id })}
+      onDoubleClick={(event) => { if (!(event.target as HTMLElement).closest('button')) toggleMaximize(); }}
     >
+      {decoration === 'motif' && <button
+        className="window-button menu"
+        aria-label={`Window menu for ${window.title}`}
+        title="Window menu (double-click to close)"
+        onPointerDown={stopPointer}
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          setMenu({ x: rect.left, y: rect.bottom + 2 });
+        }}
+        onDoubleClick={onClose}
+      />}
       {decoration === 'breeze' && <span className="window-app-icon">{icon}</span>}
       <span className="window-title">{window.title}</span>
       <div className="window-buttons">
-        {/* GNOME shows only a close button by default; KDE's Breeze shows all three. */}
-        {decoration === 'breeze' && <>
-          <WindowButton
-            label={`Minimize ${window.title}`}
-            kind="minimize"
-            onClick={() => void system.dispatch('session.minimize', { id: window.id })}
-            onPointerDown={stopPointer}
-          />
+        {(decoration === 'breeze' || decoration === 'motif') && <>
+          <WindowButton label={`Minimize ${window.title}`} kind="minimize" onClick={minimize} onPointerDown={stopPointer} />
           <WindowButton
             label={`Maximize ${window.title}`}
             kind="maximize"
-            onClick={() => void system.dispatch('session.toggleMaximize', { id: window.id })}
+            onClick={toggleMaximize}
             onPointerDown={stopPointer}
           />
         </>}
-        <WindowButton label={`Close ${window.title}`} kind="close" onClick={close} onPointerDown={stopPointer} />
+        {decoration !== 'motif'
+          && <WindowButton label={`Close ${window.title}`} kind="close" onClick={onClose} onPointerDown={stopPointer} />}
       </div>
     </header>
     <div className="window-content">
-      {View ? <Suspense fallback={<p>Loading app...</p>}>
-        <View system={system} windowId={window.id} args={window.args} setCloseGuard={setCloseGuard} />
-      </Suspense> : <p>No view registered for {window.appId}</p>}
+      {View ? <Suspense fallback={<p className="window-loading">Loading app…</p>}>
+        <View system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />
+      </Suspense> : <p className="window-loading">No view registered for {window.appId}</p>}
     </div>
-    <button
+    {!fixed && <button
       className="resize-handle"
       aria-label={`Resize ${window.title}`}
       onPointerDown={(event) => {
@@ -147,12 +181,25 @@ export function WindowFrame({ system, window, focused, insets, decoration, icon 
       }}
       onPointerMove={resize.onPointerMove}
       onPointerUp={resize.onPointerUp}
-    />
+    />}
+    {menu && <PopupMenu
+      x={menu.x}
+      y={menu.y}
+      onClose={() => setMenu(null)}
+      items={[
+        { label: 'Restore', run: () => { if (window.maximized) toggleMaximize(); } },
+        { label: 'Minimize', run: minimize },
+        { label: 'Maximize', run: () => { if (!window.maximized) toggleMaximize(); } },
+        ...(props.windowMenu?.length ? ['separator' as const, ...props.windowMenu] : []),
+        'separator',
+        { label: 'Close', run: onClose },
+      ]}
+    />}
   </section>;
 }
 
 const GLYPHS = {
-  minimize: <path d="M4 8.5h8" />,
+  minimize: <path d="M4.5 6.5 8 10l3.5-3.5" />,
   maximize: <path d="M4.5 9.5 8 6l3.5 3.5" />,
   close: <path d="M5 5l6 6M11 5l-6 6" />,
 };
@@ -164,7 +211,7 @@ function WindowButton({ label, kind, onClick, onPointerDown }: {
   onPointerDown(event: React.PointerEvent): void;
 }) {
   return <button aria-label={label} className={`window-button ${kind}`} onClick={onClick} onPointerDown={onPointerDown}>
-    <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+    <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
       {GLYPHS[kind]}
     </svg>
   </button>;
@@ -184,10 +231,10 @@ function clampPosition(x: number, y: number, width: number, insets: Insets) {
   };
 }
 
-function maximizedStyle(insets: Insets) {
+function maximizedGeometry(insets: Insets): Geometry {
   return {
-    left: 0,
-    top: insets.top,
+    x: 0,
+    y: insets.top,
     width: Math.max(MIN_WIDTH, globalThis.innerWidth),
     height: Math.max(MIN_HEIGHT, globalThis.innerHeight - insets.top - insets.bottom),
   };

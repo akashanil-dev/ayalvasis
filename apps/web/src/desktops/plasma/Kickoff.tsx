@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppIcon } from '../../desktop/AppIcon';
-import { Puppet } from '../../tutor/Puppet';
+import { Tux } from '../../desktop/Tux';
 import { Icon } from '../shared/Icons';
 import type { App, ShellProps } from '../types';
 
@@ -39,7 +39,7 @@ export function Kickoff({ apps, user, open, power, onClose }: ShellProps & { onC
 
   return <div className="kickoff" ref={panel} role="dialog" aria-label="Application Launcher">
     <header className="kickoff-head">
-      <span className="kickoff-avatar"><Puppet /></span>
+      <span className="kickoff-avatar"><Tux /></span>
       <strong>{user}</strong>
       <input
         className="kickoff-search"

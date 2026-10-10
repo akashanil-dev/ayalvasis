@@ -70,8 +70,15 @@ This template has no application code or required technology stack. The document
 - **System client** (`packages/system`): the single UI-facing API for boot, persistence, events,
   sessions, terminals and module activation. Session reads are direct cloned state reads, while `onChange`
   reports successful mutations. It runs on the main thread for now; a Web Worker is planned.
-- **Web app** (`apps/web`): a Vite + React desktop with boot/login screens, module icons, a launcher,
-  clock, kernel-backed windows and lazy app views.
+- **Web app** (`apps/web`): a Vite + React desktop with boot and login screens, kernel-backed windows and
+  lazy app views. Four desktop environments, each with its own shell, window decorations, login screen and
+  icon theme, all available at any time from the login screen or Settings:
+  - **KDE Plasma** (SDDM): bottom panel, task manager, Kickoff, KRunner (Alt+Space), desktop icons.
+  - **GNOME** (GDM): top bar, Activities overview with dash and app grid, hot corner.
+  - **CDE** (dtlogin): Front Panel, four workspaces, Motif windows, minimised windows as desktop icons.
+  - **Hyprland** (tuigreet): Waybar, wofi, tiling windows and five workspaces, driven by Alt shortcuts
+    (Alt+Q terminal, Alt+R launcher, Alt+C close, Alt+1…5 switch, Alt+Shift+1…5 move).
+  Wallpapers and icon themes are static files in `apps/web/public` (icon credits in `public/icons/CREDITS.md`).
 - **Modules** (`modules/*`): each one adds desktop apps and shell commands through a manifest, and its code
   loads only when first used. Current modules:
   - **Terminal**: xterm.js on a per-window shell, with a tested line editor and the `clear` command.
@@ -100,8 +107,9 @@ This template has no application code or required technology stack. The document
 ### Current status
 
 - Working features:
-  - **Browser desktop:** boot/login flow, saved-system continuation, CSS wallpaper, module app icons,
-    launcher, clock, lazy About view and accessible kernel-backed windows.
+  - **Browser desktop:** boot/login flow, saved-system continuation, four switchable desktop environments
+    (KDE Plasma, GNOME, CDE, Hyprland) with matching login screens, image wallpapers, per-desktop icon themes,
+    workspaces (CDE, Hyprland), tiling (Hyprland) and accessible kernel-backed windows.
   - **System client:** local in-process boot/restore, debounced injected-storage persistence, event
     subscriptions, module activation, session API and terminal API. A Web Worker is planned.
   - **Terminal:** one bash-like shell per window with the prompt `user@host:dir$ `, the motd on start, Tab

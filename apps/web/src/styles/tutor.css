@@ -1,15 +1,24 @@
 .tutor-puppet {
   position: absolute;
   z-index: 10002;
-  right: 22px;
-  bottom: 70px;
+  right: 14px;
+  bottom: calc(var(--area-bottom, 0px) + 20px);
   width: 64px;
   height: 64px;
   padding: 0;
   border: 0;
   background: transparent;
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 40%));
   cursor: pointer;
   transition: transform 160ms ease;
+}
+
+.tutor-puppet:not(.busy) .puppet-svg {
+  animation: puppet-idle 3s ease-in-out infinite;
+}
+
+@keyframes puppet-idle {
+  50% { transform: translateY(-3px); }
 }
 
 .tutor-puppet:hover {
@@ -17,7 +26,7 @@
 }
 
 .tutor-puppet:focus-visible {
-  outline: 2px solid #99c1f1;
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
   border-radius: 50%;
 }
@@ -44,35 +53,44 @@
   to { transform: rotate(-35deg); }
 }
 
+/* Vasi's panel takes each desktop's own colours, corners and type, like any other app on it. */
 .tutor-panel {
   position: absolute;
   z-index: 10001;
-  right: 22px;
-  bottom: 144px;
+  right: 14px;
+  bottom: calc(var(--area-bottom, 0px) + 96px);
   display: flex;
   flex-direction: column;
-  width: min(380px, calc(100vw - 44px));
-  height: min(520px, calc(100vh - 200px));
+  width: min(380px, calc(100vw - 28px));
+  height: min(520px, calc(100vh - var(--area-top, 0px) - var(--area-bottom, 0px) - 120px));
   overflow: hidden;
-  border: 1px solid #435174;
-  border-radius: 16px;
-  background: #1a1826f2;
-  color: #ecebf3;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 45%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--window-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
+  font-family: var(--font-ui);
   font-size: 14px;
+  animation: tutor-in 200ms ease;
+}
+
+@keyframes tutor-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
 }
 
 .tutor-panel header {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 12px 14px 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--titlebar);
 }
 
 .tutor-panel header span {
   flex: 1;
-  color: rgb(255 255 255 / 55%);
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -81,36 +99,39 @@
   background: transparent;
   color: inherit;
   font-size: 18px;
-  cursor: pointer;
 }
 
 .tutor-levels {
   display: flex;
   gap: 4px;
-  margin: 0 14px;
+  margin: 10px 14px 0;
   padding: 3px;
-  border-radius: 10px;
-  background: rgb(255 255 255 / 6%);
+  border-radius: var(--radius-small);
+  background: var(--surface);
 }
 
 .tutor-levels button {
   flex: 1;
   padding: 5px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-small);
   background: transparent;
-  color: rgb(255 255 255 / 70%);
-  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tutor-levels button:hover {
+  background: var(--hover);
 }
 
 .tutor-levels button[aria-checked="true"] {
-  background: #3584e4;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
 .tutor-level-help {
   margin: 6px 14px 0;
-  color: rgb(255 255 255 / 50%);
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -120,6 +141,7 @@
   padding: 6px 14px;
   overflow: auto;
   list-style: none;
+  user-select: text;
 }
 
 .tutor-log li {
@@ -131,40 +153,41 @@
 .tutor-message.user {
   margin-left: 40px;
   padding: 8px 11px;
-  border-radius: 12px 12px 2px 12px;
-  background: #3584e4;
-  color: #fff;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
+/* Vasi's own words sit in a speech bubble. */
 .tutor-message.assistant,
 .tutor-hello {
   margin-right: 24px;
   padding: 8px 11px;
-  border-radius: 12px 12px 12px 2px;
-  background: rgb(255 255 255 / 8%);
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface-2);
 }
 
 .tutor-log code {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgb(0 0 0 / 35%);
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  background: rgb(0 0 0 / 25%);
+  font-family: var(--font-mono);
   font-size: 12.5px;
 }
 
 .tutor-tool {
-  color: rgb(255 255 255 / 60%);
+  color: var(--muted);
   font-size: 12.5px;
 }
 
 .tutor-tool pre {
-  margin: 4px 0 0;
   max-height: 160px;
-  overflow: auto;
+  margin: 4px 0 0;
   padding: 8px;
-  border-radius: 8px;
-  background: #171421;
-  color: #d0cfcc;
+  overflow: auto;
+  border-radius: var(--radius-small);
+  background: #0d1117;
+  color: #e6edf3;
   white-space: pre-wrap;
 }
 
@@ -175,11 +198,11 @@
 
 .tutor-tool-error,
 .tutor-error {
-  color: #ff9b9b;
+  color: var(--danger);
 }
 
 .tutor-thinking {
-  color: rgb(255 255 255 / 55%);
+  color: var(--muted);
   font-style: italic;
 }
 
@@ -187,26 +210,26 @@
   display: flex;
   gap: 6px;
   padding: 10px 12px;
-  border-top: 1px solid rgb(255 255 255 / 8%);
+  border-top: 1px solid var(--line);
 }
 
 .tutor-panel input {
   flex: 1;
+  min-width: 0;
   padding: 8px 10px;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 10px;
-  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
   color: inherit;
 }
 
 .tutor-panel form button {
   padding: 8px 14px;
   border: 0;
-  border-radius: 10px;
-  background: #3584e4;
-  color: #fff;
+  border-radius: var(--radius-small);
+  background: var(--accent);
+  color: var(--accent-fg);
   font-weight: 600;
-  cursor: pointer;
 }
 
 .tutor-panel form button:disabled {
@@ -217,30 +240,84 @@
 .tutor-nudge {
   position: absolute;
   z-index: 10001;
-  right: 96px;
-  bottom: 86px;
-  max-width: 280px;
-  padding: 9px 12px;
-  border: 1px solid #435174;
-  border-radius: 12px 12px 2px 12px;
-  background: #1a1826f2;
-  color: #ecebf3;
+  right: 86px;
+  bottom: calc(var(--area-bottom, 0px) + 50px);
+  max-width: min(320px, calc(100vw - 110px));
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px 14px 4px 14px;
+  background: var(--window-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  line-height: 1.45;
   text-align: left;
-  cursor: pointer;
 }
 
 .tutor-nudge span {
   display: block;
   margin-top: 4px;
-  color: #99c1f1;
+  color: var(--accent);
   font-weight: 600;
+}
+
+/* CDE: bevelled Motif panel, square corners. */
+.de-cde .tutor-panel,
+.de-cde .tutor-nudge {
+  border: 0;
+  border-radius: 0;
+}
+
+.de-cde .tutor-panel header {
+  color: #fff;
+}
+
+.de-cde .tutor-panel header span {
+  color: #dfe6ef;
+}
+
+.de-cde .tutor-levels,
+.de-cde .tutor-panel input {
+  border: 0;
+  box-shadow: inset 1px 1px #5a5a5a, inset -1px -1px #fff;
+}
+
+.de-cde .tutor-panel input {
+  background: #e8e8e8;
+}
+
+.de-cde .tutor-levels button[aria-checked="true"],
+.de-cde .tutor-panel form button {
+  color: #fff;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #555;
+}
+
+.de-cde .tutor-message.assistant,
+.de-cde .tutor-hello {
+  border-radius: 0;
+  background: #e8e8e8;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #8a8a8a;
+}
+
+.de-cde .tutor-message.user {
+  border-radius: 0;
+}
+
+/* Hyprland: a floating window with the focused border colour, no title bar shading. */
+.de-hyprland .tutor-panel {
+  border: 2px solid #cba6f7;
+}
+
+.de-hyprland .tutor-nudge {
+  border: 2px solid #cba6f7;
 }
 
 .tutor-raised {
   position: relative;
   z-index: 9999;
-  border-radius: 12px;
-  background: #1a1826e6;
+  border-radius: var(--radius);
+  background: var(--window-bg);
 }
 
 .tutor-pointer {

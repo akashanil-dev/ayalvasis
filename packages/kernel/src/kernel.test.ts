@@ -241,15 +241,15 @@ describe('session actions', () => {
     void ignored;
     const restored = createKernel({ snapshot: { version: 1, state: legacyState as KernelState } });
     expect(restored.getState().session).toEqual({
-      windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'aurora',
+      windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'freedom',
     });
   });
 
   it('switches desktop and wallpaper, rejecting odd names', () => {
     const kernel = createKernel({ username: 'ada' });
     kernel.dispatch({ type: 'session.setDesktop', payload: { desktop: 'gnome' } });
-    kernel.dispatch({ type: 'session.setWallpaper', payload: { wallpaper: 'dunes' } });
-    expect(kernel.getState().session).toMatchObject({ desktop: 'gnome', wallpaper: 'dunes' });
+    kernel.dispatch({ type: 'session.setWallpaper', payload: { wallpaper: 'rabbit' } });
+    expect(kernel.getState().session).toMatchObject({ desktop: 'gnome', wallpaper: 'rabbit' });
     expect(kernel.dispatch({ type: 'session.setDesktop', payload: { desktop: '../evil' } }))
       .toMatchObject({ ok: false, error: { code: 'EINVAL' } });
   });

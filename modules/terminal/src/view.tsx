@@ -6,28 +6,28 @@ import { useEffect, useRef, useState } from 'react';
 import { TerminalController } from './controller';
 import './terminal.css';
 
-// Tango, the palette GNOME Terminal shipped with for years.
+// A GitHub-dark style palette: the same terminal colours in every desktop environment.
 const THEME = {
-  background: '#171421',
-  foreground: '#d0cfcc',
-  cursor: '#d0cfcc',
-  selectionBackground: '#3d3846',
-  black: '#2e3436',
-  red: '#cc0000',
-  green: '#4e9a06',
-  yellow: '#c4a000',
-  blue: '#3465a4',
-  magenta: '#75507b',
-  cyan: '#06989a',
-  white: '#d3d7cf',
-  brightBlack: '#555753',
-  brightRed: '#ef2929',
-  brightGreen: '#8ae234',
-  brightYellow: '#fce94f',
-  brightBlue: '#729fcf',
-  brightMagenta: '#ad7fa8',
-  brightCyan: '#34e2e2',
-  brightWhite: '#eeeeec',
+  background: '#0d1117',
+  foreground: '#e6edf3',
+  cursor: '#e6edf3',
+  selectionBackground: '#30363d',
+  black: '#484f58',
+  red: '#f87171',
+  green: '#4ade80',
+  yellow: '#facc15',
+  blue: '#60a5fa',
+  magenta: '#c084fc',
+  cyan: '#39c5cf',
+  white: '#b1bac4',
+  brightBlack: '#8b949e',
+  brightRed: '#ff7b72',
+  brightGreen: '#56d364',
+  brightYellow: '#e3b341',
+  brightBlue: '#79c0ff',
+  brightMagenta: '#d2a8ff',
+  brightCyan: '#56d4dd',
+  brightWhite: '#f0f6fc',
 };
 
 export default function TerminalView({ system, windowId }: AppViewProps) {
@@ -39,7 +39,7 @@ export default function TerminalView({ system, windowId }: AppViewProps) {
     if (!element) return;
     const term = new Terminal({
       theme: THEME,
-      fontFamily: '"JetBrains Mono", "DejaVu Sans Mono", "Ubuntu Mono", Menlo, Consolas, monospace',
+      fontFamily: '"JetBrains Mono", "Ubuntu Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace',
       fontSize: 14,
       cursorBlink: true,
       scrollback: 2000,

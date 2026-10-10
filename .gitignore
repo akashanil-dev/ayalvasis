@@ -28,3 +28,6 @@ Thumbs.db
 .wrangler/
 playwright-report/
 test-results/
+
+# Local design reference, kept out of the repository.
+/new/

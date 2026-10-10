@@ -1,48 +1,112 @@
 /*
  * Design tokens. Each desktop environment sets its own: KDE Plasma uses Breeze Dark, GNOME uses Adwaita's
- * dark style. Apps style themselves with these, so they look native in whichever desktop is running.
+ * dark style, CDE the grey Motif look and Hyprland Catppuccin Mocha. Apps style themselves with these, so
+ * they look native in whichever desktop is running.
  */
 :root,
 .de-plasma {
-  --font-ui: "Noto Sans", "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Hack", "DejaVu Sans Mono", ui-monospace, monospace;
+  --font-ui: "Noto Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Ubuntu Mono", ui-monospace, monospace;
   --accent: #3daee9;
+  --accent-fg: #ffffff;
   --accent-strong: #93cee9;
-  --accent-soft: rgb(61 174 233 / 20%);
+  --accent-soft: rgb(61 174 233 / 22%);
   --window-bg: #2a2e32;
   --window-fg: #fcfcfc;
+  --text: var(--window-fg);
+  --window-border: #1b1e20;
   --window-sidebar: #232629;
-  --window-border: #3d4147;
   --titlebar: #31363b;
   --titlebar-inactive: #2a2e32;
+  --surface: #232629;
+  --surface-2: #31363b;
   --card: #31363b;
-  --hover: rgb(255 255 255 / 7%);
+  --line: rgb(255 255 255 / 9%);
+  --hover: rgb(255 255 255 / 8%);
   --muted: #a1a9b1;
   --menu-bg: #2a2e32;
-  --radius: 6px;
-  --radius-small: 4px;
-  --shadow: 0 10px 34px rgb(0 0 0 / 55%);
+  --ok: #33d17a;
+  --danger: #da4453;
+  --radius: 5px;
+  --radius-small: 3px;
+  --shadow: 0 8px 30px rgb(0 0 0 / 60%);
+  --bevel: none;
 }
 
 .de-gnome {
-  --font-ui: "Cantarell", "Adwaita Sans", "Inter", system-ui, sans-serif;
-  --font-mono: "Adwaita Mono", "Source Code Pro", "DejaVu Sans Mono", ui-monospace, monospace;
+  --font-ui: "Inter", "Cantarell", system-ui, sans-serif;
   --accent: #3584e4;
   --accent-strong: #99c1f1;
-  --accent-soft: rgb(53 132 228 / 22%);
+  --accent-soft: rgb(53 132 228 / 25%);
   --window-bg: #242424;
-  --window-fg: #ffffff;
-  --window-sidebar: #2e2e32;
-  --window-border: #1b1b1f;
+  --window-fg: #f6f5f4;
+  --window-border: rgb(255 255 255 / 8%);
+  --window-sidebar: #2e2e2e;
   --titlebar: #303030;
   --titlebar-inactive: #242424;
-  --card: #383838;
-  --hover: rgb(255 255 255 / 8%);
-  --muted: #b0b0b6;
-  --menu-bg: #383838;
+  --surface: #2e2e2e;
+  --surface-2: #3a3a3a;
+  --card: #2e2e2e;
+  --line: rgb(255 255 255 / 10%);
+  --hover: rgb(255 255 255 / 10%);
+  --muted: #a5a5a5;
+  --menu-bg: #303030;
+  --danger: #e01b24;
   --radius: 12px;
   --radius-small: 8px;
-  --shadow: 0 2px 14px rgb(0 0 0 / 45%), 0 0 0 1px rgb(0 0 0 / 40%);
+  --shadow: 0 12px 40px rgb(0 0 0 / 55%), 0 0 0 1px rgb(0 0 0 / 40%);
+}
+
+.de-cde {
+  --font-ui: Helvetica, Arial, sans-serif;
+  --accent: #4b6a8c;
+  --accent-strong: #2d4a6c;
+  --accent-soft: rgb(75 106 140 / 25%);
+  --window-bg: #c6c6c6;
+  --window-fg: #000000;
+  --window-border: #8a8a8a;
+  --window-sidebar: #b8b8b8;
+  --titlebar: #4b6a8c;
+  --titlebar-inactive: #8d93a8;
+  --surface: #d9d9d9;
+  --surface-2: #b8b8b8;
+  --card: #d9d9d9;
+  --line: #8a8a8a;
+  --hover: rgb(0 0 0 / 10%);
+  --muted: #3f3f3f;
+  --menu-bg: #c6c6c6;
+  --ok: #1f7a3a;
+  --danger: #a3171e;
+  --radius: 0px;
+  --radius-small: 0px;
+  --shadow: inset 2px 2px #ffffff, inset -2px -2px #5a5a5a, 4px 4px 0 rgb(0 0 0 / 35%);
+  --bevel: inset 1px 1px #ffffff, inset -1px -1px #5a5a5a;
+}
+
+.de-hyprland {
+  --font-ui: "JetBrains Mono", "Inter", monospace;
+  --accent: #cba6f7;
+  --accent-fg: #1e1e2e;
+  --accent-strong: #cba6f7;
+  --accent-soft: rgb(203 166 247 / 20%);
+  --window-bg: rgb(30 30 46 / 90%);
+  --window-fg: #cdd6f4;
+  --window-border: #45475a;
+  --window-sidebar: #181825;
+  --titlebar: transparent;
+  --titlebar-inactive: transparent;
+  --surface: #181825;
+  --surface-2: #313244;
+  --card: #313244;
+  --line: #45475a;
+  --hover: #313244;
+  --muted: #a6adc8;
+  --menu-bg: #1e1e2e;
+  --ok: #a6e3a1;
+  --danger: #f38ba8;
+  --radius: 10px;
+  --radius-small: 6px;
+  --shadow: 0 10px 30px rgb(0 0 0 / 45%);
 }
 
 * {
@@ -57,6 +121,7 @@ body,
   overflow: hidden;
   background: #000;
   font-family: var(--font-ui);
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -67,23 +132,38 @@ textarea {
   font: inherit;
 }
 
+button {
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
 }
 
 .desktop-screen {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background-size: cover;
   font-family: var(--font-ui);
   color: var(--window-fg);
+  user-select: none;
 }
 
 .sym-icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
@@ -91,44 +171,81 @@ textarea {
   display: inline-flex;
   gap: 8px;
   align-items: center;
+  padding: 0 6px;
 }
 
-/* Desktop icons (Plasma shows them; GNOME doesn't). */
+/* Desktop icons: Plasma shows apps, CDE shows minimised windows, GNOME and Hyprland show none. */
 .icon-grid {
   position: absolute;
   left: 12px;
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(auto-fill, 96px);
-  gap: 6px;
-  height: calc(100% - 80px);
+  grid-auto-columns: 92px;
+  gap: 4px;
 }
 
 .desktop-icon {
-  display: grid;
-  justify-items: center;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 6px;
-  width: 92px;
   padding: 8px 4px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-small);
+  border: 0;
+  border-radius: 10px;
   background: transparent;
   color: #fff;
-  font-size: 12.5px;
-  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
   cursor: default;
 }
 
-.desktop-icon:hover {
-  border-color: rgb(61 174 233 / 40%);
-  background: rgb(61 174 233 / 15%);
+.desktop-icon:hover,
+.desktop-icon:focus-visible {
+  background: rgb(255 255 255 / 14%);
+  outline: none;
 }
 
-.desktop-icon:focus-visible {
-  border-color: var(--accent);
-  background: rgb(61 174 233 / 30%);
-  outline: none;
+.desktop-icon .app-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.desktop-label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 90%);
+}
+
+/* CDE: a minimised window becomes an icon on the desktop. */
+.icon-grid.icons-minimized .desktop-icon {
+  padding: 4px;
+  border-radius: 0;
+}
+
+.icon-grid.icons-minimized .desktop-icon:hover {
+  background: transparent;
+}
+
+.icon-grid.icons-minimized .app-icon {
+  width: 56px;
+  height: 56px;
+  padding: 6px;
+  background: #a8acbd;
+  box-shadow: inset 1px 1px #e5e5e5, inset -1px -1px #5a5a5a;
+}
+
+.icon-grid.icons-minimized .desktop-label {
+  max-width: 88px;
+  overflow: hidden;
+  padding: 1px 4px;
+  background: #a8acbd;
+  color: #000;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  text-shadow: none;
+  white-space: nowrap;
 }
 
 .app-icon {
@@ -138,107 +255,183 @@ textarea {
   height: 48px;
   font-size: 30px;
   line-height: 1;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 30%));
 }
 
-.app-icon svg {
+.app-icon svg,
+.app-icon img {
+  display: block;
   width: 100%;
   height: 100%;
 }
 
-/* Menus: right-click on the desktop, power menus, the session chooser. */
+.tux-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Menus: right-click on the desktop, power menus, window menus. */
 .popup-menu {
   position: fixed;
   z-index: 20000;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
-  padding: 4px;
-  border: 1px solid var(--window-border);
-  border-radius: var(--radius);
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
   background: var(--menu-bg);
   color: var(--window-fg);
   box-shadow: var(--shadow);
   font-family: var(--font-ui);
-  font-size: 13.5px;
 }
 
 .popup-menu button {
-  padding: 7px 12px;
+  padding: 8px 12px;
   border: 0;
-  border-radius: var(--radius-small);
+  border-radius: 6px;
   background: transparent;
   color: inherit;
   text-align: left;
   white-space: pre;
-  cursor: default;
 }
 
 .popup-menu button:hover,
 .popup-menu button:focus-visible {
-  background: var(--accent-soft);
+  background: var(--surface-2);
   outline: none;
 }
 
 .popup-menu hr {
-  width: 100%;
-  margin: 4px 0;
+  width: calc(100% - 12px);
+  margin: 4px 6px;
   border: 0;
-  border-top: 1px solid var(--window-border);
+  border-top: 1px solid var(--line);
+}
+
+.popup-title {
+  margin: 0 0 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 700;
+  text-align: center;
+}
+
+.de-cde .popup-menu {
+  padding: 3px;
+  border: 0;
+}
+
+.de-cde .popup-menu button {
+  padding: 5px 14px;
+  border-radius: 0;
+}
+
+.de-cde .popup-menu button:hover,
+.de-cde .popup-menu button:focus-visible {
+  background: #4b6a8c;
+  color: #fff;
+}
+
+.de-cde .popup-menu hr {
+  border-top: 1px solid #8a8a8a;
+  border-bottom: 1px solid #fff;
 }
 
 /* A desktop notification, used for the first-login welcome. */
 .notification {
   position: absolute;
   z-index: 15000;
-  right: 14px;
-  width: 360px;
-  padding: 12px 36px 12px 14px;
-  border: 1px solid var(--window-border);
-  border-radius: var(--radius);
-  background: var(--menu-bg);
-  color: var(--window-fg);
-  box-shadow: var(--shadow);
-  font-size: 13.5px;
-  animation: notification-in 240ms ease-out;
-}
-
-.notification-plasma {
-  bottom: 56px;
-}
-
-.notification-gnome {
-  top: 42px;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(340px, calc(100vw - 24px));
+  padding: 12px 34px 12px 14px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 14px;
+  background: rgb(24 24 27 / 94%);
+  color: #fff;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 40%);
+  font-size: 13px;
+  animation: notification-in 350ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
 .notification p {
-  margin: 4px 0 0;
-  color: var(--muted);
+  margin: 0;
+  color: #d4d4d8;
   line-height: 1.45;
 }
 
 .notification button {
   position: absolute;
-  top: 8px;
+  top: 6px;
   right: 8px;
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: #d4d4d8;
   font-size: 18px;
-  cursor: pointer;
+}
+
+.notification-gnome {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  animation-name: notification-drop;
+}
+
+.de-cde .notification {
+  border: 0;
+  border-radius: 0;
+  background: #c6c6c6;
+  color: #000;
+  box-shadow: var(--shadow);
+}
+
+.de-cde .notification p,
+.de-cde .notification button {
+  color: #222;
+}
+
+.de-hyprland .notification {
+  border: 2px solid #cba6f7;
+  border-radius: 10px;
+  background: rgb(30 30 46 / 96%);
+  color: #cdd6f4;
+}
+
+.de-hyprland .notification p {
+  color: #a6adc8;
 }
 
 @keyframes notification-in {
-  from { opacity: 0; translate: 0 8px; }
+  from { transform: translateX(120%); }
+}
+
+@keyframes notification-drop {
+  from { opacity: 0; translate: 0 -10px; }
+}
+
+@keyframes splash-in {
+  from { opacity: 0; }
+}
+
+@media (max-width: 719px) {
+  .icon-grid {
+    right: 12px;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fill, 84px);
+    grid-template-rows: none;
+    grid-auto-rows: 96px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 1ms !important;
-    transition-duration: 1ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 }

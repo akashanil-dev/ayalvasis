@@ -2,13 +2,13 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #171421;
+  background: #0d1117;
 }
 
 .terminal-screen {
   flex: 1;
   min-height: 0;
-  padding: 6px 0 0 8px;
+  padding: 10px 0 0 12px;
 }
 
 .terminal-error {

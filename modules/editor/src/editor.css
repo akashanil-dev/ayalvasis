@@ -1,21 +1,22 @@
+/* Text Editor: themed by the desktop's tokens. */
 .editor-view {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e24;
-  color: #e8e6ef;
+  background: var(--window-bg);
+  color: var(--window-fg);
 }
 
 .editor-view textarea {
   flex: 1;
   min-height: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 0;
   outline: none;
   resize: none;
-  background: transparent;
+  background: var(--surface);
   color: inherit;
-  font: 14px/1.5 "JetBrains Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+  font: 14px/1.5 var(--font-mono);
   tab-size: 4;
 }
 
@@ -24,8 +25,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
   font-size: 13px;
 }
 
@@ -38,36 +39,56 @@
 
 .editor-bar input {
   flex: 1;
-  padding: 5px 8px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 6px;
-  background: rgb(0 0 0 / 25%);
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
   color: inherit;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
 }
 
 .editor-bar button {
-  padding: 5px 10px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 6px;
-  background: rgb(255 255 255 / 6%);
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
   color: inherit;
+  font-weight: 600;
+}
+
+.editor-bar button:hover {
+  filter: brightness(1.15);
 }
 
 .editor-problem {
-  background: rgb(165 29 45 / 22%);
-  color: #ffc7c7;
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  color: var(--window-fg);
 }
 
 .editor-tip {
-  color: #f6d32d;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .editor-status {
   display: flex;
   justify-content: space-between;
-  padding: 4px 10px;
-  border-top: 1px solid rgb(255 255 255 / 8%);
-  color: rgb(255 255 255 / 55%);
+  padding: 5px 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
   font-size: 12px;
+}
+
+.de-cde .editor-bar button {
+  border: 0;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #555;
+}
+
+.de-cde .editor-view textarea,
+.de-cde .editor-bar input {
+  border: 0;
+  background: #e8e8e8;
+  box-shadow: inset 1px 1px #5a5a5a, inset -1px -1px #fff;
 }

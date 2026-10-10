@@ -29,7 +29,7 @@ export function GnomeShell(props: ShellProps) {
         className={`gnome-chip gnome-activities ${overview ? 'active' : ''}`}
         onClick={() => setOverview(overview ? null : 'windows')}
       >Activities</button>
-      <button className="gnome-chip gnome-clock" title={now.toLocaleString()}>{gnomeClockText(now)}</button>
+      <span className="gnome-clock" title={now.toLocaleString()}>{gnomeClockText(now)}</span>
       <button
         className="gnome-chip gnome-status"
         aria-label="System menu"
@@ -37,7 +37,7 @@ export function GnomeShell(props: ShellProps) {
           const box = event.currentTarget.getBoundingClientRect();
           setMenu({ x: box.right - 230, y: box.bottom + 6 });
         }}
-      ><Icon name="wifi" /><Icon name="volume" /><Icon name="battery" /></button>
+      ><Icon name="wifi" /><Icon name="volume" /><Icon name="power" /></button>
     </header>
     {overview && <Overview
       {...props}

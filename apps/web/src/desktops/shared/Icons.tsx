@@ -12,8 +12,13 @@ const paths: Record<string, React.JSX.Element> = {
   search: <><circle cx="7" cy="7" r="4.3" /><path d="M10.3 10.3 14 14" /></>,
   grid: <>{[3, 8, 13].flatMap((y) => [3, 8, 13].map((x) =>
     <circle key={`${x}${y}`} cx={x} cy={y} r="1.4" fill="currentColor" stroke="none" />))}</>,
-  gear: <><circle cx="8" cy="8" r="2.2" /><path d="M8 1.8v1.8M8 12.4v1.8M1.8 8h1.8M12.4 8h1.8M3.6 3.6l1.3 1.3M11.1 11.1l1.3 1.3
-    M3.6 12.4l1.3-1.3M11.1 4.9l1.3-1.3" /></>,
+  // The cog GNOME uses for its session chooser, drawn on a 24px grid and scaled to fit.
+  gear: <g transform="scale(0.6667)" strokeWidth="2.1"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0
+    .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0
+    0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1
+    0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0
+    1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3
+    1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></g>,
   arrow: <><path d="M3 8h9.5M9 4.5 12.5 8 9 11.5" /></>,
   back: <><path d="M13 8H3.5M7 4.5 3.5 8 7 11.5" /></>,
   lock: <><rect x="3.5" y="7" width="9" height="7" rx="1" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" /></>,

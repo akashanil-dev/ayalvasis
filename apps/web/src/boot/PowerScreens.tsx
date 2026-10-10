@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Puppet } from '../tutor/Puppet';
 
 const STOPPING = [
   'Stopping session-2.scope - Session 2 of User…',
@@ -30,8 +29,8 @@ export function PowerOff({ onPowerOn }: { onPowerOn(): void }) {
 
   if (off) {
     return <main className="power-off" onClick={onPowerOn}>
-      <button className="power-button" onClick={onPowerOn} aria-label="Turn TuxOS on">⏻</button>
-      <p>TuxOS is off. Press the power button (or any key) to start it again.</p>
+      <p>System halted.</p>
+      <button className="power-button" onClick={onPowerOn}>Press any key to power on.</button>
     </main>;
   }
   return <main className="bootlog">
@@ -42,17 +41,32 @@ export function PowerOff({ onPowerOn }: { onPowerOn(): void }) {
   </main>;
 }
 
-/** What shows while a desktop session starts: Plasma's logo and progress bar, or GNOME's quiet fade. */
+/** How long each desktop's splash shows before its shell appears. */
+const SPLASH_MS: Record<string, number> = { plasma: 1400, gnome: 600, cde: 1300, hyprland: 1100 };
+
+/** What shows while a desktop session starts: each desktop environment's own splash screen. */
 export function SessionSplash({ desktop, onDone }: { desktop: string; onDone(): void }) {
   useEffect(() => {
-    const timer = setTimeout(onDone, desktop === 'plasma' ? 1400 : 600);
+    const timer = setTimeout(onDone, SPLASH_MS[desktop] ?? 600);
     return () => clearTimeout(timer);
   }, [desktop, onDone]);
 
-  if (desktop !== 'plasma') return <main className="splash splash-gnome" />;
-  return <main className="splash splash-plasma" role="status" aria-label="Starting KDE Plasma">
-    <span className="splash-logo"><Puppet /></span>
-    <span className="splash-name">TuxOS · Plasma</span>
-    <span className="splash-progress"><i /></span>
-  </main>;
+  switch (desktop) {
+    case 'plasma':
+      return <main className="splash splash-plasma" role="status" aria-label="Starting KDE Plasma">
+        <span className="plasma-logo" />
+        <strong>Plasma</strong>
+        <span className="splash-progress"><i /></span>
+      </main>;
+    case 'cde':
+      return <main className="splash splash-cde" role="status">
+        <p>Starting the Common Desktop Environment…</p>
+      </main>;
+    case 'hyprland':
+      return <main className="splash splash-hyprland" role="status" aria-label="Starting Hyprland">
+        <strong className="hypr-logo">Hyprland</strong>
+      </main>;
+    default:
+      return <main className="splash splash-gnome" />;
+  }
 }

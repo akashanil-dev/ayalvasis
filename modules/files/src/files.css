@@ -1,55 +1,75 @@
+/* Files: themed by the desktop's tokens, so it looks native in Plasma, GNOME, CDE and Hyprland. */
 .files-view {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--surface, #1f1d27);
-  color: var(--text, #e8e6ef);
-  font-size: 14px;
+  background: var(--window-bg);
+  color: var(--window-fg);
+  font-size: 13.5px;
   outline: none;
 }
 
 .files-toolbar,
 .files-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   padding: 8px;
-  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  border-bottom: 1px solid var(--line);
 }
 
 .files-toolbar button,
 .files-bar button {
-  padding: 5px 10px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 6px;
-  background: rgb(255 255 255 / 6%);
-  color: inherit;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--window-fg);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.files-toolbar button:hover:not(:disabled),
+.files-bar button:hover {
+  filter: brightness(1.15);
 }
 
 .files-toolbar button:disabled {
   opacity: 0.4;
-  cursor: default;
+}
+
+.files-bar button[type="submit"] {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
 .files-bar button.danger {
-  background: #a51d2d;
-  border-color: #c01c28;
+  border-color: transparent;
+  background: var(--danger);
+  color: #fff;
 }
 
 .files-path {
   flex: 1;
+  min-width: 120px;
 }
 
 .files-path input,
 .files-bar input {
   width: 100%;
-  padding: 5px 8px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 6px;
-  background: rgb(0 0 0 / 25%);
-  color: inherit;
-  font-family: ui-monospace, "DejaVu Sans Mono", monospace;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--window-fg);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
 }
 
 .files-bar label {
@@ -60,11 +80,11 @@
 }
 
 .files-confirm {
-  background: rgb(165 29 45 / 18%);
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
 }
 
 .files-error {
-  color: #ff9b9b;
+  color: var(--danger);
 }
 
 .files-table {
@@ -75,15 +95,17 @@
 .files-table th {
   position: sticky;
   top: 0;
-  padding: 6px 10px;
-  background: var(--surface, #1f1d27);
-  color: rgb(255 255 255 / 55%);
-  font-weight: 500;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--window-bg);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
   text-align: left;
 }
 
 .files-table td {
-  padding: 5px 10px;
+  padding: 6px 12px;
   white-space: nowrap;
 }
 
@@ -92,16 +114,15 @@
 }
 
 .files-table tbody tr:hover {
-  background: rgb(255 255 255 / 5%);
+  background: var(--surface);
 }
 
 .files-table tbody tr.selected {
-  background: #3584e4;
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .files-table tbody tr:focus-visible {
-  outline: 2px solid #99c1f1;
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -113,7 +134,7 @@
   flex: 1;
   margin: 0;
   padding: 24px;
-  color: rgb(255 255 255 / 55%);
+  color: var(--muted);
   text-align: center;
 }
 
@@ -124,8 +145,27 @@
 }
 
 .files-status {
-  padding: 5px 10px;
-  border-top: 1px solid rgb(255 255 255 / 8%);
-  color: rgb(255 255 255 / 55%);
+  padding: 5px 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
   font-size: 12px;
+}
+
+/* CDE: bevelled buttons and sunken fields. */
+.de-cde .files-toolbar button,
+.de-cde .files-bar button {
+  border: 0;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #555;
+}
+
+.de-cde .files-path input,
+.de-cde .files-bar input {
+  border: 0;
+  background: #e8e8e8;
+  box-shadow: inset 1px 1px #5a5a5a, inset -1px -1px #fff;
+}
+
+.de-cde .files-table tbody tr.selected {
+  background: #4b6a8c;
+  color: #fff;
 }

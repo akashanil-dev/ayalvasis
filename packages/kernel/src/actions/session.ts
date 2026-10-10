@@ -94,7 +94,7 @@ export const sessionActions: ActionDefinition[] = [
   },
   {
     type: 'session.setDesktop', capability: 'session:control', mutates: true,
-    description: 'Switch the desktop environment, e.g. "plasma" (KDE Plasma) or "gnome".',
+    description: 'Switch the desktop environment: "plasma" (KDE Plasma), "gnome", "cde" or "hyprland".',
     params: { type: 'object', properties: { desktop: { type: 'string' } }, required: ['desktop'] },
     run: ({ state }, payload) => { state.session.desktop = settingId(payload, 'desktop'); },
   },

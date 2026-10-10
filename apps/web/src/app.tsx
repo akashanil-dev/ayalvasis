@@ -7,14 +7,19 @@ import { BootLog } from './boot/BootLog';
 import { Grub } from './boot/Grub';
 import { PowerOff } from './boot/PowerScreens';
 import type { PowerAction } from './desktops/types';
+import { Dtlogin } from './greeters/Dtlogin';
 import { Gdm } from './greeters/Gdm';
 import { Sddm } from './greeters/Sddm';
+import { Tuigreet } from './greeters/Tuigreet';
 import { lastAppearance } from './screens/appearance-memory';
 import { Desktop } from './screens/Desktop';
 
 export { Desktop } from './screens/Desktop';
 
 type Screen = 'grub' | 'boot' | 'greeter' | 'desktop' | 'off';
+
+/** Each desktop environment's display manager, as a real distribution pairs them. */
+const GREETERS = { sddm: Sddm, gdm: Gdm, dtlogin: Dtlogin, tuigreet: Tuigreet };
 
 /**
  * The whole machine, like a real PC: GRUB, the boot log, the login screen of the chosen desktop
@@ -73,9 +78,13 @@ export function App({ system, tutor, start = 'grub' }: {
     case 'off': return <PowerOff onPowerOn={powerOn} />;
     case 'desktop': return <Desktop system={system} tutor={tutor} onPower={power} />;
   }
-  const Greeter = desktopById(desktop).greeter === 'gdm' ? Gdm : Sddm;
+  const greeter = desktopById(desktop).greeter;
+  const Greeter = GREETERS[greeter];
   const wallpaper = wallpaperById(lastAppearance().wallpaper ?? '').background;
-  return <div className="greeter-wallpaper" style={{ background: wallpaper }}>
+  return <div
+    className={`greeter-screen greeter-${greeter}`}
+    style={{ '--greeter-wallpaper': wallpaper } as React.CSSProperties}
+  >
     {savedUser !== undefined && <Greeter
       system={system}
       savedUser={savedUser}

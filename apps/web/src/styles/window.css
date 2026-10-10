@@ -1,3 +1,4 @@
+/* Windows: shared frame, then each desktop environment's decorations. */
 .app-window {
   position: absolute;
   display: flex;
@@ -5,9 +6,21 @@
   min-width: 240px;
   min-height: 160px;
   overflow: hidden;
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius);
   background: var(--window-bg);
   color: var(--window-fg);
   box-shadow: var(--shadow);
+  user-select: text;
+  animation: window-in 160ms ease;
+}
+
+@keyframes window-in {
+  from { opacity: 0; transform: scale(0.96); }
+}
+
+.app-window.maximized {
+  border-radius: 0;
 }
 
 .app-window > header {
@@ -15,36 +28,45 @@
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
+  height: 40px;
+  padding: 0 8px 0 12px;
+  border-bottom: 1px solid var(--line);
   background: var(--titlebar-inactive);
-  color: var(--muted);
+  color: var(--window-fg);
   cursor: default;
+  touch-action: none;
   user-select: none;
 }
 
 .app-window.focused > header {
   background: var(--titlebar);
-  color: var(--window-fg);
 }
 
 .window-title {
   flex: 1;
   overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .window-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .window-button {
+  position: relative;
   display: grid;
   place-items: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: transparent;
+  background: rgb(255 255 255 / 10%);
   color: inherit;
   cursor: default;
 }
@@ -54,40 +76,56 @@
   height: 14px;
 }
 
-/* KDE Breeze: app icon on the left, centered title, three round buttons; a thin accent line when focused. */
-.deco-breeze {
-  border: 1px solid var(--window-border);
-  border-radius: var(--radius) var(--radius) 2px 2px;
+.window-button:hover {
+  background: rgb(255 255 255 / 20%);
 }
 
-.deco-breeze.focused {
-  border-color: rgb(61 174 233 / 55%);
+.window-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
+.window-loading {
+  margin: 0;
+  padding: 16px;
+  color: var(--muted);
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+/* KDE Breeze: icon on the left, centred title, chevron buttons, a red close on hover. */
 .deco-breeze > header {
   height: 32px;
-  padding: 0 6px 0 8px;
-  font-size: 13px;
-}
-
-.deco-breeze .window-title {
-  text-align: center;
-}
-
-.deco-breeze .window-app-icon {
-  width: 18px;
-  height: 18px;
+  border-bottom: 0;
 }
 
 .deco-breeze .window-app-icon .app-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 14px;
+  width: 16px;
+  height: 16px;
+  font-size: 13px;
+}
+
+.deco-breeze .window-buttons {
+  gap: 6px;
 }
 
 .deco-breeze .window-button {
   width: 20px;
   height: 20px;
+  background: transparent;
 }
 
 .deco-breeze .window-button:hover {
@@ -99,51 +137,110 @@
   color: #fff;
 }
 
-/* GNOME Adwaita: a taller header bar with a centered bold title and a single round close button. */
-.deco-adwaita {
-  border-radius: var(--radius);
-}
-
+/* GNOME libadwaita: a taller header bar, a centred bold title and a lone round close button. */
 .deco-adwaita > header {
   height: 46px;
-  padding: 0 10px 0 52px;
-  font-size: 14px;
-  font-weight: 700;
+  padding-left: 44px;
+  border-bottom: 0;
 }
 
-.deco-adwaita .window-title {
-  text-align: center;
+/* CDE Motif: a window-menu button, a bevelled title and minimise and maximise boxes. */
+.deco-motif {
+  padding-bottom: 3px;
+  border: 2px solid #c6c6c6;
 }
 
-.deco-adwaita .window-button {
-  width: 24px;
-  height: 24px;
-  background: rgb(255 255 255 / 10%);
-}
-
-.deco-adwaita .window-button:hover {
-  background: rgb(255 255 255 / 20%);
-}
-
-.app-window.maximized {
-  border-radius: 0;
-}
-
-.window-content {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
-
-.resize-handle {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 14px;
-  height: 14px;
+.deco-motif > header {
+  gap: 2px;
+  height: 26px;
+  margin: 3px 3px 0;
+  padding: 0;
   border: 0;
-  background: transparent;
-  cursor: nwse-resize;
+}
+
+.deco-motif .window-title {
+  display: grid;
+  align-self: stretch;
+  place-items: center;
+  color: #fff;
+  font-weight: 400;
+  box-shadow: inset 1px 1px rgb(255 255 255 / 50%), inset -1px -1px rgb(0 0 0 / 45%);
+}
+
+.deco-motif .window-buttons {
+  gap: 2px;
+}
+
+.deco-motif .window-button {
+  width: 24px;
+  height: 26px;
+  border-radius: 0;
+  background: var(--titlebar-inactive);
+  box-shadow: inset 1px 1px rgb(255 255 255 / 60%), inset -1px -1px rgb(0 0 0 / 50%);
+}
+
+.deco-motif.focused .window-button {
+  background: var(--titlebar);
+}
+
+.deco-motif .window-button svg {
+  display: none;
+}
+
+.deco-motif .window-button::before {
+  content: "";
+  box-shadow: inset 1px 1px rgb(255 255 255 / 70%), inset -1px -1px rgb(0 0 0 / 60%);
+}
+
+.deco-motif .window-button.menu::before { width: 12px; height: 4px; }
+.deco-motif .window-button.minimize::before { width: 5px; height: 5px; }
+.deco-motif .window-button.maximize::before { width: 12px; height: 12px; }
+
+.deco-motif .window-content {
+  margin: 3px;
+  box-shadow: inset 1px 1px #5a5a5a, inset -1px -1px #fff;
+}
+
+/* Hyprland: no title bars, just a border that lights up on the focused window. */
+.deco-borderless {
+  min-height: 0;
+  border: 2px solid #45475a;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+}
+
+.deco-borderless.tiled {
+  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+}
+
+.deco-borderless.focused {
+  border-color: #89b4fa #cba6f7 #cba6f7 #89b4fa;
+}
+
+.deco-borderless > header {
+  display: none;
+}
+
+/* Small screens: every window fills the space between the panels. */
+@media (max-width: 719px) {
+  .app-window {
+    left: 0 !important;
+    top: var(--area-top) !important;
+    width: 100% !important;
+    height: calc(100% - var(--area-top) - var(--area-bottom)) !important;
+    min-width: 0;
+    border-radius: 0;
+  }
+
+  .resize-handle,
+  .window-button.maximize {
+    display: none;
+  }
+
+  /* No Super key on a phone, so Hyprland windows get a title bar to close them. */
+  .deco-borderless > header {
+    display: flex;
+  }
 }
 
 /* Apps fill their window edge to edge; simple text views add their own padding. */

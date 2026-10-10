@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppIcon } from '../../desktop/AppIcon';
-import { Puppet } from '../../tutor/Puppet';
-import { dateText, timeText, useNow } from '../shared/Clock';
+import { Tux } from '../../desktop/Tux';
+import { numericDateText, timeText, useNow } from '../shared/Clock';
 import { Icon, StatusIcons } from '../shared/Icons';
 import { PopupMenu } from '../shared/Menu';
 import type { ShellProps } from '../types';
@@ -71,7 +71,7 @@ export function PlasmaShell(props: ShellProps) {
         aria-label="Application Launcher"
         title="Application Launcher"
         onClick={() => setKickoff(!kickoff)}
-      ><Puppet /></button>
+      ><Tux /></button>
       <nav className="plasma-tasks" aria-label="Task manager">
         {taskIds.map((appId) => {
           const app = apps.find((each) => each.id === appId)!;
@@ -91,7 +91,7 @@ export function PlasmaShell(props: ShellProps) {
         <StatusIcons />
         <div className="plasma-clock" title={now.toLocaleString()}>
           <span>{timeText(now)}</span>
-          <small>{dateText(now)}</small>
+          <small>{numericDateText(now)}</small>
         </div>
         <button
           className="plasma-tray-button"

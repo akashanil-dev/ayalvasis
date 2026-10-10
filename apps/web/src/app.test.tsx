@@ -13,7 +13,7 @@ interface TestSystem extends Omit<SystemClient, 'dispatch'> {
 
 function fakeSystem(): TestSystem {
   let state: SessionState = {
-    windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'aurora',
+    windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'freedom',
   };
   const allListeners = new Set<(event: KernelEvent) => void>();
   const changeListeners = new Set<(event: KernelEvent) => void>();

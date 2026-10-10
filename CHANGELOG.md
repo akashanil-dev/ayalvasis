@@ -4,6 +4,37 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T04:11:58+05:30 — UI redesign and four desktop environments (adds CDE and Hyprland)
+
+- Changed:
+  - New look across the whole UI: per-desktop design tokens (Breeze Dark, Adwaita dark, CDE Motif grey,
+    Catppuccin Mocha) in `apps/web/src/styles/base.css`, Inter and JetBrains Mono fonts, image wallpapers
+    with thumbnails (`apps/web/public/wallpapers`) and a per-desktop app icon theme (`apps/web/public/icons`,
+    credits in `icons/CREDITS.md`). The default wallpaper is now `freedom`; older saves fall back to it.
+  - Two new desktop environments, available from the start like the others: **CDE** (Front Panel with analog
+    clock, calendar, launchers, Lock/EXIT and four workspaces; Motif window decorations with a window menu;
+    minimised windows become desktop icons) and **Hyprland** (Waybar, wofi launcher, master/stack tiling with
+    no title bars, five workspaces, Alt-key shortcuts). Workspaces are desktop state, not saved session state.
+  - Two new login screens: dtlogin (CDE) and tuigreet (Hyprland). SDDM and GDM were redesigned (blurred
+    wallpaper, Tux avatar, session menus). Every login screen can start any of the four desktops.
+  - Settings is one page with a card per desktop (no locks) and a wallpaper grid; About details moved there.
+  - Restyled GRUB, boot log, power-off, per-desktop splash screens, Plasma panel/Kickoff/KRunner, GNOME bar and
+    overview, Files, Text Editor, Terminal palette, course view and Vasi's panel, which now takes each
+    desktop's colours. Vasi's puppet is unchanged.
+  - Closing a window goes through the desktop, so keyboard close (Hyprland Alt+C) still respects the Text
+    Editor's unsaved-changes prompt.
+- Why: The team wanted a complete visual redesign and all four desktop environments open to every learner.
+- Files: `apps/web` (screens, desktops, greeters, boot, styles, public assets), `packages/appearance`,
+  `packages/kernel` (default wallpaper, action description), `packages/course-view`, `modules/settings`,
+  `modules/files`, `modules/editor`, `modules/terminal`, `modules/chmod-arcade`.
+- Validation: `npm run typecheck` passed. `npx vitest run`: 22 test files, 252 tests passed (new tests for the
+  tiling layout, CDE login and workspaces, Hyprland login/launcher/keyboard close, and switching between all
+  four desktops from Settings). `npm run build` passed. Screenshotted every login screen, desktop, launcher and
+  Settings in headless Chromium at 1366×800.
+- Limitations: the Google Fonts stylesheet needs network access (system fonts are used offline). Learn Linux
+  and About have no themed icon, so they use TuxOS's own icons in every desktop. Phone-width layouts were
+  styled but not checked in a browser.
+
 ## 2026-10-11T03:08:17+05:30 — Boot sequence, login screens and desktop environments (KDE Plasma, GNOME)
 
 - Changed:

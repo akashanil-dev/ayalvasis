@@ -1,43 +1,51 @@
 /* GRUB's text-mode menu: light grey on black, a boxed list, the highlighted entry inverted. */
 .grub {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  place-items: center;
   height: 100%;
-  padding: 6vh 20px;
+  padding: 16px;
   background: #000;
-  color: #aaa;
-  font: 16px/1.5 var(--font-mono);
+  color: #c0c0c0;
+  font: 15px var(--font-mono);
   cursor: default;
 }
 
+.grub-frame {
+  width: min(860px, 100%);
+}
+
 .grub-title {
-  margin: 0 0 3vh;
+  margin: 0 0 18px;
+  text-align: center;
+}
+
+.grub-box {
+  min-height: 260px;
+  padding: 6px 0;
+  border: 2px solid #c0c0c0;
 }
 
 .grub-menu {
-  width: min(78ch, 100%);
-  min-height: 46vh;
   margin: 0;
-  padding: 6px 0;
-  border: 1px solid #aaa;
+  padding: 0;
   list-style: none;
 }
 
 .grub-menu li {
-  padding: 0 8px;
+  overflow: hidden;
+  padding: 2px 10px;
+  text-overflow: ellipsis;
   white-space: pre;
 }
 
 .grub-menu li.selected {
-  background: #aaa;
+  background: #c0c0c0;
   color: #000;
 }
 
 .grub-help {
-  width: min(78ch, 100%);
-  margin-top: 2vh;
-  padding: 0 8px;
+  margin: 16px 0 0 24px;
+  line-height: 1.5;
 }
 
 .grub-help p {
@@ -48,51 +56,56 @@
 .bootlog {
   height: 100%;
   overflow: hidden;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #000;
-  color: #d0d0d0;
-  font: 14px/1.45 var(--font-mono);
-  white-space: pre;
+  color: #c0c0c0;
+  font: 15px/1.45 var(--font-mono);
+  white-space: pre-wrap;
 }
 
 .bootlog-ok {
-  color: #4e9a06;
-  font-weight: 700;
+  color: #4ade80;
 }
 
 .bootlog-bracket {
-  color: #d0d0d0;
+  color: #c0c0c0;
+}
+
+.boot-skip {
+  position: fixed;
+  right: 16px;
+  bottom: 10px;
+  margin: 0;
+  color: #666;
 }
 
 .power-off {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+  display: grid;
+  place-content: center;
   height: 100%;
   background: #000;
-  color: #666;
-  font-size: 14px;
+  color: #c0c0c0;
+  font: 15px var(--font-mono);
+  text-align: center;
+}
+
+.power-off p {
+  margin: 0 0 1em;
 }
 
 .power-button {
-  width: 72px;
-  height: 72px;
-  border: 2px solid #333;
-  border-radius: 50%;
-  background: #0a0a0a;
-  color: #4e9a06;
-  font-size: 34px;
-  cursor: pointer;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8b949e;
+  font: inherit;
 }
 
 .power-button:hover {
-  border-color: #4e9a06;
-  box-shadow: 0 0 18px rgb(78 154 6 / 50%);
+  color: #c0c0c0;
 }
 
-/* Session splash screens. */
+/* Session splash screens, one per desktop environment. */
 .splash {
   display: flex;
   flex-direction: column;
@@ -101,28 +114,33 @@
   gap: 18px;
   height: 100%;
   background: #000;
-  color: #eff0f1;
+  color: #fff;
+  animation: splash-in 350ms ease;
 }
 
 .splash-plasma {
-  background: radial-gradient(circle at 50% 45%, #1d2b3a, #0b0f14 70%);
+  background: radial-gradient(circle at 50% 45%, #232a33, #0b0d10 70%);
+  font-family: "Noto Sans", "Inter", sans-serif;
 }
 
-.splash-logo {
-  width: 96px;
-  height: 96px;
-  animation: splash-in 600ms ease-out;
+.plasma-logo {
+  width: 64px;
+  height: 64px;
+  border: 6px solid #3daee9;
+  border-right-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-45deg);
 }
 
-.splash-name {
-  font-size: 18px;
+.splash-plasma strong {
+  font-size: 24px;
   font-weight: 300;
-  letter-spacing: 0.08em;
+  letter-spacing: 1px;
 }
 
 .splash-progress {
-  width: 200px;
-  height: 4px;
+  width: 160px;
+  height: 3px;
   overflow: hidden;
   border-radius: 2px;
   background: rgb(255 255 255 / 15%);
@@ -132,11 +150,32 @@
   display: block;
   height: 100%;
   background: #3daee9;
-  animation: splash-progress 1.3s ease-in-out forwards;
+  animation: splash-progress 1.1s ease forwards;
 }
 
-@keyframes splash-in {
-  from { opacity: 0; scale: 0.85; }
+.splash-cde {
+  background: #5f7f9f;
+}
+
+.splash-cde p {
+  margin: 0;
+  padding: 18px 28px;
+  background: #c6c6c6;
+  color: #000;
+  font: 14px Helvetica, Arial, sans-serif;
+  box-shadow: inset 2px 2px #fff, inset -2px -2px #5a5a5a;
+}
+
+.splash-hyprland {
+  background: #11111b;
+}
+
+.hypr-logo {
+  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font: 700 44px "JetBrains Mono", monospace;
 }
 
 @keyframes splash-progress {

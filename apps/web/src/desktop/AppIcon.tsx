@@ -1,5 +1,15 @@
-// App icons drawn as inline SVG, keyed by the `icon` field of a module's manifest.
-// An unknown key is shown as text, so a module can still use a single emoji or glyph.
+import { createContext, useContext } from 'react';
+
+// App icons, keyed by the `icon` field of a module's manifest. Each desktop environment has its own icon
+// theme, as on real Linux (Breeze, Adwaita, Papirus and Motif-style; see public/icons/CREDITS.md). Apps
+// without a themed icon use the TuxOS drawings below, and an unknown key is shown as text, so a module
+// can still use a single emoji or glyph.
+
+/** The desktop environment whose icon theme to use, or null for TuxOS's own icons. */
+export const IconThemeContext = createContext<string | null>(null);
+
+const THEMED = new Set(['terminal', 'files', 'editor', 'settings', 'chmod-arcade', 'learn-docker']);
+const THEMES = new Set(['plasma', 'gnome', 'cde', 'hyprland']);
 
 const ICONS: Record<string, () => React.JSX.Element> = {
   terminal: () => <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -52,6 +62,10 @@ const ICONS: Record<string, () => React.JSX.Element> = {
 };
 
 export function AppIcon({ name }: { name: string }) {
+  const theme = useContext(IconThemeContext);
+  if (theme && THEMES.has(theme) && THEMED.has(name)) {
+    return <span className="app-icon"><img src={`/icons/${theme}/${name}.svg`} alt="" draggable={false} /></span>;
+  }
   const Icon = ICONS[name];
   return <span className="app-icon">{Icon ? <Icon /> : name}</span>;
 }

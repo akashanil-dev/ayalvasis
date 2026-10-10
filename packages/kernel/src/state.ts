@@ -27,13 +27,13 @@ export interface SessionState {
   windows: Window[];
   focusedId: string | null;
   nextId: number;
-  /** The desktop environment the learner is logged in to, e.g. "plasma" or "gnome". */
+  /** The desktop environment the learner is logged in to, "plasma", "gnome", "cde" or "hyprland". */
   desktop: string;
   wallpaper: string;
 }
 
 export const DEFAULT_DESKTOP = 'plasma';
-export const DEFAULT_WALLPAPER = 'aurora';
+export const DEFAULT_WALLPAPER = 'freedom';
 
 export function emptySession(): SessionState {
   return { windows: [], focusedId: null, nextId: 1, desktop: DEFAULT_DESKTOP, wallpaper: DEFAULT_WALLPAPER };
