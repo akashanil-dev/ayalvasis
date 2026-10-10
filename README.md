@@ -32,25 +32,42 @@ This template has no application code or required technology stack. The document
 ## Project overview — complete during the event
 
 - **Project name:** TODO
-- **Short description:** TODO — what it does, who it helps, and why it matters.
+- **Short description:** A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor guides each learner and can operate the system itself. Every activity (Learn Linux, Learn Docker, games) is a module that shows up as a desktop icon.
 - **Team:** TODO — participant names and GitHub handles; maximum 4 members.
 - **Working demo:** TODO — link or local demo instructions.
-- **Technology stack:** TODO
+- **Technology stack:** TypeScript, npm workspaces, Vitest.
+
+### Architecture
+
+- **Kernel** (`packages/kernel`): owns the system state. The only way to change it is `kernel.dispatch(action)`, which:
+  - checks the sender's capabilities
+  - runs the action as a Linux user, so file permissions apply
+  - records the result in an event log that others can subscribe to
+
+  The learner, modules and the AI tutor all use this same entry point.
+- **SDK** (`packages/sdk`): shared types (actions, events, actors, capabilities, module manifests) that the kernel, modules, UI and tutor build on.
+- **Modules** (`modules/*`, planned): each one adds desktop apps, shell commands and lessons through a manifest.
 
 ### Run the project
 
-Replace these placeholders with commands that actually work for your project:
-
-1. Prerequisites and versions: TODO
-2. Dependency installation: TODO
-3. Environment setup: TODO — list required variable names and provide a sanitized `.env.example` if needed.
-4. Start the project: TODO
-5. Run checks or tests: TODO
+1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
+2. Dependency installation: `npm install`
+3. Environment setup: none needed yet.
+4. Start the project: there is no app to start yet; only the kernel library and its tests exist.
+5. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
 
 ### Current status
 
-- Working features: TODO
-- Known limitations: TODO
-- Libraries, APIs, and public datasets used: TODO — include source links and applicable attribution.
+- Working features:
+  - **Kernel:** action registry, `dispatch` with capability checks, an event log with subscribers and a size limit, and JSON snapshots and restore. A failed action leaves the state unchanged.
+  - **Virtual filesystem:**
+    - stat, read, list, write/append, mkdir (with `-p` behaviour), remove (with recursive), chmod
+    - Unix owner/other permissions, including execute permission to enter a directory, with root overrides
+  - **Tests:** covered by Vitest unit tests.
+- Known limitations:
+  - Group permissions aren't modelled.
+  - Each state-changing action copies the whole state, which is fine at learner-sized filesystems; this can be revisited if it gets slow.
+  - There is no shell, UI, module host or tutor yet.
+- Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/) (Apache-2.0) and [Vitest](https://vitest.dev/) (MIT), both development-only.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

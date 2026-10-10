@@ -4,16 +4,24 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
-No project implementation has been recorded yet. Replace this sentence with entries as you build:
+## 2026-10-10T23:41:17+05:30 — Workspace, SDK contracts and kernel core
 
-```text
-## <actual timestamp> — <short change title>
-
-- Changed: <feature or files changed>
-- Why: <reason for the change>
-- Validation: <commands or manual checks actually run, with results>
-- Limitations: <known issues or "None identified in these checks">
-```
+- Changed:
+  - Added an npm workspace (`package.json`, `tsconfig.json`).
+  - Added `packages/sdk` with shared types: Action, Actor, Capability, KernelEvent, ModuleManifest.
+  - Added `packages/kernel`:
+    - `dispatch` with capability checks, an event log, subscribers and snapshots
+    - a virtual filesystem with Unix permissions
+    - built-in `fs.*` actions
+    - Vitest tests
+  - Added build outputs to `.gitignore`.
+  - Documented the architecture, commands and status in `README.md`.
+- Why: Everything else depends on these contracts. The learner, modules and the AI tutor will all change the system through the same `dispatch` call, so it has to be correct and tested before the shell, UI and tutor are built on it.
+- Validation: `npm run check` — the type check passed and 22 of 22 tests passed (`vfs.test.ts`, `kernel.test.ts`).
+- Limitations:
+  - No group permissions.
+  - Each state-changing action copies the whole state.
+  - No shell, UI, module host or tutor yet.
 
 ## Template setup — 10 October 2026
 
