@@ -46,6 +46,7 @@ This template has no application code or required technology stack. The document
 
   The learner, modules and the AI tutor all use this same entry point.
 - **SDK** (`packages/sdk`): shared types (actions, events, actors, capabilities, module manifests) that the kernel, modules, UI and tutor build on.
+- **Shell** (`packages/shell`): a bash-like teaching shell. It parses commands, expands variables and globs, runs pipelines and redirections, and implements built-ins entirely through `kernel.dispatch`.
 - **Modules** (`modules/*`, planned): each one adds desktop apps, shell commands and lessons through a manifest.
 
 ### Run the project
@@ -53,7 +54,7 @@ This template has no application code or required technology stack. The document
 1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
 2. Dependency installation: `npm install`
 3. Environment setup: none needed yet.
-4. Start the project: there is no app to start yet; only the kernel library and its tests exist.
+4. Start the project: there is no browser app to start yet; the kernel and shell libraries can be exercised through their tests.
 5. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
 
 ### Current status
@@ -64,10 +65,13 @@ This template has no application code or required technology stack. The document
     - stat, read, list, write/append, mkdir (with `-p` behaviour), remove (with recursive), chmod
     - Unix owner/other permissions, including execute permission to enter a directory, with root overrides
   - **Tests:** covered by Vitest unit tests.
+  - **Shell:** parser, command executor, pipelines, redirections, variables, globs, conditional operators, permissions-aware built-ins, and module command registration.
 - Known limitations:
   - Group permissions aren't modelled.
   - Each state-changing action copies the whole state, which is fine at learner-sized filesystems; this can be revisited if it gets slow.
-  - There is no shell, UI, module host or tutor yet.
+  - The shell intentionally implements only the command/options listed in its package task; it is not a complete Bash or POSIX shell.
+  - Some GNU formatting and shell-language edge cases remain simplified for the teaching filesystem.
+  - There is no UI, module host or tutor yet.
 - Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/) (Apache-2.0) and [Vitest](https://vitest.dev/) (MIT), both development-only.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

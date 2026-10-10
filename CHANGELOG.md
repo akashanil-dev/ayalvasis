@@ -4,6 +4,22 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T00:02:14+05:30 — Bash-like teaching shell final fixes
+
+- Changed:
+  - Added `packages/shell` with the public `createShell` API and workspace manifest.
+  - Reworked the parser to preserve quoted segments and defer variable, status, tilde and glob expansion until each command executes.
+  - Fixed parser progress for lone dollar signs and added bounded prefix termination coverage for tricky incomplete inputs.
+  - Improved syntax diagnostics with the unexpected token and handled bad substitutions as exit status 1.
+  - Fixed grep filename prefixes to appear only for multiple files or recursive searches.
+  - Split built-ins into navigation, files, text and system command modules, with true and false included.
+  - Added user-aware command context, root-aware sudo, duplicate registration errors, kernel `resolvePath` usage and the named `RunResult` type.
+  - Split tests into parser, executor and command suites covering regressions, options, permissions and module registration.
+  - Updated `README.md` and `AI_USAGE.md`.
+- Why: Give the browser Linux system a safe, teachable command-line layer while preserving the kernel as the sole owner of filesystem state.
+- Validation: `npm run check` — `tsc -p tsconfig.json` passed; Vitest reported 5 test files and 45 tests passed.
+- Limitations: This is a focused Bash-like subset; group permissions, complete GNU edge cases, and a UI/module host remain outside the package.
+
 ## 2026-10-10T23:41:17+05:30 — Workspace, SDK contracts and kernel core
 
 - Changed:

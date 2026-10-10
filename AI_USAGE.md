@@ -8,7 +8,7 @@ No participant AI usage has been recorded yet. Replace the placeholder row as yo
 
 | Date and time with timezone | Tool / model, if known | Task | Assistance and affected files | Human review / corrections | Validation and result |
 | --- | --- | --- | --- | --- | --- |
-| TODO | Codex | TODO | TODO | Pending | TODO |
+| 2026-10-11T00:02:14+05:30 | Codex | Build and review the browser Linux teaching shell | Built `@ayalvasis/shell` including its parser, executor, built-ins, and tests; then performed the review-driven rework with a quote-aware parser and deferred expansion, user-aware sudo, command files split by responsibility, the lone-`$` hang fix, token-specific syntax errors, and GNU-style grep filename prefixes. | Pending | `npm run check` passed: TypeScript typecheck and 45 Vitest tests. |
 
 ## Template preparation
 
