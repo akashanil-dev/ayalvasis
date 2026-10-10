@@ -23,7 +23,7 @@ Record each meaningful project change during the event, newest first. Update thi
   - Design inspired by the team's earlier Tuxplore project; all code, styles and artwork here were written at
     the event (Tuxplore's files are not part of this repository).
 - Why: The team wants TuxOS to look and feel like a real Linux computer from the moment it starts.
-- Validation: `npm run check` — type check passed; Vitest reported 22 test files and 246 tests passed.
+- Validation: `npm run check` — type check passed; Vitest reported 21 test files and 246 tests passed.
   `npm run build` passed. Walked through GRUB, boot log, SDDM, Plasma, Kickoff and the terminal in Chromium.
 - Limitations: GNOME, the overview and Settings were covered by tests but the in-browser walkthrough stopped
   before them; only two desktop environments so far.
