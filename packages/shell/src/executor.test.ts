@@ -5,6 +5,16 @@ import { createShell } from './index';
 const make = () => createShell(createKernel({ username: 'ada' }));
 
 describe('executor', () => {
+  it('routes learning slash commands while preserving ordinary absolute paths', async () => {
+    const shell = make();
+    shell.register({
+      name: 'hint', summary: 'hint', usage: '/hint',
+      run: (ctx) => { ctx.stdout('try pwd\n'); return 0; },
+    });
+    await expect(shell.run('/hint')).resolves.toMatchObject({ code: 0, stdout: 'try pwd\n' });
+    await expect(shell.run('cat /etc/motd')).resolves.toMatchObject({ code: 0 });
+  });
+
   it('expands status and exported variables at execution time', async () => {
     const shell = make();
     const result = await shell.run('cat /nope; echo $?');

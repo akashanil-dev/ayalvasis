@@ -6,6 +6,7 @@ import type {
   ModuleContext,
   ModuleDefinition,
   ModuleManifest,
+  LearningBackend,
 } from '@tuxos/sdk';
 import type { CommandDefinition as ShellCommandDefinition, Shell } from '@tuxos/shell';
 
@@ -39,7 +40,7 @@ interface Record {
   deactivate?: () => void | Promise<void>;
 }
 
-export function createModuleHost(options: { kernel: Kernel; shell: Shell }): ModuleHost {
+export function createModuleHost(options: { kernel: Kernel; shell: Shell; learning?: LearningBackend }): ModuleHost {
   const records = new Map<string, Record>();
   const commandOwners = new Map<string, string>();
   const appOwners = new Map<string, string>();
@@ -178,6 +179,7 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell }): Mod
       log(message) {
         console.log(`[module:${record.manifest.id}] ${message}`);
       },
+      learning: options.learning,
     };
   }
 

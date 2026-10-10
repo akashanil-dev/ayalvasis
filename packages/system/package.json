@@ -6,6 +6,7 @@
   "exports": "./src/index.ts",
   "dependencies": {
     "@tuxos/kernel": "*",
+    "@tuxos/lessons": "*",
     "@tuxos/module-host": "*",
     "@tuxos/sdk": "*",
     "@tuxos/shell": "*"

@@ -1,7 +1,8 @@
 import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@tuxos/kernel';
+import { learningRuntime } from '@tuxos/lessons';
 import { createModuleHost, type ModuleHost } from '@tuxos/module-host';
 import type {
-  Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest,
+  Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest, LearningBackend,
 } from '@tuxos/sdk';
 import {
   createCommandRegistry,
@@ -91,7 +92,11 @@ interface Running {
   unsubscribe: () => void;
 }
 
-export function createLocalSystem(options: { storage: KeyValueStorage; modules: ModuleEntry[] }): SystemClient {
+export function createLocalSystem(options: {
+  storage: KeyValueStorage;
+  modules: ModuleEntry[];
+  learning?: LearningBackend;
+}): SystemClient {
   let running: Running | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const changeListeners = new Set<(event: KernelEvent) => void>();
@@ -124,7 +129,11 @@ export function createLocalSystem(options: { storage: KeyValueStorage; modules: 
     running?.unsubscribe();
     const kernel = createKernel(snapshot ? { snapshot } : { username });
     const registry = createCommandRegistry();
-    const host = createModuleHost({ kernel, shell: createShell(kernel, { registry }) });
+    const host = createModuleHost({
+      kernel,
+      shell: createShell(kernel, { registry }),
+      learning: options.learning ?? browserLearningBackend(),
+    });
     for (const entry of options.modules) host.add(entry.manifest, entry.load);
     const unsubscribe = kernel.subscribe((event) => {
       if (!event.ok || !event.mutates) return;
@@ -227,6 +236,22 @@ export function createLocalSystem(options: { storage: KeyValueStorage; modules: 
   return client;
 }
 
+/** The browser sends learning requests to the local API; the secret stays on that server. */
+function browserLearningBackend(): LearningBackend {
+  return {
+    async request(path, body) {
+      const response = await fetch(`/api/learning${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json().catch(() => ({ error: `learning service returned HTTP ${response.status}` }));
+      if (!response.ok) throw new Error((data as { error?: string }).error ?? `learning service returned HTTP ${response.status}`);
+      return data;
+    },
+  };
+}
+
 async function savedSnapshot(storage: KeyValueStorage, username: string): Promise<KernelSnapshot | undefined> {
   const saved = await storage.get(SAVE_KEY);
   if (!saved) return undefined;
@@ -236,7 +261,13 @@ async function savedSnapshot(storage: KeyValueStorage, username: string): Promis
 
 function terminalSession(kernel: Kernel, shell: Shell): TerminalSession {
   return {
-    run: (line) => shell.run(line),
+    run: async (line) => {
+      const result = await shell.run(line);
+      const assessment = await learningRuntime.current?.waitForAssessment();
+      return assessment
+        ? { ...result, stdout: `${result.stdout}${result.stdout.endsWith('\n') || !result.stdout ? '' : '\n'}[Trainer] ${assessment}\n` }
+        : result;
+    },
     cwd: async () => shell.cwd,
     prompt: async () => bashPrompt(kernel.user, kernel.getState().hostname, shell.cwd, shell.env.HOME ?? ''),
     complete: async (line, cursor) => shell.complete(line, cursor),

@@ -1,4 +1,5 @@
 import type { ModuleDefinition } from '@tuxos/sdk';
+import { learningRuntime } from '@tuxos/lessons';
 import { manifest } from './manifest';
 
 export { manifest } from './manifest';
@@ -18,6 +19,25 @@ export const terminal: ModuleDefinition = {
         return 0;
       },
     });
+    for (const name of ['hint', 'answer', 'task', 'next'] as const) {
+      ctx.registerCommand({
+        name,
+        summary: manifest.contributes.commands!.find((command) => command.name === name)!.summary,
+        usage: `/${name}`,
+        async run(command: { stdout(text: string): void; stderr(text: string): void }) {
+          const runner = learningRuntime.current;
+          if (!runner) {
+            command.stderr('No active AI learning task. Open Learn Linux or Learn Docker and start a day first.\n');
+            return 1;
+          }
+          const text = name === 'hint' ? await runner.hint()
+            : name === 'answer' ? await runner.answer()
+              : runner.next();
+          command.stdout(`${text}\n`);
+          return 0;
+        },
+      });
+    }
   },
 };
 

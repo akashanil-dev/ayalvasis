@@ -44,7 +44,10 @@ export class ShellImpl implements ShellInternals {
   async run(line: string): Promise<RunResult> {
     this.remember(line);
     this.ran = [];
-    const result = await this.runInternal(line, this.kernel.user);
+    // Slash commands are terminal-native learning controls. Ordinary absolute paths such as /etc/passwd
+    // remain untouched; only the explicitly supported learning commands lose their leading slash.
+    const executableLine = line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2');
+    const result = await this.runInternal(executableLine, this.kernel.user);
     if (line.trim()) this.record(line, result);
     return result;
   }

@@ -9,6 +9,7 @@
     "./view": "./src/view.tsx"
   },
   "dependencies": {
+    "@tuxos/lessons": "*",
     "@tuxos/sdk": "*",
     "@tuxos/system": "*",
     "@xterm/addon-fit": "^0.11.0",

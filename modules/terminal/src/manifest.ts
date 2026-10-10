@@ -14,6 +14,12 @@ export const manifest: ModuleManifest = {
       category: 'System',
       description: 'Type commands into a bash shell.',
     }],
-    commands: [{ name: 'clear', summary: 'Clear the terminal screen' }],
+    commands: [
+      { name: 'clear', summary: 'Clear the terminal screen' },
+      { name: 'hint', summary: 'Ask the active trainer for a hint (/hint)' },
+      { name: 'answer', summary: 'Show the detailed answer for the active task (/answer)' },
+      { name: 'task', summary: 'Show the current industry task (/task)' },
+      { name: 'next', summary: 'Show the next task (/next)' },
+    ],
   },
 };

@@ -1,4 +1,4 @@
-import { activateCourse, type Course } from '@tuxos/lessons';
+import { activateAICourse, type Course } from '@tuxos/lessons';
 import type { ModuleContext, ModuleDefinition } from '@tuxos/sdk';
 import { curl, docker } from './cli';
 import courseData from './course.json';
@@ -36,7 +36,13 @@ export const learnDocker: ModuleDefinition = {
     });
     command('docker', (args) => docker(engine, args));
     command('curl', (args) => curl(engine, args));
-    return activateCourse(ctx, course);
+    return activateAICourse(ctx, course, {
+      id: 'docker-platform-engineer',
+      title: 'Docker Platform Engineering Trainer',
+      specialty: 'A production platform engineer who teaches container lifecycle, images, networking, observability, security, and incident response.',
+      level: 'beginner to advanced',
+      scenarioFocus: 'deployment tickets, broken services, container debugging, release hygiene, and production operations',
+    });
   },
 };
 

@@ -106,6 +106,12 @@ export interface ModuleContext {
   /** Watch everything that happens in the system (read-only). Returns a function that stops watching. */
   onEvent(listener: (event: KernelEvent) => void): () => void;
   log(message: string): void;
+  /** Optional server-side AI learning service. The module never receives an API key. */
+  learning?: LearningBackend;
+}
+
+export interface LearningBackend {
+  request(path: string, body: unknown): Promise<unknown>;
 }
 
 export interface ModuleDefinition {

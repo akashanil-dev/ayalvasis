@@ -97,12 +97,21 @@ This template has no application code or required technology stack. The document
 1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
 2. Dependency installation: `npm install`
 3. Environment setup: for the AI tutor, copy `.env.example` to `.env` and set `OPENAI_API_KEY` (optionally
-   `OPENAI_MODEL`, default `gpt-4.1-mini`). Everything else works without it; the tutor then explains that it
+   `OPENAI_MODEL`, default `gpt-4.1-mini`). Set `OPENAI_MODEL_LINUX`, `OPENAI_MODEL_DOCKER`, `OPENAI_MODEL_TERMINAL`, and
+   `OPENAI_MODEL_CHMOD_ARCADE` independently when each learning module should use a distinct model. Everything else works without it; the tutor then explains that it
    isn't set up.
-4. Start the project: `npm run dev` for the desktop, then open the URL printed by Vite (normally
+4. Configure the tutor locally. First create a new OpenAI API key if an old one has ever been exposed. Copy
+   `.env.example` to `.env` and set `OPENAI_API_KEY` there. The file is ignored by Git. The key is read only by
+   the Node API server; it is never bundled into the browser, exposed as a `VITE_*` variable, or sent to the
+   frontend. In production, inject it with the hosting provider's secret manager rather than storing `.env`.
+5. Start the project: `npm run dev` for the desktop, then open the URL printed by Vite (normally
    `http://localhost:5173`). In a second terminal, `npm run api` starts the tutor's API server on port 8787;
-   the dev server forwards `/api` to it.
-5. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
+   the dev server forwards `/api` to it. Check `http://localhost:8787/api/health` before opening Vasi.
+6. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
+
+Never paste an API key into source files, commit history, issue trackers, chat, or browser developer tools. If a
+key is exposed, revoke it immediately and create a replacement; changing the model or `.env` value does not
+invalidate the old credential.
 
 ### Current status
 
@@ -125,7 +134,9 @@ This template has no application code or required technology stack. The document
     pipes, permissions and sudo). Each step is checked automatically from what the learner does in the
     terminal or on the desktop, with hints on demand and an explanation after each step. Progress survives
     reloads and keeps tracking while the window is closed. Lesson start, quit, reset and status are kernel
-    actions, so the AI tutor can drive lessons the same way.
+    actions, so the AI tutor can drive lessons the same way. With the learning API configured, a Linux
+    certification trainer generates industry scenarios and terminal `/hint`, `/answer`, `/task`, and `/next`
+    controls work across the active course; the reviewed JSON course is the offline fallback.
   - **Learn Docker:** a simulated Docker with real-looking output and errors: `run` (with `-d`, `--name`,
     `-p`, `-e`, `--rm`), `ps [-a]`, `images`, `pull`, `stop`, `start`, `restart`, `rm [-f]`, `rmi`, `logs`,
     `exec`, and images hello-world, alpine, ubuntu, python, nginx, redis and postgres. Published ports work
@@ -140,6 +151,12 @@ This template has no application code or required technology stack. The document
     picks. Each action shows in the chat as it happens. After two failed commands in a row, a nudge offers
     help; nothing is sent to the AI until the learner asks. Errors (no key, quota, service down) are shown in
     plain words.
+  - **AI-designed learning backend:** `/api/learning/plan` creates a seven-day terminal-first syllabus with
+    recap tasks from day two onward; `/evaluate`, `/hint`, and `/answer` use module-specific trainer personas.
+    The server validates structured responses and never exposes the API key to the browser. Generated progress and a
+    bounded, module-specific memory cache are saved in the user's virtual home under
+    `~/.local/share/tuxos/ai-learning/`; the API remains stateless. To keep model execution local too, point
+    `OPENAI_BASE_URL` at a local OpenAI-compatible inference server; otherwise only state and memory are local.
   - **Security:** acting as another user (sudo) needs the `user:switch` capability, so neither modules nor the
     tutor can escalate to root unless granted it.
   - **About module:** contributes the About app and `uname` command, including `uname -a` hostname output.

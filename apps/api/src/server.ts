@@ -5,11 +5,18 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { RateLimiter } from './rate-limit.ts';
 import { handleTutor, type TutorConfig } from './tutor.ts';
+import { handleLearning } from './learning.ts';
 
 const config: TutorConfig = {
   apiKey: process.env.OPENAI_API_KEY || undefined,
   model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
   baseUrl: (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
+  learningModels: {
+    'learn-linux': process.env.OPENAI_MODEL_LINUX || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    'learn-docker': process.env.OPENAI_MODEL_DOCKER || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    terminal: process.env.OPENAI_MODEL_TERMINAL || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    'chmod-arcade': process.env.OPENAI_MODEL_CHMOD_ARCADE || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+  },
 };
 const port = Number(process.env.PORT || 8787);
 const MAX_BODY_BYTES = 512 * 1024;
@@ -36,6 +43,16 @@ async function route(request: IncomingMessage, response: ServerResponse): Promis
     const body = await readJson(request);
     if (body === undefined) return send(response, 400, { error: 'The request body must be JSON under 512 KB.' });
     const reply = await handleTutor(body, config);
+    return send(response, reply.status, reply.body);
+  }
+  if (request.method === 'POST' && /^\/api\/learning\/(plan|evaluate|hint|answer)$/.test(url.pathname)) {
+    if (!limiter.allow(request.socket.remoteAddress ?? 'unknown')) {
+      return send(response, 429, { error: 'Slow down a little: too many learning requests in a minute.' });
+    }
+    const body = await readJson(request);
+    if (body === undefined) return send(response, 400, { error: 'The request body must be JSON under 512 KB.' });
+    const operation = url.pathname.slice('/api/learning/'.length);
+    const reply = await handleLearning({ ...(body as Record<string, unknown>), operation }, config);
     return send(response, reply.status, reply.body);
   }
   send(response, 404, { error: 'Not found.' });

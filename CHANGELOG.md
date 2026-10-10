@@ -4,6 +4,26 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T04:14:36+05:30 — Module-local learning memory and model routing
+
+- What changed: Added bounded local memory files per learning module, memory-aware planning/hints/answers/evaluation, and independent environment-configurable model routing for Linux, Docker, Terminal, and chmod-arcade.
+- Why: Keep learner continuity distinct between trainer personas and make module model choice explicit without putting secrets or learner history in the browser/API state.
+- Affected files: `packages/lessons/src/ai.ts`, `apps/api/src/learning.ts`, `apps/api/src/server.ts`, `apps/api/src/tutor.ts`, `.env.example`, `README.md`, and learning tests.
+- Validation: `npm run check` passed with 22 test files and 251 tests; `npm run build` passed; `git diff --check` passed.
+- Known limitation: OpenAI-compatible generation is remote unless `OPENAI_BASE_URL` points to a local inference server; persisted state and memory are always local to the virtual filesystem.
+
+## 2026-10-11T04:10:23+05:30 — AI-designed terminal learning backend
+
+- Changed:
+  - Added server-side `/api/learning/plan`, `/evaluate`, `/hint`, and `/answer` endpoints with structured response validation and per-module trainer personas.
+  - Added AI course runners for Learn Linux and Learn Docker. They generate seven-day, industry-scenario syllabi, require recap tasks after day one, evaluate actual terminal evidence, and persist progress.
+  - Added terminal-native `/hint`, `/answer`, `/task`, and `/next` commands without changing frontend components; AI-mode command results include an explicit trainer assessment.
+  - Preserved the existing reviewed JSON courses as a deterministic fallback when the AI service is unavailable.
+- Why: Make learning content adaptive and realistic while keeping execution local, auditable, and safe.
+- Validation: `npm run check` passed with 22 test files and 250 tests; `npm run build` passed; `npm install --package-lock-only --ignore-scripts` completed.
+- Limitations: AI content quality depends on the configured model; the fallback is intentionally deterministic; real API/browser validation requires a valid server-side key and running local servers.
+
+
 ## 2026-10-11T04:11:58+05:30 — UI redesign and four desktop environments (adds CDE and Hyprland)
 
 - Changed:

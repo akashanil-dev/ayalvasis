@@ -7,6 +7,7 @@ export interface TutorConfig {
   apiKey: string | undefined;
   model: string;
   baseUrl: string;
+  learningModels?: Record<string, string>;
 }
 
 export interface Reply {
