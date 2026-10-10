@@ -1,5 +1,5 @@
-import type { SystemClient } from '@ayalvasis/system';
-import type { Autonomy, Transport } from '@ayalvasis/tutor';
+import type { SystemClient } from '@tuxos/system';
+import type { Autonomy, Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
 import { PointerOverlay } from './PointerOverlay';
 import { Puppet } from './Puppet';

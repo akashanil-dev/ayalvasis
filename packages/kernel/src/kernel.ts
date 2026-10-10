@@ -4,7 +4,7 @@
 
 import type {
   Action, ActionDefinition as SdkActionDefinition, ActionError, Actor, Capability, DispatchResult, KernelEvent,
-} from '@ayalvasis/sdk';
+} from '@tuxos/sdk';
 import { KernelError } from './errors';
 import { createInitialState, type KernelState } from './state';
 import * as vfs from './vfs';
@@ -72,7 +72,7 @@ export class Kernel {
       }
       this.state = restoreState(options.snapshot.state);
     } else if (options.username) {
-      this.state = createInitialState(options.username, 'ayalvasis', this.now());
+      this.state = createInitialState(options.username, 'tuxos', this.now());
     } else {
       throw new KernelError('EINVAL', 'a kernel needs a username or a snapshot');
     }

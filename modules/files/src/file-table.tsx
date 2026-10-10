@@ -1,4 +1,4 @@
-import type { Stat } from '@ayalvasis/kernel';
+import type { Stat } from '@tuxos/kernel';
 import { formatSize, formatTime } from './model';
 
 interface FileTableProps {

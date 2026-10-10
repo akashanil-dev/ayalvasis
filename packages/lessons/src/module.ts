@@ -1,8 +1,8 @@
 // Everything a course module needs: run the course, keep progress in the learner's home, and expose
 // status/start/quit/reset as kernel actions that the course window and the AI tutor both use.
 
-import { KernelError } from '@ayalvasis/kernel';
-import type { ModuleContext } from '@ayalvasis/sdk';
+import { KernelError } from '@tuxos/kernel';
+import type { ModuleContext } from '@tuxos/sdk';
 import { LessonRunner, type LessonHost } from './runner';
 import type { Course, Progress } from './types';
 import { validateCourse } from './validate';
@@ -65,7 +65,7 @@ function registerLessonActions(ctx: ModuleContext, runner: LessonRunner): void {
 /** Progress lives in a hidden file in the learner's home, the way Linux apps keep their data. */
 function moduleLessonHost(ctx: ModuleContext, courseId: string): LessonHost {
   const home = `/home/${ctx.user}`;
-  const dataDir = `${home}/.local/share/ayalvasis`;
+  const dataDir = `${home}/.local/share/tuxos`;
   const progressFile = `${dataDir}/${courseId}.json`;
   const read = <R>(type: string, path: string) => ctx.dispatch<R>(type, { path });
   return {

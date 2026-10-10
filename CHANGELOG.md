@@ -4,6 +4,16 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T02:54:39+05:30 — Renamed the project to TuxOS
+
+- Changed: the product is now called TuxOS. Package scope `@ayalvasis/*` became `@tuxos/*`, the hostname and
+  prompt became `tuxos`, browser storage keys and the tutor's instructions were updated. The GitHub repository
+  keeps its name. Earlier changelog and AI usage entries still say ayalvasis, as they did when written.
+- Why: The team chose TuxOS as the product name.
+- Validation: `npm run check` — type check passed; Vitest reported 20 test files and 239 tests passed.
+  `npm run build` passed.
+- Limitations: saves made under the old storage key are not migrated, so earlier local test systems start fresh.
+
 ## 2026-10-11T02:17:58+05:30 — Learn Docker and chmod Arcade
 
 - Changed:

@@ -173,7 +173,7 @@ export function curl(engine: DockerEngine, args: string[]): Output {
   const match = /^(?:https?:\/\/)?(localhost|127\.0\.0\.1)(?::(\d+))?(\/[^\s]*)?$/.exec(url);
   if (!match) {
     return { stdout: '', stderr: `curl: (6) Could not resolve host: ${url.replace(/^https?:\/\//, '').split('/')[0]}\n`
-      + '(ayalvasis has no internet; only localhost works here.)\n', code: 6 };
+      + '(tuxos has no internet; only localhost works here.)\n', code: 6 };
   }
   return engine.httpGet(Number(match[2] ?? 80), match[3] ?? '/');
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createLocalSystem, type KeyValueStorage } from '@ayalvasis/system';
+import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
 import { TerminalController, titleFor, toTerminal } from './controller';
 import { terminal } from './index';
 
@@ -33,8 +33,8 @@ describe('TerminalController', () => {
   it('prints the motd and a bash prompt, and titles the window', async () => {
     const { controller, window, read } = await setup();
     await controller.start('Welcome');
-    expect(read()).toBe('Welcome\r\nada@ayalvasis:~$ ');
-    expect(window.titles).toEqual(['ada@ayalvasis: ~']);
+    expect(read()).toBe('Welcome\r\nada@tuxos:~$ ');
+    expect(window.titles).toEqual(['ada@tuxos: ~']);
   });
 
   it('runs a typed command and shows its output with terminal line endings', async () => {
@@ -42,15 +42,15 @@ describe('TerminalController', () => {
     await controller.start();
     reset();
     await controller.input('echo hi > f; cat f; cat nope\r');
-    expect(read()).toContain('\r\nhi\r\ncat: nope: No such file or directory\r\nada@ayalvasis:~$ ');
+    expect(read()).toContain('\r\nhi\r\ncat: nope: No such file or directory\r\nada@tuxos:~$ ');
   });
 
   it('updates the prompt and title after cd', async () => {
     const { controller, window, read } = await setup();
     await controller.start();
     await controller.input('cd Documents\r');
-    expect(read().endsWith('ada@ayalvasis:~/Documents$ ')).toBe(true);
-    expect(window.titles).toEqual(['ada@ayalvasis: ~', 'ada@ayalvasis: ~/Documents']);
+    expect(read().endsWith('ada@tuxos:~/Documents$ ')).toBe(true);
+    expect(window.titles).toEqual(['ada@tuxos: ~', 'ada@tuxos: ~/Documents']);
     await controller.input('ls\r');
     expect(window.titles).toHaveLength(2);
   });
@@ -88,7 +88,7 @@ describe('TerminalController', () => {
     await controller.start();
     reset();
     await controller.input('half typed\x03');
-    expect(read().endsWith('^C\r\nada@ayalvasis:~$ ')).toBe(true);
+    expect(read().endsWith('^C\r\nada@tuxos:~$ ')).toBe(true);
   });
 });
 

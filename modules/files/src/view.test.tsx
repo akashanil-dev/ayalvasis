@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { files } from './index';
 import { formatSize, nameError, parentOf, sortEntries } from './model';

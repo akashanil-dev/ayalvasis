@@ -1,4 +1,4 @@
-import { createKernel } from '@ayalvasis/kernel';
+import { createKernel } from '@tuxos/kernel';
 import { describe, expect, it } from 'vitest';
 import { createCommandRegistry, createShell } from './index';
 

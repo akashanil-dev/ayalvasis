@@ -1,5 +1,5 @@
-import type { Stat } from '@ayalvasis/kernel';
-import type { SystemClient } from '@ayalvasis/system';
+import type { Stat } from '@tuxos/kernel';
+import type { SystemClient } from '@tuxos/system';
 import { useCallback, useEffect, useState } from 'react';
 
 const REASONS: Record<string, string> = {

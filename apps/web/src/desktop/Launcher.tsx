@@ -1,4 +1,4 @@
-import type { AppContribution } from '@ayalvasis/sdk';
+import type { AppContribution } from '@tuxos/sdk';
 import { AppIcon } from './AppIcon';
 
 interface LauncherProps {

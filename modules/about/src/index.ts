@@ -1,4 +1,4 @@
-import type { ModuleDefinition } from '@ayalvasis/sdk';
+import type { ModuleDefinition } from '@tuxos/sdk';
 import { manifest } from './manifest';
 
 export { manifest } from './manifest';
@@ -11,7 +11,7 @@ export const about: ModuleDefinition = {
       run(command) {
         const all = command.args.includes('-a');
         const hostname = command.kernel.getState().hostname;
-        command.stdout(all ? `Linux ${hostname} 6.6.0-ayalvasis #1 SMP x86_64 GNU/Linux\n` : 'Linux\n');
+        command.stdout(all ? `Linux ${hostname} 6.6.0-tuxos #1 SMP x86_64 GNU/Linux\n` : 'Linux\n');
         return 0;
       },
     });

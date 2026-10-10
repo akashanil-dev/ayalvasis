@@ -1,5 +1,5 @@
-import type { SystemClient } from '@ayalvasis/system';
-import type { Transport } from '@ayalvasis/tutor';
+import type { SystemClient } from '@tuxos/system';
+import type { Transport } from '@tuxos/tutor';
 import { useEffect, useState } from 'react';
 import { Boot } from './screens/Boot';
 import { Desktop } from './screens/Desktop';

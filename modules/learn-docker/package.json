@@ -1,5 +1,5 @@
 {
-  "name": "@ayalvasis/module-learn-docker",
+  "name": "@tuxos/module-learn-docker",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,10 +9,10 @@
     "./view": "./src/view.tsx"
   },
   "dependencies": {
-    "@ayalvasis/course-view": "*",
-    "@ayalvasis/lessons": "*",
-    "@ayalvasis/sdk": "*",
-    "@ayalvasis/system": "*",
+    "@tuxos/course-view": "*",
+    "@tuxos/lessons": "*",
+    "@tuxos/sdk": "*",
+    "@tuxos/system": "*",
     "react": "^19.1.0"
   }
 }

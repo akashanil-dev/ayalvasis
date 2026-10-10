@@ -1,18 +1,18 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import type { AppViewProps } from '@ayalvasis/system';
+import type { AppViewProps } from '@tuxos/system';
 
-export type { AppViewProps } from '@ayalvasis/system';
+export type { AppViewProps } from '@tuxos/system';
 type ViewModule = { default: ComponentType<AppViewProps> };
 
 // Each app's window content, loaded only when its first window opens.
 export const views: Record<string, () => Promise<ViewModule>> = {
-  about: () => import('@ayalvasis/module-about/view'),
-  terminal: () => import('@ayalvasis/module-terminal/view'),
-  files: () => import('@ayalvasis/module-files/view'),
-  editor: () => import('@ayalvasis/module-editor/view'),
-  'learn-linux': () => import('@ayalvasis/module-learn-linux/view'),
-  'learn-docker': () => import('@ayalvasis/module-learn-docker/view'),
-  'chmod-arcade': () => import('@ayalvasis/module-chmod-arcade/view'),
+  about: () => import('@tuxos/module-about/view'),
+  terminal: () => import('@tuxos/module-terminal/view'),
+  files: () => import('@tuxos/module-files/view'),
+  editor: () => import('@tuxos/module-editor/view'),
+  'learn-linux': () => import('@tuxos/module-learn-linux/view'),
+  'learn-docker': () => import('@tuxos/module-learn-docker/view'),
+  'chmod-arcade': () => import('@tuxos/module-chmod-arcade/view'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();

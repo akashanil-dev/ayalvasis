@@ -1,4 +1,4 @@
-import type { AppViewProps } from '@ayalvasis/system';
+import type { AppViewProps } from '@tuxos/system';
 import { useEffect, useRef, useState } from 'react';
 import './editor.css';
 

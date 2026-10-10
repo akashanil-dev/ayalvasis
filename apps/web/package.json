@@ -1,5 +1,5 @@
 {
-  "name": "@ayalvasis/web",
+  "name": "@tuxos/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,16 +8,16 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@ayalvasis/module-about": "*",
-    "@ayalvasis/module-chmod-arcade": "*",
-    "@ayalvasis/module-editor": "*",
-    "@ayalvasis/module-files": "*",
-    "@ayalvasis/module-learn-docker": "*",
-    "@ayalvasis/module-learn-linux": "*",
-    "@ayalvasis/module-terminal": "*",
-    "@ayalvasis/sdk": "*",
-    "@ayalvasis/system": "*",
-    "@ayalvasis/tutor": "*",
+    "@tuxos/module-about": "*",
+    "@tuxos/module-chmod-arcade": "*",
+    "@tuxos/module-editor": "*",
+    "@tuxos/module-files": "*",
+    "@tuxos/module-learn-docker": "*",
+    "@tuxos/module-learn-linux": "*",
+    "@tuxos/module-terminal": "*",
+    "@tuxos/sdk": "*",
+    "@tuxos/system": "*",
+    "@tuxos/tutor": "*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

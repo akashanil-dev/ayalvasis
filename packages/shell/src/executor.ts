@@ -1,5 +1,5 @@
-import { Kernel, resolvePath, type Stat } from '@ayalvasis/kernel';
-import type { Actor, DispatchResult } from '@ayalvasis/sdk';
+import { Kernel, resolvePath, type Stat } from '@tuxos/kernel';
+import type { Actor, DispatchResult } from '@tuxos/sdk';
 import { parse, type ParsedCommand, type ParsedList, type ParsedWord, type WordSegment } from './parser';
 import type {
   CommandContext,

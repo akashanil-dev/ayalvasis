@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createKernel } from '@ayalvasis/kernel';
+import { createKernel } from '@tuxos/kernel';
 import { createShell } from './index';
 
 const make = () => createShell(createKernel({ username: 'ada' }));

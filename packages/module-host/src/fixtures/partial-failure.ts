@@ -1,4 +1,4 @@
-import { defineModule } from '@ayalvasis/sdk';
+import { defineModule } from '@tuxos/sdk';
 
 export const partialFailure = defineModule({
   manifest: {

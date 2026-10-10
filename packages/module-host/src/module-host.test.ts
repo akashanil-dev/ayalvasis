@@ -1,7 +1,7 @@
-import type { ModuleDefinition, ModuleManifest } from '@ayalvasis/sdk';
+import type { ModuleDefinition, ModuleManifest } from '@tuxos/sdk';
 import { describe, expect, it } from 'vitest';
-import { createKernel } from '@ayalvasis/kernel';
-import { createShell } from '@ayalvasis/shell';
+import { createKernel } from '@tuxos/kernel';
+import { createShell } from '@tuxos/shell';
 import { createModuleHost } from './index';
 import { failing } from './fixtures/failing';
 import { hello } from './fixtures/hello';

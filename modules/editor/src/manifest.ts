@@ -1,4 +1,4 @@
-import type { ModuleManifest } from '@ayalvasis/sdk';
+import type { ModuleManifest } from '@tuxos/sdk';
 
 export const manifest: ModuleManifest = {
   id: 'editor',

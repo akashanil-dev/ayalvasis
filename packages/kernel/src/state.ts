@@ -38,7 +38,7 @@ export interface KernelState {
 
 // The "message of the day" a terminal prints when it opens, as Ubuntu's does.
 const MOTD = [
-  'Welcome to ayalvasis, a Linux system for learning.',
+  'Welcome to tuxos, a Linux system for learning.',
   '',
   ' * Type "help" to see the commands you can use.',
   ' * Press Tab to complete a command or file name, and Up to repeat one.',
@@ -47,7 +47,7 @@ const MOTD = [
 // Same rule as useradd's default NAME_REGEX on Debian.
 const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/;
 
-export function createInitialState(username: string, hostname = 'ayalvasis', now = 0): KernelState {
+export function createInitialState(username: string, hostname = 'tuxos', now = 0): KernelState {
   if (!USERNAME.test(username) || username === 'root') {
     throw new KernelError('EINVAL', `invalid username: ${JSON.stringify(username)}`);
   }
@@ -57,7 +57,7 @@ export function createInitialState(username: string, hostname = 'ayalvasis', now
   ].join('\n');
   const shadow = [
     'root:*:20000:0:99999:7:::',
-    `${username}:$y$j9T$ayalvasis$notarealhash:20000:0:99999:7:::`,
+    `${username}:$y$j9T$tuxos$notarealhash:20000:0:99999:7:::`,
   ].join('\n');
 
   return {

@@ -1,5 +1,5 @@
-import type { SessionState } from '@ayalvasis/kernel';
-import type { SystemClient } from '@ayalvasis/system';
+import type { SessionState } from '@tuxos/kernel';
+import type { SystemClient } from '@tuxos/system';
 import { useEffect, useState } from 'react';
 
 interface PanelProps {

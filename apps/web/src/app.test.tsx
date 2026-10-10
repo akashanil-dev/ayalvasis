@@ -1,9 +1,9 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { SessionState } from '@ayalvasis/kernel';
-import type { KernelEvent } from '@ayalvasis/sdk';
-import { about } from '@ayalvasis/module-about';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
+import type { SessionState } from '@tuxos/kernel';
+import type { KernelEvent } from '@tuxos/sdk';
+import { about } from '@tuxos/module-about';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { App, Desktop } from './app';
 
 interface TestSystem extends Omit<SystemClient, 'dispatch'> {
@@ -27,7 +27,7 @@ function fakeSystem(): TestSystem {
     };
     if (type === 'fs.read') {
       const path = (payload as { path: string }).path;
-      const value = path.endsWith('passwd') ? 'root:x:0:0\nada:x:1000:1000\n' : 'ayalvasis\n';
+      const value = path.endsWith('passwd') ? 'root:x:0:0\nada:x:1000:1000\n' : 'tuxos\n';
       return { ok: true as const, value: value as R };
     }
     const current = state.windows.find((window) => window.id === value.id);
@@ -81,7 +81,7 @@ function fakeSystem(): TestSystem {
     flush: vi.fn(async () => undefined),
     tutor: () => { throw new Error('the tutor is not used in this test'); },
     user: vi.fn(async () => 'ada'),
-    hostname: vi.fn(async () => 'ayalvasis'),
+    hostname: vi.fn(async () => 'tuxos'),
     session: vi.fn(async () => structuredClone(state)),
     apps: vi.fn(async () => [{ id: 'about', moduleId: 'about', title: 'About this system', icon: 'ⓘ' }]),
     openApp: vi.fn(async () => {
@@ -152,9 +152,9 @@ describe('web desktop', () => {
     await system.dispatch('fs.read', { path: '/etc/hostname' });
     await system.dispatch('fs.list', { path: '/' });
     expect(await screen.findByText('A small Linux desktop for learning by doing.')).toBeTruthy();
-    const hostname = await screen.findByText('ayalvasis');
+    const hostname = await screen.findByText('tuxos');
     await system.dispatch('session.focus', { id: 'window-1' });
-    expect(screen.getByText('ayalvasis')).toBe(hostname);
+    expect(screen.getByText('tuxos')).toBe(hostname);
     expect((await screen.findAllByText('About this system')).length).toBeGreaterThan(1);
   });
 

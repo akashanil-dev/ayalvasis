@@ -1,11 +1,11 @@
 {
-  "name": "@ayalvasis/lessons",
+  "name": "@tuxos/lessons",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@ayalvasis/kernel": "*",
-    "@ayalvasis/sdk": "*"
+    "@tuxos/kernel": "*",
+    "@tuxos/sdk": "*"
   }
 }

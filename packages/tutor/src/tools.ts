@@ -2,8 +2,8 @@
 // so the kernel's capability checks are the real limit; the autonomy level only decides which tools
 // the model is offered and which capabilities the tutor is granted.
 
-import type { KernelEvent } from '@ayalvasis/sdk';
-import type { ActionInfo, TerminalSession, TutorAccess } from '@ayalvasis/system';
+import type { KernelEvent } from '@tuxos/sdk';
+import type { ActionInfo, TerminalSession, TutorAccess } from '@tuxos/system';
 import type { ToolSpec } from './protocol';
 
 export type Autonomy = 'guide' | 'demo' | 'drive';

@@ -1,7 +1,7 @@
 // One conversation with the tutor. Each question is sent with a fresh snapshot of what the learner
 // is doing; the model may call tools, whose results go back to it, until it answers in words.
 
-import type { TutorAccess } from '@ayalvasis/system';
+import type { TutorAccess } from '@tuxos/system';
 import type { ChatMessage, ToolCall, Transport } from './protocol';
 import { CAPABILITIES, learnerCommands, Toolbox, type Autonomy, type PuppetUi } from './tools';
 

@@ -63,5 +63,5 @@ function send(response: ServerResponse, status: number, body: unknown): void {
 
 server.listen(port, () => {
   const tutor = config.apiKey ? 'on' : 'off';
-  console.log(`ayalvasis API on http://localhost:${port} (model ${config.model}, tutor ${tutor})`);
+  console.log(`tuxos API on http://localhost:${port} (model ${config.model}, tutor ${tutor})`);
 });

@@ -1,4 +1,4 @@
-import type { ModuleDefinition } from '@ayalvasis/sdk';
+import type { ModuleDefinition } from '@tuxos/sdk';
 import { manifest } from './manifest';
 
 export { manifest } from './manifest';

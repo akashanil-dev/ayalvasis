@@ -1,5 +1,5 @@
-import type { LessonStatus } from '@ayalvasis/lessons';
-import type { SystemClient } from '@ayalvasis/system';
+import type { LessonStatus } from '@tuxos/lessons';
+import type { SystemClient } from '@tuxos/system';
 import { useCallback, useEffect, useState } from 'react';
 import './course.css';
 

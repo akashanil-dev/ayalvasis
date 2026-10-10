@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { editor } from './index';
 import EditorView from './view';
@@ -51,7 +51,7 @@ describe('Text Editor', () => {
   it('explains a permission error and suggests sudo', async () => {
     const system = await boot();
     render(<EditorView system={system} windowId="window-1" args={{ path: '/etc/hostname' }} />);
-    await waitFor(() => expect(area().value).toBe('ayalvasis'));
+    await waitFor(() => expect(area().value).toBe('tuxos'));
     fireEvent.change(area(), { target: { value: 'my-box' } });
     fireEvent.keyDown(area(), { key: 's', ctrlKey: true });
     const alert = await screen.findByRole('alert');

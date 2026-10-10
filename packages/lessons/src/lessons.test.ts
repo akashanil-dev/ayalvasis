@@ -1,4 +1,4 @@
-import type { KernelEvent } from '@ayalvasis/sdk';
+import type { KernelEvent } from '@tuxos/sdk';
 import { describe, expect, it } from 'vitest';
 import { satisfied, type CheckContext, type Entry } from './conditions';
 import { LessonRunner, type LessonHost } from './runner';

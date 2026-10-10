@@ -1,14 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { manifest as aboutManifest } from '@ayalvasis/module-about/manifest';
-import { manifest as arcadeManifest } from '@ayalvasis/module-chmod-arcade/manifest';
-import { manifest as editorManifest } from '@ayalvasis/module-editor/manifest';
-import { manifest as filesManifest } from '@ayalvasis/module-files/manifest';
-import { manifest as learnDockerManifest } from '@ayalvasis/module-learn-docker/manifest';
-import { manifest as learnLinuxManifest } from '@ayalvasis/module-learn-linux/manifest';
-import { manifest as terminalManifest } from '@ayalvasis/module-terminal/manifest';
-import { createLocalSystem, type KeyValueStorage } from '@ayalvasis/system';
-import { httpTransport } from '@ayalvasis/tutor';
+import { manifest as aboutManifest } from '@tuxos/module-about/manifest';
+import { manifest as arcadeManifest } from '@tuxos/module-chmod-arcade/manifest';
+import { manifest as editorManifest } from '@tuxos/module-editor/manifest';
+import { manifest as filesManifest } from '@tuxos/module-files/manifest';
+import { manifest as learnDockerManifest } from '@tuxos/module-learn-docker/manifest';
+import { manifest as learnLinuxManifest } from '@tuxos/module-learn-linux/manifest';
+import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
+import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
+import { httpTransport } from '@tuxos/tutor';
 import { App } from './app';
 import './styles/boot.css';
 import './styles/login.css';
@@ -38,22 +38,22 @@ const storage: KeyValueStorage = {
 const system = createLocalSystem({
   storage,
   modules: [
-    { manifest: terminalManifest, load: () => import('@ayalvasis/module-terminal').then((module) => module.terminal) },
-    { manifest: filesManifest, load: () => import('@ayalvasis/module-files').then((module) => module.files) },
-    { manifest: editorManifest, load: () => import('@ayalvasis/module-editor').then((module) => module.editor) },
+    { manifest: terminalManifest, load: () => import('@tuxos/module-terminal').then((module) => module.terminal) },
+    { manifest: filesManifest, load: () => import('@tuxos/module-files').then((module) => module.files) },
+    { manifest: editorManifest, load: () => import('@tuxos/module-editor').then((module) => module.editor) },
     {
       manifest: learnLinuxManifest,
-      load: () => import('@ayalvasis/module-learn-linux').then((module) => module.learnLinux),
+      load: () => import('@tuxos/module-learn-linux').then((module) => module.learnLinux),
     },
     {
       manifest: learnDockerManifest,
-      load: () => import('@ayalvasis/module-learn-docker').then((module) => module.learnDocker),
+      load: () => import('@tuxos/module-learn-docker').then((module) => module.learnDocker),
     },
     {
       manifest: arcadeManifest,
-      load: () => import('@ayalvasis/module-chmod-arcade').then((module) => module.chmodArcade),
+      load: () => import('@tuxos/module-chmod-arcade').then((module) => module.chmodArcade),
     },
-    { manifest: aboutManifest, load: () => import('@ayalvasis/module-about').then((module) => module.about) },
+    { manifest: aboutManifest, load: () => import('@tuxos/module-about').then((module) => module.about) },
   ],
 });
 const tutor = httpTransport('/api/tutor');

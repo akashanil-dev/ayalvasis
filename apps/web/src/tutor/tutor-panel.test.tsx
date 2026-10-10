@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
-import type { ChatMessage, CompletionRequest, Transport } from '@ayalvasis/tutor';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
+import type { ChatMessage, CompletionRequest, Transport } from '@tuxos/tutor';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Desktop } from '../screens/Desktop';
 import { manifest as terminalManifest } from '../../../../modules/terminal/src/manifest';
@@ -58,7 +58,7 @@ describe('tutor panel', () => {
       uses('run_command', { command: 'pwd' }),
       { role: 'assistant', content: 'Use `pwd` to see **where** you are.' },
     );
-    localStorage.setItem('ayalvasis.tutor.autonomy', 'demo');
+    localStorage.setItem('tuxos.tutor.autonomy', 'demo');
     render(<Desktop system={system} tutor={transport} />);
     fireEvent.click(screen.getByRole('button', { name: 'Ask Vasi, your Linux tutor' }));
     fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'where am I?' } });
@@ -102,7 +102,7 @@ describe('tutor panel', () => {
     const offered = transport.requests.map((request) => request.tools.map((tool) => tool.function.name));
     expect(offered[0]).not.toContain('write_file');
     expect(offered[1]).toContain('write_file');
-    expect(localStorage.getItem('ayalvasis.tutor.autonomy')).toBe('drive');
+    expect(localStorage.getItem('tuxos.tutor.autonomy')).toBe('drive');
   });
 
   it('shows the service error in plain words', async () => {

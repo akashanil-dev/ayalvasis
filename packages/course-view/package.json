@@ -1,12 +1,12 @@
 {
-  "name": "@ayalvasis/course-view",
+  "name": "@tuxos/course-view",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": "./src/index.tsx",
   "dependencies": {
-    "@ayalvasis/lessons": "*",
-    "@ayalvasis/system": "*",
+    "@tuxos/lessons": "*",
+    "@tuxos/system": "*",
     "react": "^19.1.0"
   }
 }

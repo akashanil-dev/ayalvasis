@@ -1,8 +1,8 @@
-import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@ayalvasis/kernel';
-import { createModuleHost, type ModuleHost } from '@ayalvasis/module-host';
+import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@tuxos/kernel';
+import { createModuleHost, type ModuleHost } from '@tuxos/module-host';
 import type {
   Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest,
-} from '@ayalvasis/sdk';
+} from '@tuxos/sdk';
 import {
   createCommandRegistry,
   createShell,
@@ -10,7 +10,7 @@ import {
   type Completion,
   type RunResult,
   type Shell,
-} from '@ayalvasis/shell';
+} from '@tuxos/shell';
 
 export interface KeyValueStorage {
   get(key: string): Promise<string | null>;
@@ -80,7 +80,7 @@ export interface TutorAccess {
   recentEvents(limit: number): KernelEvent[];
 }
 
-const SAVE_KEY = 'ayalvasis.save';
+const SAVE_KEY = 'tuxos.save';
 const TUTOR: Actor = { kind: 'tutor', id: 'tutor' };
 const SAVE_DELAY_MS = 500;
 

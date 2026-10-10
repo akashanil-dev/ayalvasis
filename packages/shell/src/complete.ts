@@ -2,7 +2,7 @@
 // completes paths. Quoting inside the word being completed is not handled; learners rarely tab-complete
 // quoted names, and a wrong guess there is harmless (it just offers nothing).
 
-import { resolvePath, type Stat } from '@ayalvasis/kernel';
+import { resolvePath, type Stat } from '@tuxos/kernel';
 import type { Completion } from './commands';
 
 export interface CompletionSource {

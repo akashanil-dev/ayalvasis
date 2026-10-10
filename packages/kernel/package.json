@@ -1,10 +1,10 @@
 {
-  "name": "@ayalvasis/kernel",
+  "name": "@tuxos/kernel",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@ayalvasis/sdk": "*"
+    "@tuxos/sdk": "*"
   }
 }

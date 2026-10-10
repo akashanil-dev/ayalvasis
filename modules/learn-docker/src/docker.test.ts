@@ -1,5 +1,5 @@
-import { validateCourse, type LessonStatus } from '@ayalvasis/lessons';
-import { createLocalSystem, type KeyValueStorage, type SystemClient, type TerminalSession } from '@ayalvasis/system';
+import { validateCourse, type LessonStatus } from '@tuxos/lessons';
+import { createLocalSystem, type KeyValueStorage, type SystemClient, type TerminalSession } from '@tuxos/system';
 import { describe, expect, it } from 'vitest';
 import { ago, curl, docker, table } from './cli';
 import { DockerEngine } from './engine';

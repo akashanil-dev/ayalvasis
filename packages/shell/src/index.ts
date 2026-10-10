@@ -1,5 +1,5 @@
-import type { Actor } from '@ayalvasis/sdk';
-import type { Kernel } from '@ayalvasis/kernel';
+import type { Actor } from '@tuxos/sdk';
+import type { Kernel } from '@tuxos/kernel';
 import { ShellImpl } from './executor';
 import type { Shell } from './commands';
 import type { CommandRegistry } from './registry';

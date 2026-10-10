@@ -1,5 +1,5 @@
-import type { Window as SessionWindow } from '@ayalvasis/kernel';
-import type { SystemClient } from '@ayalvasis/system';
+import type { Window as SessionWindow } from '@tuxos/kernel';
+import type { SystemClient } from '@tuxos/system';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { usePointerDrag } from '../hooks/usePointerDrag';
 import { getLazyView } from '../views';

@@ -1,4 +1,4 @@
-import type { Stat } from '@ayalvasis/kernel';
+import type { Stat } from '@tuxos/kernel';
 
 /** Why a new file or folder name is unusable, or null if it is fine. Mirrors what Linux itself forbids. */
 export function nameError(name: string): string | null {

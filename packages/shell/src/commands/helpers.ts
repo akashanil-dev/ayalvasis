@@ -1,5 +1,5 @@
 import type { CommandContext } from './types';
-import type { DispatchResult } from '@ayalvasis/sdk';
+import type { DispatchResult } from '@tuxos/sdk';
 
 export interface Stat {
   name: string;

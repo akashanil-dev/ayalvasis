@@ -29,7 +29,7 @@ describe('local system client', () => {
     expect((await client.session()).focusedId).toBe('window-1');
     const terminal = await client.createTerminal();
     expect(await terminal.run('uname -a')).toMatchObject({
-      code: 0, stdout: expect.stringContaining('Linux ayalvasis'),
+      code: 0, stdout: expect.stringContaining('Linux tuxos'),
     });
   });
 
@@ -57,9 +57,9 @@ describe('local system client', () => {
     const client = system(storage());
     await client.boot('ada');
     const terminal = await client.createTerminal();
-    expect(await terminal.prompt()).toBe('ada@ayalvasis:~$ ');
+    expect(await terminal.prompt()).toBe('ada@tuxos:~$ ');
     await terminal.run('cd Documents');
-    expect(await terminal.prompt()).toBe('ada@ayalvasis:~/Documents$ ');
+    expect(await terminal.prompt()).toBe('ada@tuxos:~/Documents$ ');
     expect(bashPrompt('root', 'box', '/etc', '/root')).toBe('root@box:/etc# ');
     expect(bashPrompt('ada', 'box', '/home/adam', '/home/ada')).toBe('ada@box:/home/adam$ ');
   });

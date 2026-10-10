@@ -1,8 +1,8 @@
 // Lesson CI: every lesson's own solution must complete it in a fresh system. If a shell change or a
 // content edit breaks a lesson, this fails instead of a learner getting stuck.
 
-import { validateCourse, type LessonStatus } from '@ayalvasis/lessons';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
+import { validateCourse, type LessonStatus } from '@tuxos/lessons';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { describe, expect, it } from 'vitest';
 import { files } from '../../files/src/index';
 import { course, learnLinux } from './index';
@@ -71,7 +71,7 @@ describe('Learn Linux course', () => {
     await first.boot('ada');
     await first.dispatch('learn-linux.start', { lesson: 'first-words' });
     await (await first.createTerminal()).run('whoami');
-    const progressFile = '/home/ada/.local/share/ayalvasis/learn-linux.json';
+    const progressFile = '/home/ada/.local/share/tuxos/learn-linux.json';
     const saved = await first.dispatch<string>('fs.read', { path: progressFile });
     expect(saved.ok && JSON.parse(saved.value)).toMatchObject({ active: { lesson: 'first-words', step: 1 } });
     await first.flush();

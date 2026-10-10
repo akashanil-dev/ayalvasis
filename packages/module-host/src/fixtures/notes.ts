@@ -1,5 +1,5 @@
-import type { ActionContext } from '@ayalvasis/kernel';
-import { defineModule, type ModuleContext } from '@ayalvasis/sdk';
+import type { ActionContext } from '@tuxos/kernel';
+import { defineModule, type ModuleContext } from '@tuxos/sdk';
 
 export function addNote(ctx: ModuleContext, text: string) {
   return ctx.dispatch('notes.add', { text });

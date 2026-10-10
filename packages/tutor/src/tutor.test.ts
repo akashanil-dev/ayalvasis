@@ -1,4 +1,4 @@
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { describe, expect, it } from 'vitest';
 import { learnLinux } from '../../../modules/learn-linux/src/index';
 import type { ChatMessage, CompletionRequest, ToolCall, Transport } from './protocol';

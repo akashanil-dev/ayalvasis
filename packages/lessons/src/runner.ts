@@ -2,7 +2,7 @@
 // as soon as the current one is done. It talks to the system only through the small LessonHost interface,
 // so the same runner works inside a module and in tests.
 
-import type { KernelEvent } from '@ayalvasis/sdk';
+import type { KernelEvent } from '@tuxos/sdk';
 import { expand, satisfied, type Entry } from './conditions';
 import type { Course, Lesson, Progress, Step } from './types';
 

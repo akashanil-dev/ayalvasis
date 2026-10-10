@@ -1,8 +1,8 @@
-import type { AppViewProps } from '@ayalvasis/system';
+import type { AppViewProps } from '@tuxos/system';
 import { useEffect, useState } from 'react';
 
 export default function AboutView({ system }: AppViewProps) {
-  const [details, setDetails] = useState({ hostname: '...', user: '...', kernel: '6.6.0-ayalvasis' });
+  const [details, setDetails] = useState({ hostname: '...', user: '...', kernel: '6.6.0-tuxos' });
 
   useEffect(() => {
     let alive = true;
@@ -12,7 +12,7 @@ export default function AboutView({ system }: AppViewProps) {
     ]).then(([hostname, passwd]) => {
       if (!alive || !hostname.ok || !passwd.ok) return;
       const user = passwd.value.split('\n').find((line) => line.includes(':1000:'))?.split(':')[0] ?? 'unknown';
-      setDetails({ hostname: hostname.value.trim(), user, kernel: '6.6.0-ayalvasis' });
+      setDetails({ hostname: hostname.value.trim(), user, kernel: '6.6.0-tuxos' });
     });
     return () => { alive = false; };
   }, [system]);

@@ -1,6 +1,6 @@
-import type { AppContribution } from '@ayalvasis/sdk';
-import type { SessionState } from '@ayalvasis/kernel';
-import type { SystemClient } from '@ayalvasis/system';
+import type { AppContribution } from '@tuxos/sdk';
+import type { SessionState } from '@tuxos/kernel';
+import type { SystemClient } from '@tuxos/system';
 import { useEffect, useState } from 'react';
 
 const emptySession: SessionState = { windows: [], focusedId: null, nextId: 1 };

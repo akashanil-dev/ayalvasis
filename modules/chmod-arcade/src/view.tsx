@@ -1,4 +1,4 @@
-import type { AppViewProps, SystemClient } from '@ayalvasis/system';
+import type { AppViewProps, SystemClient } from '@tuxos/system';
 import { useEffect, useRef, useState } from 'react';
 import { explain, nextQuestion, octal, parseOctal, points, ROUND_SECONDS, symbolic, type Question } from './game';
 import './arcade.css';
@@ -124,14 +124,14 @@ function ToSymbolic({ question, onAnswer }: { question: Question; onAnswer(mode:
   </div>;
 }
 
-/** The best score lives in ~/.local/share/ayalvasis/chmod-arcade.json, like any app's saved data. */
+/** The best score lives in ~/.local/share/tuxos/chmod-arcade.json, like any app's saved data. */
 function useBestScore(system: SystemClient) {
   const [value, setValue] = useState<number | null>(null);
   const [file, setFile] = useState('');
 
   useEffect(() => {
     void system.user().then(async (user) => {
-      const path = `/home/${user}/.local/share/ayalvasis/chmod-arcade.json`;
+      const path = `/home/${user}/.local/share/tuxos/chmod-arcade.json`;
       setFile(path);
       const saved = await system.dispatch<string>('fs.read', { path });
       if (!saved.ok) return;

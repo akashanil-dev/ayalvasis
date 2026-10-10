@@ -1,5 +1,5 @@
-import { activateCourse, type Course } from '@ayalvasis/lessons';
-import type { ModuleContext, ModuleDefinition } from '@ayalvasis/sdk';
+import { activateCourse, type Course } from '@tuxos/lessons';
+import type { ModuleContext, ModuleDefinition } from '@tuxos/sdk';
 import { curl, docker } from './cli';
 import courseData from './course.json';
 import { DockerEngine, type EngineState, type Output } from './engine';

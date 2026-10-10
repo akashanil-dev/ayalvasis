@@ -1,4 +1,4 @@
-import type { Kernel, ActionDefinition as KernelActionDefinition } from '@ayalvasis/kernel';
+import type { Kernel, ActionDefinition as KernelActionDefinition } from '@tuxos/kernel';
 import type {
   ActionDefinition,
   AppContribution,
@@ -6,8 +6,8 @@ import type {
   ModuleContext,
   ModuleDefinition,
   ModuleManifest,
-} from '@ayalvasis/sdk';
-import type { CommandDefinition as ShellCommandDefinition, Shell } from '@ayalvasis/shell';
+} from '@tuxos/sdk';
+import type { CommandDefinition as ShellCommandDefinition, Shell } from '@tuxos/shell';
 
 export type ModuleStatus = 'registered' | 'activating' | 'active' | 'failed';
 

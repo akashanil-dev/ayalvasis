@@ -1,4 +1,4 @@
-import type { SystemClient } from '@ayalvasis/system';
+import type { SystemClient } from '@tuxos/system';
 import { useState } from 'react';
 
 interface LoginProps {
@@ -23,7 +23,7 @@ export function Login({ system, savedUser, onBoot }: LoginProps) {
   return <main className="login-screen">
     <section className="login-card">
       <div className="login-logo">λ</div>
-      <h1>Welcome to ayalvasis</h1>
+      <h1>Welcome to tuxos</h1>
       <p>Choose a Linux username to start learning.</p>
       <form onSubmit={(event) => { event.preventDefault(); void boot(username); }}>
         <label htmlFor="username">Username</label>

@@ -1,5 +1,5 @@
-import type { Kernel } from '@ayalvasis/kernel';
-import type { Actor, CommandDefinition as SdkCommandDefinition, DispatchResult } from '@ayalvasis/sdk';
+import type { Kernel } from '@tuxos/kernel';
+import type { Actor, CommandDefinition as SdkCommandDefinition, DispatchResult } from '@tuxos/sdk';
 import type { CommandRegistry } from '../registry';
 
 export interface RunResult {

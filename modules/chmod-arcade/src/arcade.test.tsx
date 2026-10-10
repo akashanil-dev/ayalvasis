@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@ayalvasis/system';
+import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { explain, nextQuestion, octal, parseOctal, points, symbolic } from './game';
 import { chmodArcade } from './index';
@@ -77,7 +77,7 @@ describe('chmod Arcade window', () => {
     expect(screen.getByText('10 points')).toBeTruthy();
     vi.useRealTimers();
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
-    const scoreFile = '/home/ada/.local/share/ayalvasis/chmod-arcade.json';
+    const scoreFile = '/home/ada/.local/share/tuxos/chmod-arcade.json';
     const saved = await system.dispatch<string>('fs.read', { path: scoreFile });
     expect(saved).toEqual({ ok: true, value: '{"best":10}\n' });
   });

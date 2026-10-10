@@ -1,7 +1,7 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
-import type { AppViewProps } from '@ayalvasis/system';
+import type { AppViewProps } from '@tuxos/system';
 import { useEffect, useRef, useState } from 'react';
 import { TerminalController } from './controller';
 import './terminal.css';

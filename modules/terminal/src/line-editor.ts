@@ -5,7 +5,7 @@
 // Known limitation: redrawing uses `\r` and clear-to-end-of-line, which assumes the prompt and line
 // fit on one screen row. Longer lines still work, they just redraw imperfectly.
 
-import type { Completion } from '@ayalvasis/shell';
+import type { Completion } from '@tuxos/shell';
 
 export type EditorEvent =
   | { type: 'submit'; line: string }

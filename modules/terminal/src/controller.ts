@@ -1,7 +1,7 @@
 // Connects a screen (xterm.js in the app, a fake in tests) to one shell session: prompt, line editing,
 // running commands, completion, and the few things bash itself handles rather than a program (exit).
 
-import type { TerminalSession } from '@ayalvasis/system';
+import type { TerminalSession } from '@tuxos/system';
 import { LineEditor, type EditorEvent } from './line-editor';
 
 export interface Screen {
@@ -97,7 +97,7 @@ export function toTerminal(text: string): string {
   return text.replace(/\r?\n/g, '\r\n');
 }
 
-/** `ada@ayalvasis:~/src$ ` becomes the window title `ada@ayalvasis: ~/src`, as GNOME Terminal shows it. */
+/** `ada@tuxos:~/src$ ` becomes the window title `ada@tuxos: ~/src`, as GNOME Terminal shows it. */
 export function titleFor(prompt: string): string {
   const match = /^(.*?):(.*)[$#] $/.exec(prompt);
   return match ? `${match[1]}: ${match[2]}` : 'Terminal';

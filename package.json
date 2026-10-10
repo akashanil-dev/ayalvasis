@@ -1,5 +1,5 @@
 {
-  "name": "ayalvasis",
+  "name": "tuxos",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -11,9 +11,9 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "check": "npm run typecheck && npm test",
-    "dev": "npm run dev --workspace @ayalvasis/web",
-    "build": "npm run typecheck && npm run build --workspace @ayalvasis/web",
-    "api": "npm run start --workspace @ayalvasis/api"
+    "dev": "npm run dev --workspace @tuxos/web",
+    "build": "npm run typecheck && npm run build --workspace @tuxos/web",
+    "api": "npm run start --workspace @tuxos/api"
   },
   "engines": {
     "node": ">=20"

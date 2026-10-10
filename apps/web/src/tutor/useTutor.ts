@@ -1,5 +1,5 @@
-import type { SystemClient } from '@ayalvasis/system';
-import { TutorSession, type Autonomy, type Transport, type TutorEvent } from '@ayalvasis/tutor';
+import type { SystemClient } from '@tuxos/system';
+import { TutorSession, type Autonomy, type Transport, type TutorEvent } from '@tuxos/tutor';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export type Entry =
@@ -13,7 +13,7 @@ export interface Pointer {
   at: number;
 }
 
-const AUTONOMY_KEY = 'ayalvasis.tutor.autonomy';
+const AUTONOMY_KEY = 'tuxos.tutor.autonomy';
 
 /** The tutor conversation for this desktop: messages, tool actions, busy state and where it is pointing. */
 export function useTutor(system: SystemClient, transport: Transport) {

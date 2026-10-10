@@ -1,5 +1,5 @@
-import type { Stat } from '@ayalvasis/kernel';
-import type { AppViewProps } from '@ayalvasis/system';
+import type { Stat } from '@tuxos/kernel';
+import type { AppViewProps } from '@tuxos/system';
 import { useEffect, useState } from 'react';
 import { FileTable } from './file-table';
 import { formatSize, joinPath, nameError, parentOf, sortEntries } from './model';

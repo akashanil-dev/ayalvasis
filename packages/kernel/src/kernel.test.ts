@@ -1,4 +1,4 @@
-import type { Actor, KernelEvent } from '@ayalvasis/sdk';
+import type { Actor, KernelEvent } from '@tuxos/sdk';
 import type { KernelState } from './state';
 import { describe, expect, it } from 'vitest';
 import { createKernel, KernelError } from './index';
@@ -45,7 +45,7 @@ describe('dispatch', () => {
       },
     });
     expect(kernel.dispatch({ type: 'test.half', payload: {} })).toMatchObject({ ok: false, error: { code: 'EIO' } });
-    expect(kernel.getState().hostname).toBe('ayalvasis');
+    expect(kernel.getState().hostname).toBe('tuxos');
   });
 
   it('rethrows unexpected errors so bugs are not hidden', () => {
@@ -229,8 +229,8 @@ describe('session actions', () => {
   it('renames a window', () => {
     const kernel = createKernel({ username: 'ada' });
     kernel.dispatch({ type: 'session.open', payload: { appId: 'terminal', title: 'Terminal' } });
-    kernel.dispatch({ type: 'session.setTitle', payload: { id: 'window-1', title: 'ada@ayalvasis: ~' } });
-    expect(kernel.getState().session.windows[0]?.title).toBe('ada@ayalvasis: ~');
+    kernel.dispatch({ type: 'session.setTitle', payload: { id: 'window-1', title: 'ada@tuxos: ~' } });
+    expect(kernel.getState().session.windows[0]?.title).toBe('ada@tuxos: ~');
     expect(kernel.dispatch({ type: 'session.setTitle', payload: { id: 'nope', title: 'x' } }))
       .toMatchObject({ ok: false, error: { code: 'ENOENT' } });
   });

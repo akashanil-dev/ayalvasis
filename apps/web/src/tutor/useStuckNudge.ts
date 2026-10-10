@@ -1,4 +1,4 @@
-import type { SystemClient } from '@ayalvasis/system';
+import type { SystemClient } from '@tuxos/system';
 import { useEffect, useState } from 'react';
 
 export interface Nudge {

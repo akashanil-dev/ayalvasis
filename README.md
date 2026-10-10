@@ -31,7 +31,7 @@ This template has no application code or required technology stack. The document
 
 ## Project overview — complete during the event
 
-- **Project name:** TODO
+- **Project name:** TuxOS
 - **Short description:** A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor guides each learner and can operate the system itself. Every activity (Learn Linux, Learn Docker, games) is a module that shows up as a desktop icon.
 - **Team:** TODO — participant names and GitHub handles; maximum 4 members.
 - **Working demo:** TODO — link or local demo instructions.
@@ -78,7 +78,7 @@ This template has no application code or required technology stack. The document
   - **Files**: a point-and-click file manager over the same filesystem.
   - **Text Editor**: opens, edits and saves files, explaining permission errors.
   - **Learn Linux**: six hands-on lessons that check your work as you go, with progress saved in
-    `~/.local/share/ayalvasis/learn-linux.json` like a real Linux app.
+    `~/.local/share/tuxos/learn-linux.json` like a real Linux app.
   - **Learn Docker**: a simulated `docker` CLI and `curl`, plus a five-lesson Docker course.
   - **chmod Arcade**: a 60-second game for reading and writing file permissions.
   - **About**: system information and the `uname` command.
@@ -125,7 +125,7 @@ This template has no application code or required technology stack. The document
     `/var/lib/docker`. Five lessons: first container, images, serving a website, cleaning up, and
     configuring with environment variables.
   - **chmod Arcade:** alternating questions (rwx to octal, octal to rwx with toggle buttons), streak bonuses,
-    an explanation of each wrong answer, and the best score saved in `~/.local/share/ayalvasis/`.
+    an explanation of each wrong answer, and the best score saved in `~/.local/share/tuxos/`.
   - **AI tutor (Vasi):** a penguin puppet in the corner opens a chat. Vasi looks at the learner's recent
     commands and screen before answering, can open apps, point at icons and windows (with a highlight), run
     demonstration commands in its own shell, and start lessons, depending on the autonomy level the learner

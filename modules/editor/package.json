@@ -1,5 +1,5 @@
 {
-  "name": "@ayalvasis/module-editor",
+  "name": "@tuxos/module-editor",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
     "./view": "./src/view.tsx"
   },
   "dependencies": {
-    "@ayalvasis/sdk": "*",
-    "@ayalvasis/system": "*",
+    "@tuxos/sdk": "*",
+    "@tuxos/system": "*",
     "react": "^19.1.0"
   }
 }

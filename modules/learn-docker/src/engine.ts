@@ -228,12 +228,12 @@ export class DockerEngine {
       container.logs.push(...(image.startup ?? []));
       if (options.detach) return ok(`${container.id}\n`);
       // A real foreground service would hold the terminal until Ctrl+C, which stops it. Show that, then stop.
-      return this.exit(container, ok(`${(image.startup ?? []).join('\n')}\n(ayalvasis: in the foreground this `
+      return this.exit(container, ok(`${(image.startup ?? []).join('\n')}\n(tuxos: in the foreground this `
         + 'container would keep the terminal busy until Ctrl+C, which stops it. Add -d to run it in the '
         + 'background instead.)\n'));
     }
     if (options.interactive && !options.args.length) {
-      return this.exit(container, { stdout: '', stderr: 'ayalvasis: interactive shells inside containers are not '
+      return this.exit(container, { stdout: '', stderr: 'tuxos: interactive shells inside containers are not '
         + `available here yet. Try running one command instead, e.g. docker run ${image.name} cat /etc/os-release\n`,
       code: 1 });
     }

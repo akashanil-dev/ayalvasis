@@ -1,4 +1,4 @@
-import type { KernelEvent } from '@ayalvasis/sdk';
+import type { KernelEvent } from '@tuxos/sdk';
 import type { Condition, RanCondition } from './types';
 
 /** A file or folder as a check sees it, or undefined if it doesn't exist (or can't be reached). */
