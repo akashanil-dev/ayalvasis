@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "@ayalvasis/module-about": "*",
+    "@ayalvasis/module-chmod-arcade": "*",
     "@ayalvasis/module-editor": "*",
     "@ayalvasis/module-files": "*",
+    "@ayalvasis/module-learn-docker": "*",
     "@ayalvasis/module-learn-linux": "*",
     "@ayalvasis/module-terminal": "*",
     "@ayalvasis/sdk": "*",

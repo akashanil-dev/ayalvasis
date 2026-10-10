@@ -79,7 +79,11 @@ This template has no application code or required technology stack. The document
   - **Text Editor**: opens, edits and saves files, explaining permission errors.
   - **Learn Linux**: six hands-on lessons that check your work as you go, with progress saved in
     `~/.local/share/ayalvasis/learn-linux.json` like a real Linux app.
+  - **Learn Docker**: a simulated `docker` CLI and `curl`, plus a five-lesson Docker course.
+  - **chmod Arcade**: a 60-second game for reading and writing file permissions.
   - **About**: system information and the `uname` command.
+  Course modules share `activateCourse` (from `packages/lessons`) and the course window (`packages/course-view`),
+  so a new course is mostly a JSON file.
 
 ### Run the project
 
@@ -114,6 +118,14 @@ This template has no application code or required technology stack. The document
     terminal or on the desktop, with hints on demand and an explanation after each step. Progress survives
     reloads and keeps tracking while the window is closed. Lesson start, quit, reset and status are kernel
     actions, so the AI tutor can drive lessons the same way.
+  - **Learn Docker:** a simulated Docker with real-looking output and errors: `run` (with `-d`, `--name`,
+    `-p`, `-e`, `--rm`), `ps [-a]`, `images`, `pull`, `stop`, `start`, `restart`, `rm [-f]`, `rmi`, `logs`,
+    `exec`, and images hello-world, alpine, ubuntu, python, nginx, redis and postgres. Published ports work
+    with `curl localhost:PORT`, which nginx answers and logs. State persists in a root-only
+    `/var/lib/docker`. Five lessons: first container, images, serving a website, cleaning up, and
+    configuring with environment variables.
+  - **chmod Arcade:** alternating questions (rwx to octal, octal to rwx with toggle buttons), streak bonuses,
+    an explanation of each wrong answer, and the best score saved in `~/.local/share/ayalvasis/`.
   - **AI tutor (Vasi):** a penguin puppet in the corner opens a chat. Vasi looks at the learner's recent
     commands and screen before answering, can open apps, point at icons and windows (with a highlight), run
     demonstration commands in its own shell, and start lessons, depending on the autonomy level the learner
@@ -149,6 +161,9 @@ This template has no application code or required technology stack. The document
   - The AI tutor has been tested with a scripted model and, in a real browser, through the API server
     against a local stand-in for the OpenAI API. It has not yet been run against a real OpenAI model in this
     environment (no API key here), so answer quality is unverified.
+  - The Docker simulation covers the commands and images listed above. Commands inside containers are
+    limited to a few (echo, cat /etc/os-release, env, ls, uname...), and interactive shells (`-it ... sh`)
+    are not available yet.
   - The tutor has no long-term memory of the learner between conversations.
   - Commands run to completion before the prompt returns; there are no background jobs or long-running
     interactive programs yet.

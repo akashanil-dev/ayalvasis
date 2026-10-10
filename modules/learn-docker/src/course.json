@@ -1,0 +1,166 @@
+{
+  "id": "learn-docker",
+  "title": "Learn Docker",
+  "summary": "Containers package a program with everything it needs. Learn to run them, serve a website from one, and clean up after yourself.",
+  "lessons": [
+    {
+      "id": "hello-docker",
+      "title": "Hello, containers",
+      "story": "Docker runs programs in containers: little isolated boxes made from images. Let's check Docker is here and run the classic first container.",
+      "steps": [
+        {
+          "id": "version",
+          "task": "Check that Docker is installed: docker --version",
+          "hints": ["Type docker --version in the Terminal."],
+          "check": { "ran": { "command": "docker", "line": "--version|docker version", "code": 0 } },
+          "explain": "The docker command is the client. It talks to the Docker daemon, a background service that does the work."
+        },
+        {
+          "id": "hello-world",
+          "task": "Run your first container: docker run hello-world",
+          "hints": ["Type docker run hello-world. The first time, Docker downloads the image."],
+          "check": { "ran": { "command": "docker", "line": "run", "stdout": "Hello from Docker" } },
+          "explain": "Docker didn't have the image, so it pulled it from Docker Hub, created a container from it, and ran it."
+        },
+        {
+          "id": "ps-a",
+          "task": "See every container, including finished ones: docker ps -a",
+          "hints": ["Plain docker ps only shows running containers. -a means all.", "Type docker ps -a"],
+          "check": { "ran": { "command": "docker", "line": "ps.*(-a|--all)", "stdout": "hello-world" } },
+          "explain": "The container printed its message and exited, so its STATUS is Exited (0). It still exists until you remove it."
+        }
+      ],
+      "solution": ["docker --version", "docker run hello-world", "docker ps -a"]
+    },
+    {
+      "id": "images",
+      "title": "Images",
+      "story": "An image is a read-only template: a small Linux system plus a program. Containers are running copies of images.",
+      "steps": [
+        {
+          "id": "pull",
+          "task": "Download the tiny Alpine Linux image: docker pull alpine",
+          "hints": ["Type docker pull alpine"],
+          "check": { "ran": { "command": "docker", "line": "pull\\s+alpine", "code": 0 } },
+          "explain": "pull downloads an image without running it. Alpine is a whole Linux distribution in under 8 MB."
+        },
+        {
+          "id": "images",
+          "task": "List the images you have: docker images",
+          "hints": ["Type docker images"],
+          "check": { "ran": { "command": "docker", "line": "images|image ls", "stdout": "alpine" } },
+          "explain": "Each image has a repository name, a tag (latest is the default) and an ID."
+        },
+        {
+          "id": "run-command",
+          "task": "Run one command inside an Alpine container to see which Linux it is: docker run alpine cat /etc/os-release",
+          "hints": ["Anything after the image name is the command to run inside the container.", "Type docker run alpine cat /etc/os-release"],
+          "check": { "ran": { "command": "docker", "line": "run", "stdout": "Alpine Linux" } },
+          "explain": "Your system isn't Alpine, but the container is: it brings its own files. That's what makes containers portable."
+        }
+      ],
+      "solution": ["docker pull alpine", "docker images", "docker run alpine cat /etc/os-release"]
+    },
+    {
+      "id": "web-server",
+      "title": "Serving a website",
+      "story": "Containers are great for services that keep running, like web servers. You'll run nginx in the background and visit it.",
+      "steps": [
+        {
+          "id": "run-nginx",
+          "task": "Start nginx in the background, named web, with port 8080 on this computer going to port 80 in the container: docker run -d --name web -p 8080:80 nginx",
+          "hints": ["-d runs it in the background (detached). --name gives it a name. -p HOST:CONTAINER publishes a port.", "Type docker run -d --name web -p 8080:80 nginx"],
+          "check": { "ran": { "command": "docker", "line": "-p\\s*8080:80", "stdout": "^[0-9a-f]{64}$" } },
+          "explain": "Docker printed the new container's full ID. The container keeps running after the command returns."
+        },
+        {
+          "id": "ps",
+          "task": "Check it's running: docker ps",
+          "hints": ["Type docker ps and look at the STATUS and PORTS columns."],
+          "check": { "ran": { "command": "docker", "line": "ps", "stdout": "0\\.0\\.0\\.0:8080->80/tcp" } },
+          "explain": "PORTS shows 0.0.0.0:8080->80/tcp: requests to port 8080 here reach port 80 inside the container."
+        },
+        {
+          "id": "curl",
+          "task": "Visit the website from the terminal: curl localhost:8080",
+          "hints": ["curl fetches a web page and prints it.", "Type curl localhost:8080"],
+          "check": { "ran": { "command": "curl", "stdout": "Welcome to nginx" } },
+          "explain": "That HTML came from nginx inside the container, through the port you published."
+        },
+        {
+          "id": "logs",
+          "task": "See what the server recorded: docker logs web",
+          "hints": ["Type docker logs web"],
+          "check": { "ran": { "command": "docker", "line": "logs", "stdout": "GET / HTTP" } },
+          "explain": "Containers write logs to their output, and docker logs shows them: here, your curl request."
+        }
+      ],
+      "solution": ["docker run -d --name web -p 8080:80 nginx", "docker ps", "curl localhost:8080", "docker logs web"]
+    },
+    {
+      "id": "cleanup",
+      "title": "Stopping and cleaning up",
+      "story": "Containers and images take up space until you remove them. Let's practise the clean-up routine on a container of your own.",
+      "steps": [
+        {
+          "id": "start",
+          "task": "Start a container to practise on: docker run -d --name scratch nginx",
+          "hints": ["Type docker run -d --name scratch nginx"],
+          "check": { "ran": { "command": "docker", "line": "--name[ =]scratch", "code": 0 } },
+          "explain": "Naming containers makes them easy to refer to. Otherwise Docker invents a name like jolly_turing."
+        },
+        {
+          "id": "rm-running",
+          "task": "Try to remove it while it's still running: docker rm scratch",
+          "hints": ["This is meant to fail. Type docker rm scratch and read the error."],
+          "check": { "ran": { "command": "docker", "line": "rm", "stderr": "container is running" } },
+          "explain": "Docker protects running containers. Stop them first, or force it with docker rm -f."
+        },
+        {
+          "id": "stop",
+          "task": "Stop it: docker stop scratch",
+          "hints": ["Type docker stop scratch"],
+          "check": { "ran": { "command": "docker", "line": "stop\\s+scratch", "code": 0 } },
+          "explain": "stop asks the program to shut down cleanly. The container still exists, just not running."
+        },
+        {
+          "id": "rm",
+          "task": "Now remove it: docker rm scratch",
+          "hints": ["Type docker rm scratch, then docker ps -a to check it's gone."],
+          "check": { "ran": { "command": "docker", "line": "rm\\s+scratch", "code": 0 } },
+          "explain": "Removed for good. docker run --rm removes a container automatically when it exits."
+        }
+      ],
+      "solution": ["docker run -d --name scratch nginx", "docker rm scratch", "docker stop scratch", "docker rm scratch"]
+    },
+    {
+      "id": "configuration",
+      "title": "Configuring with environment variables",
+      "story": "Many images are configured with environment variables. A database is a good example: it won't start without a password.",
+      "steps": [
+        {
+          "id": "fail",
+          "task": "Try to start the PostgreSQL database without any settings: docker run postgres",
+          "hints": ["This is meant to fail. Type docker run postgres and read why."],
+          "check": { "ran": { "command": "docker", "line": "run", "stderr": "POSTGRES_PASSWORD" } },
+          "explain": "The image refused to start: it needs a password for the database's superuser."
+        },
+        {
+          "id": "env",
+          "task": "Start it in the background named db with a password: docker run -d --name db -e POSTGRES_PASSWORD=secret postgres",
+          "hints": ["-e NAME=value sets an environment variable inside the container.", "Type docker run -d --name db -e POSTGRES_PASSWORD=secret postgres"],
+          "check": { "ran": { "command": "docker", "line": "-e\\s*POSTGRES_PASSWORD=\\S+", "code": 0 } },
+          "explain": "Configuration that changes between environments (passwords, URLs) goes in variables, not in the image."
+        },
+        {
+          "id": "exec",
+          "task": "Look inside the running container's environment: docker exec db env",
+          "hints": ["docker exec runs a command inside a running container.", "Type docker exec db env"],
+          "check": { "ran": { "command": "docker", "line": "exec", "stdout": "POSTGRES_PASSWORD=" } },
+          "explain": "exec is how you get into a running container to look around or debug."
+        }
+      ],
+      "solution": ["docker run postgres", "docker run -d --name db -e POSTGRES_PASSWORD=secret postgres", "docker exec db env"]
+    }
+  ]
+}

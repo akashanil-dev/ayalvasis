@@ -1,0 +1,132 @@
+.arcade-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: radial-gradient(circle at top, #2a1f4d, #120f1f 70%);
+  color: #f2efff;
+}
+
+.arcade-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  font-size: 13px;
+  color: rgb(255 255 255 / 70%);
+}
+
+.arcade-bar strong {
+  color: #fff;
+}
+
+.arcade-hurry strong {
+  color: #ff7b7b;
+}
+
+.arcade-center {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 28px;
+  text-align: center;
+}
+
+.arcade-center p {
+  max-width: 46ch;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.arcade-center code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 35%);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.arcade-big {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.arcade-mono,
+.arcade-input,
+.arcade-row button {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.arcade-input {
+  width: 120px;
+  padding: 8px;
+  border: 2px solid #7c6cf0;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 30%);
+  color: #fff;
+  font-size: 28px;
+  text-align: center;
+}
+
+.arcade-primary {
+  padding: 9px 22px;
+  border: 0;
+  border-radius: 10px;
+  background: #7c6cf0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.arcade-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.arcade-row {
+  display: grid;
+  grid-template-columns: 70px repeat(3, 48px);
+  align-items: center;
+  gap: 8px;
+}
+
+.arcade-row span {
+  color: rgb(255 255 255 / 65%);
+  text-align: right;
+}
+
+.arcade-row button {
+  height: 44px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 6%);
+  color: rgb(255 255 255 / 55%);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.arcade-row button[aria-pressed="true"] {
+  border-color: #8ff0a4;
+  background: rgb(143 240 164 / 18%);
+  color: #8ff0a4;
+}
+
+.arcade-feedback {
+  margin: 0 16px 14px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.arcade-feedback.good {
+  background: rgb(38 162 105 / 25%);
+  color: #c3f4d6;
+}
+
+.arcade-feedback.bad {
+  background: rgb(192 28 40 / 25%);
+  color: #ffd1d1;
+}

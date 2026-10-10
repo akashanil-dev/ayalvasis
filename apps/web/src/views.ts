@@ -11,6 +11,8 @@ export const views: Record<string, () => Promise<ViewModule>> = {
   files: () => import('@ayalvasis/module-files/view'),
   editor: () => import('@ayalvasis/module-editor/view'),
   'learn-linux': () => import('@ayalvasis/module-learn-linux/view'),
+  'learn-docker': () => import('@ayalvasis/module-learn-docker/view'),
+  'chmod-arcade': () => import('@ayalvasis/module-chmod-arcade/view'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();

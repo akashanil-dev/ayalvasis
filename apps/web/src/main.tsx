@@ -1,8 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { manifest as aboutManifest } from '@ayalvasis/module-about/manifest';
+import { manifest as arcadeManifest } from '@ayalvasis/module-chmod-arcade/manifest';
 import { manifest as editorManifest } from '@ayalvasis/module-editor/manifest';
 import { manifest as filesManifest } from '@ayalvasis/module-files/manifest';
+import { manifest as learnDockerManifest } from '@ayalvasis/module-learn-docker/manifest';
 import { manifest as learnLinuxManifest } from '@ayalvasis/module-learn-linux/manifest';
 import { manifest as terminalManifest } from '@ayalvasis/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@ayalvasis/system';
@@ -42,6 +44,14 @@ const system = createLocalSystem({
     {
       manifest: learnLinuxManifest,
       load: () => import('@ayalvasis/module-learn-linux').then((module) => module.learnLinux),
+    },
+    {
+      manifest: learnDockerManifest,
+      load: () => import('@ayalvasis/module-learn-docker').then((module) => module.learnDocker),
+    },
+    {
+      manifest: arcadeManifest,
+      load: () => import('@ayalvasis/module-chmod-arcade').then((module) => module.chmodArcade),
     },
     { manifest: aboutManifest, load: () => import('@ayalvasis/module-about').then((module) => module.about) },
   ],

@@ -25,6 +25,18 @@ const ICONS: Record<string, () => React.JSX.Element> = {
     <path d="M41 21v12" stroke="#f6d32d" strokeWidth="2.5" strokeLinecap="round" />
     <circle cx="41" cy="35" r="2.5" fill="#f6d32d" />
   </svg>,
+  'learn-docker': () => <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M4 24h36c2 0 4-3 4-5 1 0 3 1 3 3-1 0-2 1-3 2-2 10-11 16-23 16C11 40 5 34 4 24z" fill="#1d63ed" />
+    {[[9, 18], [15, 18], [21, 18], [27, 18], [15, 12], [21, 12], [21, 6]].map(([x, y]) =>
+      <rect key={`${x}-${y}`} x={x} y={y} width="5" height="5" rx="1" fill="#99c1f1" />)}
+  </svg>,
+  'chmod-arcade': () => <svg viewBox="0 0 48 48" aria-hidden="true">
+    <rect x="5" y="12" width="38" height="24" rx="12" fill="#7c6cf0" />
+    <path d="M14 20v8M10 24h8" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+    <circle cx="32" cy="21" r="2.6" fill="#8ff0a4" />
+    <circle cx="37" cy="27" r="2.6" fill="#f6d32d" />
+    <text x="24" y="44" fontSize="8" textAnchor="middle" fill="#c0bfbc" fontFamily="monospace">755</text>
+  </svg>,
   about: () => <svg viewBox="0 0 48 48" aria-hidden="true">
     <circle cx="24" cy="24" r="19" fill="#613583" />
     <circle cx="24" cy="15" r="3" fill="#fff" />

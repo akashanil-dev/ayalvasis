@@ -4,6 +4,26 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T02:17:58+05:30 — Learn Docker and chmod Arcade
+
+- Changed:
+  - New `modules/learn-docker`: a deterministic Docker engine (images, containers, published ports, logs,
+    environment variables) behind a `docker` CLI with Docker's tables, messages and exit codes, a `curl` for
+    localhost, state kept as root in `/var/lib/docker` (mode 710), and a five-lesson course.
+  - New `modules/chmod-arcade`: a 60-second permissions game with streak scoring, explanations and a saved
+    best score.
+  - Course modules now share `activateCourse` (in `packages/lessons`) and `CourseView` (new
+    `packages/course-view`); Learn Linux uses them unchanged.
+  - Corrected the AI tutor changelog entry: it said 19 test files; there were 18.
+- Why: Learning Docker was part of the plan, and a game gives learners a quick, fun way to practise
+  permissions. Sharing the course code means a new course is mostly a JSON file.
+- Validation: `npm run check` — type check passed; Vitest reported 20 test files and 239 tests passed,
+  including exact Docker output tests and a replay of all five Docker lessons. `npm run build` passed. In
+  Chromium: ran nginx with a published port, saw it in `docker ps`, fetched its page with `curl`, and started
+  a chmod Arcade round, with no console errors.
+- Limitations: only the listed Docker commands and images; a few commands inside containers; no interactive
+  container shells yet.
+
 ## 2026-10-11T02:07:45+05:30 — AI tutor (Vasi)
 
 - Changed:
@@ -21,7 +41,7 @@ Record each meaningful project change during the event, newest first. Update thi
   - Lesson checks now count only the learner's actions, so the tutor's demonstrations don't complete steps.
   - Actions can describe their parameters (`params`), which become the generated tools' schemas.
 - Why: The tutor puppet with real but limited control of the system is the core of the project's design.
-- Validation: `npm run check` — type check passed; Vitest reported 19 test files and 217 tests passed,
+- Validation: `npm run check` — type check passed; Vitest reported 18 test files and 217 tests passed,
   including scripted-model tutor tests against a real system and UI tests. `npm run build` passed. The API
   server was started and its health, missing-key, bad-JSON and 404 responses checked with curl. In Chromium,
   through the dev server and the API server pointed at a local stand-in for the OpenAI API: two failed

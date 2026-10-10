@@ -9,7 +9,7 @@
     "./view": "./src/view.tsx"
   },
   "dependencies": {
-    "@ayalvasis/kernel": "*",
+    "@ayalvasis/course-view": "*",
     "@ayalvasis/lessons": "*",
     "@ayalvasis/sdk": "*",
     "@ayalvasis/system": "*",
