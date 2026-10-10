@@ -45,8 +45,14 @@ This template has no application code or required technology stack. The document
   - records the result in an event log that others can subscribe to
 
   The learner, modules and the AI tutor all use this same entry point.
-- **SDK** (`packages/sdk`): shared types (actions, events, actors, capabilities, module manifests) that the kernel, modules, UI and tutor build on.
+- **SDK** (`packages/sdk`): shared types (actions, events, actors, capabilities, module manifests,
+  and the module activation API) that the kernel, modules, UI and tutor build on. Its action and
+  command definitions are generic structural contracts, so it has no runtime dependency on either.
 - **Shell** (`packages/shell`): a bash-like teaching shell. It parses commands, expands variables and globs, runs pipelines and redirections, and implements built-ins entirely through `kernel.dispatch`.
+- **Module host** (`packages/module-host`): validates manifests, registers lazy command stubs,
+  activates dependency chains, grants declared capabilities, and reports activation state/events.
+  It depends on the kernel and shell; adding a module only requires registering its manifest and
+  loader with the host.
 - **Modules** (`modules/*`, planned): each one adds desktop apps, shell commands and lessons through a manifest.
 
 ### Run the project
@@ -61,11 +67,13 @@ This template has no application code or required technology stack. The document
 
 - Working features:
   - **Kernel:** action registry, `dispatch` with capability checks, an event log with subscribers and a size limit, and JSON snapshots and restore. A failed action leaves the state unchanged.
+    Actions receive permission-bound filesystem helpers through `ActionContext.fs`; raw VFS mutators
+    are not part of the kernel package API.
   - **Virtual filesystem:**
     - stat, read, list, write/append, mkdir (with `-p` behaviour), remove (with recursive), chmod
     - deterministic modification times, Linux-style parent-directory updates, and backward-compatible snapshots
     - Unix owner/other permissions, including execute permission to enter a directory, with root overrides
-  - **Tests:** covered by Vitest unit tests.
+  - **Tests:** covered by Vitest unit tests, including module-host contract and failure tests.
   - **Shell:** parser, command executor, pipelines, redirections, variables, globs, conditional operators, permissions-aware built-ins, and module command registration.
   - **GNU fidelity:** errno diagnostics preserve typed paths; `cp`/`mv` support directory targets;
     `ls` supports hidden entries, `-d`, and long listings; text commands accept `-` for stdin.
@@ -76,7 +84,9 @@ This template has no application code or required technology stack. The document
   - The shell intentionally implements only the command/options listed in its package task; it is not a complete Bash or POSIX shell.
   - Some GNU formatting and shell-language edge cases remain simplified for the teaching filesystem;
     long listings use the virtual filesystem's fixed UTC clock values.
-  - There is no UI, module host or tutor yet.
+  - The module host and SDK contract are implemented, with hello, notes, failure, and missing-command
+    fixtures proving the contract. Failed module activation rolls back registered actions, commands
+    and capability grants. A browser UI, production modules and tutor are still pending.
 - Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/) (Apache-2.0) and [Vitest](https://vitest.dev/) (MIT), both development-only.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

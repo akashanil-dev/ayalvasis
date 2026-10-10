@@ -1,5 +1,5 @@
 import type { Kernel } from '@ayalvasis/kernel';
-import type { Actor, DispatchResult } from '@ayalvasis/sdk';
+import type { Actor, CommandDefinition as SdkCommandDefinition, DispatchResult } from '@ayalvasis/sdk';
 
 export interface RunResult {
   stdout: string;
@@ -15,12 +15,7 @@ export interface Shell {
   commands(): CommandDefinition[];
 }
 
-export interface CommandDefinition {
-  name: string;
-  summary: string;
-  usage: string;
-  run(ctx: CommandContext): Promise<number> | number;
-}
+export type CommandDefinition = SdkCommandDefinition<CommandContext>;
 
 export interface CommandContext {
   args: string[];

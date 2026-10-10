@@ -8,6 +8,8 @@ No participant AI usage has been recorded yet. Replace the placeholder row as yo
 
 | Date and time with timezone | Tool / model, if known | Task | Assistance and affected files | Human review / corrections | Validation and result |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-11T00:44:50+05:30 | Codex | Review fixes for module permissions and rollback | Added permission-bound `ActionContext.fs`, kernel unregister/revoke lifecycle cleanup, partial-failure coverage, and app/command namespace correction. | Pending | `npm run check` passed; 6 test files and 78 tests passed. |
+| 2026-10-11T00:41:00+05:30 | Codex | Module host and SDK activation contract | Added SDK module contracts, the module-host package, lazy stubs, dependency/capability handling, fixtures, tests and docs. | Pending | `npm run check` passed; 6 test files and 75 tests passed. |
 | 2026-10-11T00:37:34+05:30 | Codex | Parser and multi-file fidelity | Fixed double-quote escapes, multi-file text commands, and added tests. | Pending | 56 tests passed. |
 | 2026-10-11T00:36:20+05:30 | Codex | Echo and stdin fidelity | Added Bash echo escapes/options, stdin `-` operands, and regression tests. | Pending | 54 tests passed. |
 | 2026-10-11T00:34:18+05:30 | Codex | Shell fidelity review | Totals, options, `ls -d`, and tests. | Pending | 52 tests passed. |

@@ -28,48 +28,48 @@ export const fsActions: ActionDefinition[] = [
     capability: 'fs:read',
     description: 'Get the type, owner, permissions and size of a file or directory.',
     mutates: false,
-    run: ({ state, user }, payload) => vfs.stat(state.fs, path(payload), user),
+    run: ({ fs }, payload) => fs.stat(path(payload)),
   },
   {
     type: 'fs.read',
     capability: 'fs:read',
     description: 'Read the text of a file.',
     mutates: false,
-    run: ({ state, user }, payload) => vfs.readFile(state.fs, path(payload), user),
+    run: ({ fs }, payload) => fs.read(path(payload)),
   },
   {
     type: 'fs.list',
     capability: 'fs:read',
     description: 'List the entries of a directory.',
     mutates: false,
-    run: ({ state, user }, payload) => vfs.listDir(state.fs, path(payload), user),
+    run: ({ fs }, payload) => fs.list(path(payload)),
   },
   {
     type: 'fs.write',
     capability: 'fs:write',
     description: 'Create or overwrite a file, or append to it.',
     mutates: true,
-    run: ({ state, user, now }, payload) =>
-      vfs.writeFile(
-        state.fs, path(payload), user, field(payload, 'content', 'string')!,
-        field(payload, 'append', 'boolean', true), now,
-      ),
+    run: ({ fs }, payload) => fs.write(path(payload), field(payload, 'content', 'string')!, {
+      append: field(payload, 'append', 'boolean', true),
+    }),
   },
   {
     type: 'fs.mkdir',
     capability: 'fs:write',
     description: 'Create a directory, and its parents too when "parents" is true.',
     mutates: true,
-    run: ({ state, user, now }, payload) =>
-      vfs.makeDir(state.fs, path(payload), user, field(payload, 'parents', 'boolean', true), now),
+    run: ({ fs }, payload) => fs.mkdir(path(payload), {
+      parents: field(payload, 'parents', 'boolean', true),
+    }),
   },
   {
     type: 'fs.remove',
     capability: 'fs:write',
     description: 'Delete a file, or a directory and everything in it when "recursive" is true.',
     mutates: true,
-    run: ({ state, user, now }, payload) =>
-      vfs.remove(state.fs, path(payload), user, field(payload, 'recursive', 'boolean', true), now),
+    run: ({ fs }, payload) => fs.remove(path(payload), {
+      recursive: field(payload, 'recursive', 'boolean', true),
+    }),
   },
   {
     type: 'fs.chmod',

@@ -3,7 +3,7 @@ import { Kernel, type KernelOptions } from './kernel';
 
 export { KernelError } from './errors';
 export { Kernel } from './kernel';
-export type { ActionContext, ActionDefinition, DispatchOptions, KernelOptions, KernelSnapshot } from './kernel';
+export type { ActionContext, ActionDefinition, ActionFs, DispatchOptions, KernelOptions, KernelSnapshot } from './kernel';
 export type { KernelState, UserAccount } from './state';
 export { resolvePath } from './vfs';
 export type { DirNode, FileNode, Stat, VNode } from './vfs';

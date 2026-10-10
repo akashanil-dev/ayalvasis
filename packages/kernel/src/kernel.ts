@@ -2,9 +2,21 @@
 // Every request goes through dispatch, which checks the actor's capabilities, runs the action,
 // and records the outcome in the event log that the UI, lessons and the tutor subscribe to.
 
-import type { Action, ActionError, Actor, Capability, DispatchResult, KernelEvent } from '@ayalvasis/sdk';
+import type {
+  Action, ActionDefinition as SdkActionDefinition, ActionError, Actor, Capability, DispatchResult, KernelEvent,
+} from '@ayalvasis/sdk';
 import { KernelError } from './errors';
 import { createInitialState, type KernelState } from './state';
+import * as vfs from './vfs';
+
+export interface ActionFs {
+  read(path: string): string;
+  write(path: string, content: string, options?: { append?: boolean }): void;
+  list(path: string): vfs.Stat[];
+  stat(path: string): vfs.Stat;
+  mkdir(path: string, options?: { parents?: boolean }): void;
+  remove(path: string, options?: { recursive?: boolean }): void;
+}
 
 export interface ActionContext {
   state: KernelState;
@@ -12,16 +24,10 @@ export interface ActionContext {
   /** The Linux user the action runs as. */
   user: string;
   now: number;
+  fs: ActionFs;
 }
 
-export interface ActionDefinition<P = unknown, R = unknown> {
-  type: string;
-  capability: Capability;
-  description: string;
-  /** Whether the action changes state. Read-only actions are logged but skipped on replay. */
-  mutates: boolean;
-  run(ctx: ActionContext, payload: P): R;
-}
+export type ActionDefinition<P = unknown, R = unknown> = SdkActionDefinition<P, R, ActionContext>;
 
 export interface KernelSnapshot {
   version: typeof SNAPSHOT_VERSION;
@@ -89,6 +95,10 @@ export class Kernel {
     this.definitions.set(definition.type, definition);
   }
 
+  unregister(type: string): void {
+    if (!this.definitions.delete(type)) throw new KernelError('ENOENT', `unknown action: ${type}`);
+  }
+
   /** All registered actions, e.g. to describe them to the tutor as tools. */
   actions(): ActionDefinition[] {
     return [...this.definitions.values()];
@@ -96,6 +106,10 @@ export class Kernel {
 
   grant(actor: Actor, capabilities: Capability[]): void {
     this.grants.set(actorKey(actor), [...capabilities]);
+  }
+
+  revoke(actor: Actor): void {
+    this.grants.delete(actorKey(actor));
   }
 
   can(actor: Actor, capability: Capability): boolean {
@@ -118,7 +132,9 @@ export class Kernel {
     } else if (!this.state.users[user]) {
       result = failure('EINVAL', `no such user: ${user}`);
     } else {
-      result = this.run<R>(definition, { state: this.state, actor, user, now }, action.payload);
+      result = this.run<R>(definition, {
+        state: this.state, actor, user, now, fs: createActionFs(this.state, user, now),
+      }, action.payload);
     }
 
     this.record({
@@ -156,7 +172,9 @@ export class Kernel {
     // That way a failed action can never leave the system half-changed.
     const draft = definition.mutates ? structuredClone(ctx.state) : ctx.state;
     try {
-      const value = definition.run({ ...ctx, state: draft }, payload) as R;
+      const value = definition.run({
+        ...ctx, state: draft, fs: createActionFs(draft, ctx.user, ctx.now),
+      }, payload) as R;
       this.state = draft;
       return { ok: true, value };
     } catch (err) {
@@ -170,6 +188,24 @@ export class Kernel {
     if (this.log.length > this.logLimit) this.log.splice(0, this.log.length - this.logLimit);
     for (const listener of this.listeners) listener(event);
   }
+}
+
+function createActionFs(state: KernelState, user: string, now: number): ActionFs {
+  const path = (value: string): string => {
+    if (!value.startsWith('/')) throw new KernelError('EINVAL', `path must be absolute: ${value}`);
+    return vfs.resolvePath(value);
+  };
+  return {
+    read: (value) => vfs.readFile(state.fs, path(value), user),
+    write: (value, content, options = {}) =>
+      vfs.writeFile(state.fs, path(value), user, content, options.append ?? false, now),
+    list: (value) => vfs.listDir(state.fs, path(value), user),
+    stat: (value) => vfs.stat(state.fs, path(value), user),
+    mkdir: (value, options = {}) =>
+      vfs.makeDir(state.fs, path(value), user, options.parents ?? false, now),
+    remove: (value, options = {}) =>
+      vfs.remove(state.fs, path(value), user, options.recursive ?? false, now),
+  };
 }
 
 function restoreState(state: KernelState): KernelState {

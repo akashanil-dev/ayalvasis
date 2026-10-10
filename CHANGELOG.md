@@ -4,6 +4,33 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T00:44:50+05:30 — Permission-bound module filesystem access and rollback
+
+- Changed:
+  - Added `ActionContext.fs` helpers backed by the same VFS permission checks as built-in `fs.*`
+    actions, and removed the raw `writeFile` export from `@ayalvasis/kernel`.
+  - Added `Kernel.unregister` and `Kernel.revoke`; failed module activation now removes registered
+    actions and commands and revokes the module actor's grant.
+  - Allowed app ids and command names to share a namespace-free value, updated the notes and partial-
+    failure fixtures, and added tests for user/root access and cleanup.
+- Why: Prevent modules from bypassing acting-user permissions and avoid leaving partial module state
+  after activation fails.
+- Validation: `npm run check` — TypeScript typecheck passed; Vitest reported 6 test files and 78 tests passed.
+- Limitations: The browser UI, production modules and tutor are not implemented yet.
+
+## 2026-10-11T00:41:00+05:30 — Lazy module host and activation SDK
+
+- Changed:
+  - Added `@ayalvasis/module-host` with manifest validation, per-host lifecycle state, lazy shell
+    command stubs, dependency activation, capability grants, app activation and host events.
+  - Extended the SDK with activation events, module contexts, module definitions and `defineModule`.
+  - Added hello, notes, throwing and missing-command fixtures plus 19 module-host contract tests.
+  - Updated the README architecture/status and workspace lockfile for the new package.
+- Why: Make Terminal, Files, Learn Linux, Learn Docker and games independently loadable modules whose
+  manifests are the only integration point required by the core.
+- Validation: `npm run check` — TypeScript typecheck passed; Vitest reported 6 test files and 75 tests passed.
+- Limitations: The browser UI, production modules and tutor are not implemented yet.
+
 ## 2026-10-11T00:37:34+05:30 — Parser and multi-file text command fidelity
 
 - Changed:

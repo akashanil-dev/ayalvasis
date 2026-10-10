@@ -57,6 +57,25 @@ export interface CommandContribution {
   summary: string;
 }
 
+/** A runtime-neutral action definition accepted by a module. */
+export interface ActionDefinition<P = unknown, R = unknown, C = any> {
+  type: string;
+  capability: Capability;
+  description: string;
+  mutates: boolean;
+  run(ctx: C, payload: P): R;
+}
+
+/** A runtime-neutral command definition accepted by a module. */
+export interface CommandDefinition<C = any> {
+  name: string;
+  summary: string;
+  usage: string;
+  run(ctx: C): Promise<number> | number;
+}
+
+export type ActivationEvent = 'onStartup' | `onCommand:${string}` | `onApp:${string}`;
+
 /** What a module declares about itself. The module host reads this before loading any code. */
 export interface ModuleManifest {
   id: string;
@@ -64,8 +83,29 @@ export interface ModuleManifest {
   title: string;
   /** Capabilities the module needs. The kernel refuses actions outside this list. */
   capabilities: Capability[];
+  requires?: string[];
+  activation: ActivationEvent[];
   contributes: {
     apps?: AppContribution[];
     commands?: CommandContribution[];
   };
+}
+
+export interface ModuleContext {
+  id: string;
+  actor: Actor;
+  dispatch<R>(type: string, payload: unknown, options?: { user?: string }): DispatchResult<R>;
+  registerAction(definition: ActionDefinition<any, any, any>): void;
+  registerCommand(definition: CommandDefinition<any>): void;
+  log(message: string): void;
+}
+
+export interface ModuleDefinition {
+  manifest: ModuleManifest;
+  activate(ctx: ModuleContext): void | (() => void | Promise<void>)
+    | Promise<void | (() => void | Promise<void>)>;
+}
+
+export function defineModule(definition: ModuleDefinition): ModuleDefinition {
+  return definition;
 }
