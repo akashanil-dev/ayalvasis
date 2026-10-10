@@ -19,6 +19,12 @@ const ICONS: Record<string, () => React.JSX.Element> = {
     <path d="M30 5v9h9" fill="#c0bfbc" />
     <path d="M14 21h20M14 27h20M14 33h13" stroke="#77767b" strokeWidth="2.5" strokeLinecap="round" />
   </svg>,
+  'learn-linux': () => <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M24 9 3 19l21 10 21-10z" fill="#33d17a" />
+    <path d="M11 24v9c0 3 6 7 13 7s13-4 13-7v-9l-13 6z" fill="#26a269" />
+    <path d="M41 21v12" stroke="#f6d32d" strokeWidth="2.5" strokeLinecap="round" />
+    <circle cx="41" cy="35" r="2.5" fill="#f6d32d" />
+  </svg>,
   about: () => <svg viewBox="0 0 48 48" aria-hidden="true">
     <circle cx="24" cy="24" r="19" fill="#613583" />
     <circle cx="24" cy="15" r="3" fill="#fff" />

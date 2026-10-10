@@ -175,6 +175,33 @@ describe('dependencies and failures', () => {
   });
 });
 
+describe('module events', () => {
+  it('lets an active module watch kernel events', async () => {
+    const { host, kernel } = setup();
+    const value = manifest('watcher');
+    const seen: string[] = [];
+    host.add(value, async () => moduleDefinition(value, (ctx) => {
+      ctx.onEvent((event) => seen.push(event.action.type));
+    }));
+    await host.activate('watcher');
+    kernel.dispatch({ type: 'fs.list', payload: { path: '/' } });
+    expect(seen).toEqual(['fs.list']);
+  });
+
+  it('stops a failed module from watching', async () => {
+    const { host, kernel } = setup();
+    const value = manifest('broken-watcher');
+    const seen: string[] = [];
+    host.add(value, async () => moduleDefinition(value, (ctx) => {
+      ctx.onEvent((event) => seen.push(event.action.type));
+      throw new Error('boom');
+    }));
+    await expect(host.activate('broken-watcher')).rejects.toThrow('boom');
+    kernel.dispatch({ type: 'fs.list', payload: { path: '/' } });
+    expect(seen).toEqual([]);
+  });
+});
+
 describe('module context', () => {
   it('grants exactly declared capabilities and enforces them', async () => {
     const { host, kernel } = setup();
@@ -206,6 +233,22 @@ describe('module context', () => {
     )).toMatchObject({ ok: false, error: { code: 'EACCES' } });
     expect(kernel.dispatch(
       { type: 'writer.write', payload: { path: '/etc/module-file' } }, { actor, user: 'root' },
+    )).toMatchObject({ ok: false, error: { code: 'EPERM' } });
+  });
+
+  it('lets a module act as root only when its manifest declares user:switch', async () => {
+    const { host, kernel } = setup();
+    const value = manifest('admin', { capabilities: ['fs:write', 'user:switch'] });
+    host.add(value, async () => moduleDefinition(value, (ctx) => {
+      ctx.registerAction({
+        type: 'admin.write', capability: 'fs:write', description: 'Write a path', mutates: true,
+        run: ({ fs }, payload) => fs.write((payload as { path: string }).path, 'written'),
+      });
+    }));
+    await host.activate('admin');
+    expect(kernel.dispatch(
+      { type: 'admin.write', payload: { path: '/etc/module-file' } },
+      { actor: { kind: 'module', id: 'admin' }, user: 'root' },
     )).toMatchObject({ ok: true });
   });
 

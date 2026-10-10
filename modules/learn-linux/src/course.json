@@ -1,0 +1,239 @@
+{
+  "id": "learn-linux",
+  "title": "Learn Linux",
+  "summary": "Use the terminal the way people do every day: look around, move, make, read, search and protect files.",
+  "lessons": [
+    {
+      "id": "first-words",
+      "title": "First words with the shell",
+      "story": "A terminal is a conversation: you type a command, press Enter, and the computer answers. Let's ask it three simple questions.",
+      "steps": [
+        {
+          "id": "whoami",
+          "task": "Ask the computer who you are: type whoami and press Enter.",
+          "hints": ["Open the Terminal (Ctrl+Alt+T), type whoami and press Enter."],
+          "check": { "ran": { "command": "whoami", "code": 0 } },
+          "explain": "whoami prints the user you are logged in as. Everything you do runs as that user."
+        },
+        {
+          "id": "pwd",
+          "task": "Ask where you are: pwd.",
+          "hints": ["pwd stands for print working directory. Type pwd and press Enter."],
+          "check": { "ran": { "command": "pwd", "code": 0 } },
+          "explain": "You start in your home folder, /home/<you>. The prompt shows it as ~."
+        },
+        {
+          "id": "ls",
+          "task": "Look around with ls.",
+          "hints": ["ls lists what is in the current folder. Type ls and press Enter."],
+          "check": { "ran": { "command": "ls", "code": 0 } },
+          "explain": "ls is the command you will type most often. Folders and files are listed by name."
+        }
+      ],
+      "solution": ["whoami", "pwd", "ls"]
+    },
+    {
+      "id": "moving-around",
+      "title": "Moving around",
+      "story": "Someone left a garden in your home folder, and something is hidden in it. Folders are called directories, and cd (change directory) moves you between them.",
+      "setup": {
+        "dirs": ["~/garden/shed"],
+        "files": {
+          "~/garden/roses.txt": "Red, and very thorny.\n",
+          "~/garden/.seed-packet": "The hidden seed is a sunflower.\n"
+        }
+      },
+      "steps": [
+        {
+          "id": "cd-garden",
+          "task": "Go into the garden directory: cd garden",
+          "hints": ["From your home folder, type cd garden. Watch the prompt change to ~/garden."],
+          "check": { "cwd": "~/garden" },
+          "explain": "The prompt always shows where you are. cd with no arguments takes you back home."
+        },
+        {
+          "id": "ls-a",
+          "task": "Some files are hidden. Show everything with ls -a",
+          "hints": ["Names starting with a dot are hidden from plain ls.", "Type ls -a inside the garden."],
+          "check": { "ran": { "command": "ls", "line": "-[a-zA-Z]*a", "stdout": "\\.seed-packet" } },
+          "explain": "-a means all. Files whose names start with a dot are hidden by convention, often settings."
+        },
+        {
+          "id": "cat-seed",
+          "task": "Read the hidden file with cat to find out what the seed is.",
+          "hints": ["cat prints a file. The file is called .seed-packet (with the dot).", "Type cat .seed-packet"],
+          "check": { "ran": { "command": "cat", "stdout": "sunflower" } },
+          "explain": "cat (from concatenate) prints files. Tab completes names, so cat .se then Tab saves typing."
+        },
+        {
+          "id": "back-home",
+          "task": "Go back up to your home folder with cd ..",
+          "hints": [".. means the folder above this one. Type cd .."],
+          "check": { "cwd": "~" },
+          "explain": ".. is the parent folder and . is the current one. They work in every path, like ../garden/shed."
+        }
+      ],
+      "solution": ["cd garden", "ls -a", "cat .seed-packet", "cd .."]
+    },
+    {
+      "id": "making-things",
+      "title": "Making, copying and removing",
+      "story": "Time to build your own corner of the system: a project folder with a plan in it.",
+      "steps": [
+        {
+          "id": "mkdir",
+          "task": "Make a directory called projects: mkdir projects",
+          "hints": ["mkdir means make directory. Type mkdir projects in your home folder."],
+          "check": { "exists": "~/projects", "kind": "dir" },
+          "explain": "mkdir -p makes a whole path at once, like mkdir -p a/b/c."
+        },
+        {
+          "id": "write-plan",
+          "task": "Write the words learn linux into projects/plan.txt using echo and >",
+          "hints": ["> sends a command's output into a file instead of the screen.", "Type echo learn linux > projects/plan.txt"],
+          "check": { "contains": { "path": "~/projects/plan.txt", "pattern": "learn linux" } },
+          "explain": "> replaces a file's contents and >> adds to the end. Careful: > overwrites without asking."
+        },
+        {
+          "id": "copy",
+          "task": "Make a backup: copy plan.txt to plan.bak in the same folder.",
+          "hints": ["cp takes a source and a destination.", "Type cp projects/plan.txt projects/plan.bak"],
+          "check": { "contains": { "path": "~/projects/plan.bak", "pattern": "learn linux" } },
+          "explain": "cp copies, mv moves or renames, and both take the source first and the destination second."
+        },
+        {
+          "id": "open-files",
+          "task": "Open the Files app from the desktop and look inside projects.",
+          "hints": ["Double-click the Files icon on the desktop, then double-click projects."],
+          "check": { "opened": "files" },
+          "explain": "Files and the terminal show the same filesystem. Change something in one and the other sees it."
+        },
+        {
+          "id": "remove",
+          "task": "You don't need the backup after all. Delete projects/plan.bak with rm.",
+          "hints": ["rm removes files. There is no recycle bin in the terminal.", "Type rm projects/plan.bak"],
+          "check": { "all": [{ "missing": "~/projects/plan.bak" }, { "exists": "~/projects/plan.txt" }] },
+          "explain": "rm deletes for good. rm -r removes a folder and everything in it, so read twice before pressing Enter."
+        }
+      ],
+      "solution": ["mkdir projects", "echo learn linux > projects/plan.txt", "cp projects/plan.txt projects/plan.bak", { "open": "files" }, "rm projects/plan.bak"]
+    },
+    {
+      "id": "reading-and-searching",
+      "title": "Reading and searching",
+      "story": "A web server has been writing a log all night. Logs are long, so instead of reading everything you'll ask questions about it.",
+      "setup": {
+        "dirs": ["~/logs"],
+        "files": {
+          "~/logs/server.log": "08:00 INFO server started\n08:01 INFO request /home\n08:02 ERROR database timeout\n08:03 INFO request /about\n08:04 WARN slow response\n08:05 ERROR disk almost full\n08:06 INFO request /home\n08:07 ERROR database timeout\n08:08 INFO request /contact\n08:09 INFO server healthy\n"
+        }
+      },
+      "steps": [
+        {
+          "id": "head",
+          "task": "Show only the first 3 lines of logs/server.log with head.",
+          "hints": ["head shows the start of a file. -n chooses how many lines.", "Type head -n 3 logs/server.log"],
+          "check": { "ran": { "command": "head", "line": "-n\\s*3\\b", "stdout": "08:02 ERROR database timeout" } },
+          "explain": "tail shows the end instead, which is where the newest log lines are."
+        },
+        {
+          "id": "wc",
+          "task": "How many lines does the log have? Count them with wc -l",
+          "hints": ["wc counts lines, words and characters; -l means just lines.", "Type wc -l logs/server.log"],
+          "check": { "ran": { "command": "wc", "stdout": "^10\\b" } },
+          "explain": "10 lines. On a real server, logs can have millions, which is why these tools matter."
+        },
+        {
+          "id": "grep",
+          "task": "Show only the ERROR lines with grep.",
+          "hints": ["grep prints the lines that contain a pattern.", "Type grep ERROR logs/server.log"],
+          "check": { "ran": { "command": "grep", "stdout": "disk almost full" } },
+          "explain": "grep is one of the most useful commands there is. grep -i ignores case and grep -r searches folders."
+        },
+        {
+          "id": "grep-c",
+          "task": "Now just count the errors with grep -c",
+          "hints": ["-c makes grep print how many lines matched instead of the lines.", "Type grep -c ERROR logs/server.log"],
+          "check": { "ran": { "command": "grep", "line": "-[a-zA-Z]*c", "stdout": "^3$" } },
+          "explain": "Three errors. Small questions with exact answers are how you find problems quickly."
+        }
+      ],
+      "solution": ["head -n 3 logs/server.log", "wc -l logs/server.log", "grep ERROR logs/server.log", "grep -c ERROR logs/server.log"]
+    },
+    {
+      "id": "pipes",
+      "title": "Pipes: chaining commands",
+      "story": "The real power of the shell is joining small commands together. A pipe | sends one command's output into the next.",
+      "setup": {
+        "files": {
+          "~/fruit.txt": "banana\napple\ncherry\napple\nbanana\napple\n"
+        }
+      },
+      "steps": [
+        {
+          "id": "sort",
+          "task": "Sort fruit.txt alphabetically.",
+          "hints": ["Type sort fruit.txt"],
+          "check": { "ran": { "command": "sort", "stdout": "^apple\\napple\\napple\\nbanana" } },
+          "explain": "sort puts lines in order. sort -r reverses it and sort -n sorts numbers properly."
+        },
+        {
+          "id": "count",
+          "task": "Count how many of each fruit there are by piping sort into uniq -c",
+          "hints": ["uniq only merges repeated lines that are next to each other, so sort first.", "Type sort fruit.txt | uniq -c"],
+          "check": { "ran": { "command": "uniq", "line": "\\|", "stdout": "3 apple" } },
+          "explain": "sort | uniq -c is a classic: it turns a list into a tally. Add | sort -rn to rank it."
+        },
+        {
+          "id": "save",
+          "task": "Save the sorted fruit into sorted.txt using >",
+          "hints": ["Redirection works after any command, including a pipeline.", "Type sort fruit.txt > sorted.txt"],
+          "check": { "contains": { "path": "~/sorted.txt", "pattern": "^apple\\napple\\napple\\nbanana\\nbanana\\ncherry" } },
+          "explain": "Commands, pipes and redirection together are how people automate work on Linux."
+        }
+      ],
+      "solution": ["sort fruit.txt", "sort fruit.txt | uniq -c", "sort fruit.txt > sorted.txt"]
+    },
+    {
+      "id": "permissions",
+      "title": "Permissions and sudo",
+      "story": "Linux decides who may read, change or run every file. You'll meet a file you can't read, borrow root's power, and protect a file of your own.",
+      "setup": {
+        "files": {
+          "~/diary.txt": "Today I learned that ls -l shows permissions.\n"
+        }
+      },
+      "steps": [
+        {
+          "id": "ls-l",
+          "task": "See the permissions of your files with ls -l",
+          "hints": ["Type ls -l. The first column, like -rw-r--r--, is the permissions."],
+          "check": { "ran": { "command": "ls", "line": "-[a-zA-Z]*l", "stdout": "diary\\.txt" } },
+          "explain": "rw-r--r-- means: you (owner) can read and write, your group and everyone else can only read."
+        },
+        {
+          "id": "denied",
+          "task": "Try to read the password file: cat /etc/shadow",
+          "hints": ["Type cat /etc/shadow. It's supposed to fail!"],
+          "check": { "ran": { "command": "cat", "stderr": "/etc/shadow: Permission denied" } },
+          "explain": "/etc/shadow holds password hashes, so only root, the administrator, may read it."
+        },
+        {
+          "id": "sudo",
+          "task": "Run the same command as root by putting sudo in front of it.",
+          "hints": ["sudo means do this as the superuser.", "Type sudo cat /etc/shadow"],
+          "check": { "ran": { "command": "sudo", "line": "shadow", "code": 0 } },
+          "explain": "sudo is powerful: root can change or delete anything. Use it only when you understand the command."
+        },
+        {
+          "id": "chmod",
+          "task": "Make your diary private: only you may read or write it. Use chmod 600 diary.txt",
+          "hints": ["600 means read+write (6) for you, nothing (0) for group, nothing (0) for others.", "Type chmod 600 diary.txt, then ls -l to check."],
+          "check": { "mode": { "path": "~/diary.txt", "is": "600" } },
+          "explain": "Each digit adds read (4), write (2) and execute (1). 644 is a typical file and 755 a typical program."
+        }
+      ],
+      "solution": ["ls -l", "cat /etc/shadow", "sudo cat /etc/shadow", "chmod 600 diary.txt"]
+    }
+  ]
+}

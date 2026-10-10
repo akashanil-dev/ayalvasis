@@ -87,6 +87,18 @@ describe('capabilities', () => {
     );
     expect(result).toMatchObject({ ok: false, error: { code: 'EACCES' } });
   });
+
+  it('requires user:switch to act as another user, so actors cannot grant themselves sudo', () => {
+    const kernel = createKernel({ username: 'ada' });
+    const write = { type: 'fs.write', payload: { path: '/etc/motd', content: 'hi' } };
+    kernel.grant(tutor, ['fs:*']);
+    expect(kernel.dispatch(write, { actor: tutor, user: 'root' })).toMatchObject({
+      ok: false, error: { code: 'EPERM', message: expect.stringContaining('user:switch') },
+    });
+    kernel.grant(tutor, ['fs:*', 'user:switch']);
+    expect(kernel.dispatch(write, { actor: tutor, user: 'root' })).toMatchObject({ ok: true });
+    expect(kernel.dispatch(write, { user: 'root' })).toMatchObject({ ok: true });
+  });
 });
 
 describe('event log', () => {
@@ -229,5 +241,18 @@ describe('session actions', () => {
     void ignored;
     const restored = createKernel({ snapshot: { version: 1, state: legacyState as KernelState } });
     expect(restored.getState().session).toEqual({ windows: [], focusedId: null, nextId: 1 });
+  });
+});
+
+describe('nested dispatch', () => {
+  it('keeps changes made by actions dispatched from inside a read-only action', () => {
+    const kernel = createKernel({ username: 'ada' });
+    kernel.register({
+      type: 'test.orchestrate', capability: 'fs:read', description: 'creates a file via dispatch', mutates: false,
+      run: () => kernel.dispatch({ type: 'fs.write', payload: { path: '/home/ada/made', content: 'kept' } }),
+    });
+    expect(kernel.dispatch({ type: 'test.orchestrate', payload: {} })).toMatchObject({ ok: true });
+    expect(kernel.dispatch({ type: 'fs.read', payload: { path: '/home/ada/made' } }))
+      .toEqual({ ok: true, value: 'kept' });
   });
 });

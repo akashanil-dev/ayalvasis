@@ -87,26 +87,37 @@ export function modeString(mode: number, kind: 'file' | 'dir'): string {
   return prefix + permissions.join('');
 }
 
+/**
+ * An octal mode (`755`) or GNU symbolic clauses (`u+x`, `go-w`, `+x`, `u=rw,o=`), applied to `current`.
+ * With no u/g/o/a, a clause applies to everyone (GNU also masks with the umask, which is 022 here, so
+ * `+w` only adds write for the owner).
+ */
 export function parseMode(value: string, current = 0): number | undefined {
-  if (/^[0-7]{3}$/.test(value)) return Number.parseInt(value, 8);
-  const match = value.match(/^([ugoa]+)([+=-])([rwx]+)$/);
-  if (!match) return undefined;
-  const groups = match[1]!.includes('a') ? 'ugo' : match[1]!;
-  let bits = 0;
-  for (const group of groups) {
-    const shift = group === 'u' ? 6 : group === 'g' ? 3 : 0;
-    for (const flag of match[3]!) {
-      bits |= (flag === 'r' ? 4 : flag === 'w' ? 2 : 1) << shift;
-    }
+  if (/^[0-7]{3,4}$/.test(value)) {
+    const mode = Number.parseInt(value, 8);
+    return mode <= 0o777 ? mode : undefined;
   }
-  if (match[2] === '+') return current | bits;
-  if (match[2] === '-') return current & ~bits;
   let result = current;
-  for (const group of groups) {
-    const shift = group === 'u' ? 6 : group === 'g' ? 3 : 0;
-    result = (result & ~(7 << shift)) | (bits & (7 << shift));
+  for (const clause of value.split(',')) {
+    const match = /^([ugoa]*)([+=-])([rwx]*)$/.exec(clause);
+    if (!match) return undefined;
+    const [, who, op, perms] = match as unknown as [string, string, string, string];
+    const shifts = shiftsFor(who);
+    let bits = 0;
+    for (const shift of shifts) for (const flag of perms) bits |= (flag === 'r' ? 4 : flag === 'w' ? 2 : 1) << shift;
+    if (!who) bits &= ~UMASK;
+    if (op === '+') result |= bits;
+    else if (op === '-') result &= ~bits;
+    else for (const shift of shifts) result = (result & ~(7 << shift)) | (bits & (7 << shift));
   }
   return result;
+}
+
+const UMASK = 0o022;
+
+function shiftsFor(who: string): number[] {
+  if (!who || who.includes('a')) return [6, 3, 0];
+  return [...new Set(who)].map((group) => (group === 'u' ? 6 : group === 'g' ? 3 : 0));
 }
 
 export function recursiveFiles(ctx: CommandContext, path: string): string[] {

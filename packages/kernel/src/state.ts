@@ -68,6 +68,7 @@ export function createInitialState(username: string, hostname = 'ayalvasis', now
     },
     fs: dir('root', 0o755, {
       bin: dir('root', 0o755, {}, now),
+      dev: dir('root', 0o755, { null: file('root', 0o666, '', now) }, now),
       etc: dir('root', 0o755, {
         hostname: file('root', 0o644, hostname, now),
         motd: file('root', 0o644, MOTD, now),

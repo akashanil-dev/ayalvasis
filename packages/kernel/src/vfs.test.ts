@@ -106,3 +106,12 @@ describe('permissions', () => {
     expect(vfs.allows(node, 'root', 'x')).toBe(true);
   });
 });
+
+describe('/dev/null', () => {
+  it('accepts writes from anyone and stays empty', () => {
+    const root = fresh();
+    vfs.writeFile(root, '/dev/null', 'ada', 'discard me');
+    vfs.writeFile(root, '/dev/../dev/null', 'ada', 'and me', true);
+    expect(vfs.readFile(root, '/dev/null', 'ada')).toBe('');
+  });
+});

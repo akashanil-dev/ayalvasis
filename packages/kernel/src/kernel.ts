@@ -51,6 +51,7 @@ export interface DispatchOptions {
 
 const SNAPSHOT_VERSION = 1;
 const SYSTEM: Actor = { kind: 'system', id: 'kernel' };
+const SWITCH_USER = 'user:switch';
 
 export class Kernel {
   private state: KernelState;
@@ -131,6 +132,9 @@ export class Kernel {
       result = failure('EPERM', `${actor.kind}:${actor.id} lacks capability ${definition.capability}`);
     } else if (!this.state.users[user]) {
       result = failure('EINVAL', `no such user: ${user}`);
+    } else if (user !== this.sessionUser && !this.can(actor, SWITCH_USER)) {
+      // Acting as root (sudo) is its own permission, so a module or the tutor can't escalate on its own.
+      result = failure('EPERM', `${actor.kind}:${actor.id} lacks capability ${SWITCH_USER}`);
     } else {
       result = this.run<R>(definition, {
         state: this.state, actor, user, now, fs: createActionFs(this.state, user, now),
@@ -175,7 +179,9 @@ export class Kernel {
       const value = definition.run({
         ...ctx, state: draft, fs: createActionFs(draft, ctx.user, ctx.now),
       }, payload) as R;
-      this.state = draft;
+      // A read-only action may dispatch other actions while it runs (a lesson starting creates files).
+      // Those replace this.state themselves, so only a mutating action installs its own draft.
+      if (definition.mutates) this.state = draft;
       return { ok: true, value };
     } catch (err) {
       if (err instanceof KernelError) return failure(err.code, err.message);

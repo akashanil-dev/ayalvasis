@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { manifest as aboutManifest } from '@ayalvasis/module-about/manifest';
 import { manifest as editorManifest } from '@ayalvasis/module-editor/manifest';
 import { manifest as filesManifest } from '@ayalvasis/module-files/manifest';
+import { manifest as learnLinuxManifest } from '@ayalvasis/module-learn-linux/manifest';
 import { manifest as terminalManifest } from '@ayalvasis/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@ayalvasis/system';
 import { App } from './app';
@@ -36,6 +37,10 @@ const system = createLocalSystem({
     { manifest: terminalManifest, load: () => import('@ayalvasis/module-terminal').then((module) => module.terminal) },
     { manifest: filesManifest, load: () => import('@ayalvasis/module-files').then((module) => module.files) },
     { manifest: editorManifest, load: () => import('@ayalvasis/module-editor').then((module) => module.editor) },
+    {
+      manifest: learnLinuxManifest,
+      load: () => import('@ayalvasis/module-learn-linux').then((module) => module.learnLinux),
+    },
     { manifest: aboutManifest, load: () => import('@ayalvasis/module-about').then((module) => module.about) },
   ],
 });

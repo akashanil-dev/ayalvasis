@@ -165,7 +165,7 @@ describe('built-in commands', () => {
     expect((await run(shell, 'cat -- -z')).stdout).toBe('');
     expect((await run(shell, 'echo -')).stdout).toBe('-\n');
     expect((await run(shell, 'ls -ld deep')).stdout).toMatch(/^[d-].* deep\n$/);
-    expect((await run(shell, 'ls -l /')).stdout.split('\n')[0]).toBe('total 28');
+    expect((await run(shell, 'ls -l /')).stdout.split('\n')[0]).toBe('total 32');
     expect((await run(shell, 'ls -la')).stdout.split('\n')[0]).toBe('total 28');
   });
 
@@ -203,5 +203,26 @@ describe('built-in commands', () => {
     expect((await run(shell, 'tail a b')).stdout).toBe('==> a <==\na\n\n==> b <==\nb\n');
     expect((await run(shell, 'wc a b')).stdout).toBe('1 1 2 a\n1 1 2 b\n2 2 4 total\n');
     expect((await run(shell, 'grep a a b')).stdout).toBe('a:a\n');
+  });
+});
+
+describe('chmod symbolic modes', () => {
+  it.each([
+    ['+x', 0o644, 0o755],
+    ['u+x', 0o644, 0o744],
+    ['go-r', 0o644, 0o600],
+    ['u=rwx,go=', 0o644, 0o700],
+    ['a=r', 0o644, 0o444],
+    ['+w', 0o444, 0o644],
+    ['o+w', 0o644, 0o646],
+    ['0755', 0o644, 0o755],
+  ])('chmod %s turns %o into %o', async (mode, from, to) => {
+    const { parseMode } = await import('./commands/helpers');
+    expect(parseMode(mode, from)).toBe(to);
+  });
+
+  it.each(['u+z', 'x', '888', '1777', 'u+x,,'])('rejects %s', async (mode) => {
+    const { parseMode } = await import('./commands/helpers');
+    expect(parseMode(mode, 0o644)).toBeUndefined();
   });
 });

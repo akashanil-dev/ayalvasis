@@ -34,6 +34,8 @@ interface Record {
   promise?: Promise<void>;
   commands: Map<string, CommandDefinition<any>>;
   actions: string[];
+  /** Event subscriptions to cancel if activation fails. */
+  subscriptions: (() => void)[];
   deactivate?: () => void | Promise<void>;
 }
 
@@ -48,7 +50,8 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell }): Mod
     add(manifest, load) {
       validateManifest(manifest, records, commandOwners, appOwners, builtins);
       const record: Record = {
-        manifest: structuredClone(manifest), load, status: 'registered', commands: new Map(), actions: [],
+        manifest: structuredClone(manifest), load, status: 'registered',
+        commands: new Map(), actions: [], subscriptions: [],
       };
       records.set(manifest.id, record);
       for (const command of manifest.contributes.commands ?? []) {
@@ -147,6 +150,7 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell }): Mod
     return {
       id: record.manifest.id,
       actor,
+      user: options.kernel.user,
       dispatch<R>(type: string, payload: unknown, dispatchOptions: { user?: string } = {}) {
         return options.kernel.dispatch<R>({ type, payload }, { actor, ...dispatchOptions });
       },
@@ -165,6 +169,11 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell }): Mod
           throw new Error(`module '${record.manifest.id}' registered command twice: ${definition.name}`);
         }
         record.commands.set(definition.name, definition);
+      },
+      onEvent(listener) {
+        const unsubscribe = options.kernel.subscribe(listener);
+        record.subscriptions.push(unsubscribe);
+        return unsubscribe;
       },
       log(message) {
         console.log(`[module:${record.manifest.id}] ${message}`);
@@ -185,6 +194,8 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell }): Mod
   function cleanup(record: Record): void {
     for (const type of record.actions) options.kernel.unregister(type);
     record.actions.length = 0;
+    for (const unsubscribe of record.subscriptions) unsubscribe();
+    record.subscriptions.length = 0;
     record.commands.clear();
     options.kernel.revoke({ kind: 'module', id: record.manifest.id });
   }

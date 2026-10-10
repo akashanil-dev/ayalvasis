@@ -78,3 +78,30 @@ describe('history', () => {
     expect(shell.history()).toEqual(['ls', 'pwd', 'ls']);
   });
 });
+
+describe('shell.ran record', () => {
+  it('logs each line with its commands, cwd, exit code and output', async () => {
+    const kernel = createKernel({ username: 'ada' });
+    const shell = createShell(kernel);
+    await shell.run('cd /tmp; echo hi | sort; sudo cat /etc/shadow > /dev/null; cat nope');
+    await shell.run('   ');
+    const ran = kernel.events().filter((event) => event.action.type === 'shell.ran');
+    expect(ran).toHaveLength(1);
+    expect(ran[0]?.action.payload).toEqual({
+      line: 'cd /tmp; echo hi | sort; sudo cat /etc/shadow > /dev/null; cat nope',
+      cwd: '/tmp',
+      code: 1,
+      stdout: 'hi\n',
+      stderr: 'cat: nope: No such file or directory\n',
+      commands: ['cd', 'echo', 'sort', 'sudo', 'cat', 'cat'],
+    });
+  });
+
+  it('caps very long output', async () => {
+    const kernel = createKernel({ username: 'ada' });
+    const shell = createShell(kernel);
+    await shell.run(`echo ${'x'.repeat(5000)}`);
+    const payload = kernel.events().at(-1)?.action.payload as { stdout: string };
+    expect(payload.stdout).toHaveLength(4001);
+  });
+});

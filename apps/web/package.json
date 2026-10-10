@@ -11,6 +11,7 @@
     "@ayalvasis/module-about": "*",
     "@ayalvasis/module-editor": "*",
     "@ayalvasis/module-files": "*",
+    "@ayalvasis/module-learn-linux": "*",
     "@ayalvasis/module-terminal": "*",
     "@ayalvasis/sdk": "*",
     "@ayalvasis/system": "*",

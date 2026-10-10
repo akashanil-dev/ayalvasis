@@ -49,6 +49,10 @@ This template has no application code or required technology stack. The document
   and the module activation API) that the kernel, modules, UI and tutor build on. Its action and
   command definitions are generic structural contracts, so it has no runtime dependency on either.
 - **Shell** (`packages/shell`): a bash-like teaching shell. It parses commands, expands variables and globs, runs pipelines and redirections, and implements built-ins entirely through `kernel.dispatch`.
+- **Lessons** (`packages/lessons`): a lesson engine. Courses are JSON data; each step's check is a small
+  condition over what happened (`ran`, `opened`, `cwd`) and the system's state (`exists`, `missing`,
+  `contains`, `mode`), combinable with `all`/`any`/`not`. Shell commands are logged as `shell.ran` events,
+  which is what `ran` checks see. Every lesson carries a solution that tests replay ("lesson CI").
 - **Module host** (`packages/module-host`): validates manifests, registers lazy command stubs,
   activates dependency chains, grants declared capabilities, and reports activation state/events.
   It depends on the kernel and shell; adding a module only requires registering its manifest and
@@ -63,6 +67,8 @@ This template has no application code or required technology stack. The document
   - **Terminal**: xterm.js on a per-window shell, with a tested line editor and the `clear` command.
   - **Files**: a point-and-click file manager over the same filesystem.
   - **Text Editor**: opens, edits and saves files, explaining permission errors.
+  - **Learn Linux**: six hands-on lessons that check your work as you go, with progress saved in
+    `~/.local/share/ayalvasis/learn-linux.json` like a real Linux app.
   - **About**: system information and the `uname` command.
 
 ### Run the project
@@ -89,7 +95,16 @@ This template has no application code or required technology stack. The document
     from anywhere (for example the terminal). Double-clicking a file opens it in the Text Editor.
   - **Text Editor:** opens a window's file, dirty marker in the title, Ctrl+S to save, Save As for new
     documents, a prompt before closing with unsaved changes, and a sudo tip on permission errors.
+  - **Learn Linux:** six lessons (first commands, moving around, making files, reading and searching,
+    pipes, permissions and sudo). Each step is checked automatically from what the learner does in the
+    terminal or on the desktop, with hints on demand and an explanation after each step. Progress survives
+    reloads and keeps tracking while the window is closed. Lesson start, quit, reset and status are kernel
+    actions, so the AI tutor can drive lessons the same way.
+  - **Security:** acting as another user (sudo) needs the `user:switch` capability, so neither modules nor the
+    tutor can escalate to root unless granted it.
   - **About module:** contributes the About app and `uname` command, including `uname -a` hostname output.
+  - **More Linux realism:** `/dev/null`, a root-only `/etc/shadow`, `chmod +x` and comma-separated symbolic
+    modes (`u=rw,go=`).
   - **Shared commands:** every terminal has its own cwd, environment and history but shares one command
     registry, so commands a module installs work in all of them.
   - **Saving** never blocks the learner: changes are written after a 500 ms pause, and storage failures are

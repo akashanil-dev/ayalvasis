@@ -32,6 +32,7 @@ export interface Stat {
 }
 
 type Access = 'r' | 'w' | 'x';
+const NULL_DEVICE = '/dev/null';
 const BITS: Record<Access, number> = { r: 4, w: 2, x: 1 };
 
 export function file(owner: string, mode: number, content = '', mtime = 0): FileNode {
@@ -121,6 +122,8 @@ export function writeFile(root: DirNode, path: string, user: string, content: st
   if (existing?.kind === 'dir') throw new KernelError('EISDIR', `${path}: Is a directory`);
   if (existing) {
     demand(existing, user, 'w', path);
+    // The null device swallows everything written to it, so `> /dev/null` discards output as on Linux.
+    if (resolvePath(path) === NULL_DEVICE) return;
     existing.content = append ? existing.content + content : content;
     existing.mtime = now;
     return;

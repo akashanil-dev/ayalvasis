@@ -4,6 +4,28 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T01:54:26+05:30 — Lesson engine and Learn Linux
+
+- Changed:
+  - New `packages/lessons`: course types, a validator, condition checks and a `LessonRunner` that advances
+    steps from kernel events and file state, saves progress, and only counts events after a step began.
+  - New `modules/learn-linux`: six JSON lessons with hints and explanations, a lessons window, and
+    status/start/quit/reset kernel actions; progress is a file in the learner's home.
+  - Shell: every command line is logged as a `shell.ran` event (line, cwd, exit code, capped output,
+    command names), and `chmod` accepts `+x` and comma-separated clauses.
+  - Kernel: acting as another user now requires `user:switch`; `/dev/null`; and a fix so changes made by
+    actions dispatched from inside a read-only action are no longer discarded.
+  - Modules can watch kernel events (`ctx.onEvent`, cleaned up if activation fails) and know the learner's
+    username (`ctx.user`).
+- Why: Lessons are the core of learning here, and the tutor phase needs both lesson state and a log of what
+  the learner typed. Replaying each lesson's solution in tests caught the kernel nested-dispatch bug.
+- Validation: `npm run check` — type check passed; Vitest reported 15 test files and 186 tests passed,
+  including a replay of every lesson's solution. `npm run build` passed. In Chromium: started a lesson from
+  the Learn Linux window, ran `whoami` and `pwd` in the terminal, and the window ticked both steps off and
+  showed the explanation, with no console errors.
+- Limitations: lesson content is English only; checks read files as the learner, so they cannot inspect
+  files the learner cannot read.
+
 ## 2026-10-11T01:44:48+05:30 — Terminal, Files and Text Editor apps
 
 - Changed:

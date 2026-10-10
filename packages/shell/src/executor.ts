@@ -14,6 +14,7 @@ import { complete } from './complete';
 import { createCommandRegistry, type CommandRegistry } from './registry';
 
 const HISTORY_LIMIT = 500;
+const OUTPUT_LIMIT = 4000;
 
 export class ShellImpl implements ShellInternals {
   cwd: string;
@@ -22,6 +23,8 @@ export class ShellImpl implements ShellInternals {
   private readonly registry: CommandRegistry;
   private readonly lines: string[] = [];
   private lastStatus = 0;
+  /** Command names run by the current line, for the shell.ran record. */
+  private ran: string[] = [];
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
@@ -38,9 +41,12 @@ export class ShellImpl implements ShellInternals {
     return this.registry.list();
   }
 
-  run(line: string): Promise<RunResult> {
+  async run(line: string): Promise<RunResult> {
     this.remember(line);
-    return this.runInternal(line, this.kernel.user);
+    this.ran = [];
+    const result = await this.runInternal(line, this.kernel.user);
+    if (line.trim()) this.record(line, result);
+    return result;
   }
 
   history(): string[] {
@@ -60,6 +66,7 @@ export class ShellImpl implements ShellInternals {
   }
 
   async runAsCommand(args: string[], stdin: string, user: string): Promise<RunResult> {
+    this.ran.push(args[0]!);
     const definition = this.registry.get(args[0]!);
     if (!definition) return { stdout: '', stderr: `${args[0]}: command not found\n`, code: 127 };
     return this.executeCommand(definition, args.slice(1), stdin, user);
@@ -105,6 +112,7 @@ export class ShellImpl implements ShellInternals {
       const expanded = await this.expandWords(command.words, user);
       const name = expanded[0];
       if (!name) return { stdout: '', stderr: 'bash: syntax error near unexpected token `newline`\n', code: 2 };
+      this.ran.push(name);
       const definition = this.registry.get(name);
       if (!definition) return { stdout: '', stderr: `${name}: command not found\n`, code: 127 };
       const result = await this.executeCommand(definition, expanded.slice(1), input, user, command);
@@ -163,6 +171,19 @@ export class ShellImpl implements ShellInternals {
       }
     }
     return { stdout, stderr, code };
+  }
+
+  // Lessons and the tutor learn what happened from this record. Output is capped so the log stays small.
+  private record(line: string, result: RunResult): void {
+    const cap = (text: string) => (text.length > OUTPUT_LIMIT ? `${text.slice(0, OUTPUT_LIMIT)}…` : text);
+    this.dispatch('shell.ran', {
+      line,
+      cwd: this.cwd,
+      code: result.code,
+      stdout: cap(result.stdout),
+      stderr: cap(result.stderr),
+      commands: this.ran,
+    }, this.kernel.user);
   }
 
   // Like bash's HISTCONTROL=ignoredups: blank lines and immediate repeats are not stored.

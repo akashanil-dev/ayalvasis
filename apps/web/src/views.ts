@@ -10,6 +10,7 @@ export const views: Record<string, () => Promise<ViewModule>> = {
   terminal: () => import('@ayalvasis/module-terminal/view'),
   files: () => import('@ayalvasis/module-files/view'),
   editor: () => import('@ayalvasis/module-editor/view'),
+  'learn-linux': () => import('@ayalvasis/module-learn-linux/view'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();

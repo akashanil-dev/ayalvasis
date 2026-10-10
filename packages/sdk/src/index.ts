@@ -94,9 +94,13 @@ export interface ModuleManifest {
 export interface ModuleContext {
   id: string;
   actor: Actor;
+  /** The learner's Linux username; their home is /home/<user>. */
+  user: string;
   dispatch<R>(type: string, payload: unknown, options?: { user?: string }): DispatchResult<R>;
   registerAction(definition: ActionDefinition<any, any, any>): void;
   registerCommand(definition: CommandDefinition<any>): void;
+  /** Watch everything that happens in the system (read-only). Returns a function that stops watching. */
+  onEvent(listener: (event: KernelEvent) => void): () => void;
   log(message: string): void;
 }
 
