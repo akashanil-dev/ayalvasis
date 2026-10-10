@@ -1,0 +1,206 @@
+.settings-view {
+  display: flex;
+  height: 100%;
+  background: var(--window-bg);
+  color: var(--window-fg);
+  font-size: 14px;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 210px;
+  flex-shrink: 0;
+  padding: 12px 8px;
+  border-right: 1px solid var(--window-border);
+  background: var(--window-sidebar);
+}
+
+.settings-nav button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-nav button:hover {
+  background: var(--hover);
+}
+
+.settings-nav button.selected {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.settings-page {
+  flex: 1;
+  overflow: auto;
+  padding: 22px 26px;
+}
+
+.settings-page h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.settings-intro {
+  max-width: 60ch;
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.settings-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.settings-card.current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.settings-card h2 {
+  margin: 4px 0 0;
+  font-size: 15px;
+}
+
+.settings-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.settings-used {
+  font-size: 12px;
+}
+
+.settings-card button,
+.settings-badge {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radius-small);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-badge {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  cursor: default;
+}
+
+/* Tiny sketches of each desktop's layout. */
+.settings-preview {
+  position: relative;
+  height: 96px;
+  overflow: hidden;
+  border-radius: var(--radius-small);
+  background: linear-gradient(160deg, #14234a, #0d2a3a);
+}
+
+.settings-preview i,
+.settings-preview b {
+  position: absolute;
+  display: block;
+}
+
+.preview-plasma i {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 12px;
+  background: #232629e6;
+}
+
+.preview-plasma b {
+  top: 18px;
+  left: 26px;
+  width: 54%;
+  height: 46%;
+  border-radius: 3px;
+  background: #eff0f1;
+  box-shadow: 0 2px 0 #3daee9 inset;
+}
+
+.preview-gnome i {
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 9px;
+  background: #000;
+}
+
+.preview-gnome b {
+  top: 22px;
+  left: 50%;
+  width: 56%;
+  height: 52%;
+  border-radius: 6px;
+  background: #fafafa;
+  transform: translateX(-50%);
+}
+
+.settings-wallpapers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.settings-wallpaper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.settings-wallpaper span {
+  display: block;
+  height: 84px;
+  border-radius: var(--radius-small);
+}
+
+.settings-wallpaper[aria-checked="true"] {
+  border-color: var(--accent);
+}
+
+.settings-about {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 22px;
+  margin: 0 0 18px;
+}
+
+.settings-about dt {
+  color: var(--muted);
+}
+
+.settings-about dd {
+  margin: 0;
+  font-weight: 600;
+}

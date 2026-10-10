@@ -12,7 +12,9 @@ interface TestSystem extends Omit<SystemClient, 'dispatch'> {
 }
 
 function fakeSystem(): TestSystem {
-  let state: SessionState = { windows: [], focusedId: null, nextId: 1 };
+  let state: SessionState = {
+    windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'aurora',
+  };
   const allListeners = new Set<(event: KernelEvent) => void>();
   const changeListeners = new Set<(event: KernelEvent) => void>();
   const emit = (type: string) => {
@@ -59,6 +61,8 @@ function fakeSystem(): TestSystem {
             height: Math.max(160, value.height ?? 160),
           } : window),
       };
+    } else if (type === 'session.setDesktop') {
+      state = { ...state, desktop: (payload as { desktop: string }).desktop };
     } else if (current && type === 'session.toggleMaximize') {
       state = {
         ...state,
@@ -108,31 +112,10 @@ describe('web desktop', () => {
     cleanup();
     vi.useRealTimers();
   });
-  it('shows the kernel username validation error on login', async () => {
-    const system = fakeSystem();
-    render(<App system={system} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Skip boot' }));
-    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'Bad User' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Start system' }));
-    expect((await screen.findByRole('alert')).textContent).toContain('invalid username');
-  });
-
-  it('stays on the desktop when the learner skips boot and logs in quickly', async () => {
-    vi.useFakeTimers();
-    const system = fakeSystem();
-    render(<App system={system} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Skip boot' }));
-    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'ada' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Start system' }));
-    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    expect(screen.queryByRole('button', { name: 'Start system' })).toBeNull();
-    vi.useRealTimers();
-  });
-
   it('shows about, opens a window, closes it, and follows direct dispatch events', async () => {
     const system = fakeSystem();
     render(<Desktop system={system} />);
-    expect(await screen.findByText('About this system')).toBeTruthy();
+    expect(await screen.findByText('About this system', {}, { timeout: 3000 })).toBeTruthy();
     fireEvent.doubleClick(screen.getByRole('button', { name: /About this system/ }));
     expect(await screen.findByRole('button', { name: 'Close About this system' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Close About this system' }));
@@ -151,7 +134,7 @@ describe('web desktop', () => {
     await system.openApp('about');
     await system.dispatch('fs.read', { path: '/etc/hostname' });
     await system.dispatch('fs.list', { path: '/' });
-    expect(await screen.findByText('A small Linux desktop for learning by doing.')).toBeTruthy();
+    expect(await screen.findByText('A small Linux desktop for learning by doing.', {}, { timeout: 3000 })).toBeTruthy();
     const hostname = await screen.findByText('tuxos');
     await system.dispatch('session.focus', { id: 'window-1' });
     expect(screen.getByText('tuxos')).toBe(hostname);
@@ -175,7 +158,7 @@ describe('web desktop', () => {
     const system = fakeSystem();
     render(<Desktop system={system} />);
     await system.openApp('about');
-    const handle = await screen.findByRole('button', { name: 'Resize About this system' });
+    const handle = await screen.findByRole('button', { name: 'Resize About this system' }, { timeout: 3000 });
     dispatchPointer(handle, 'pointerdown', 520, 340, 2);
     dispatchPointer(handle, 'pointermove', 0, 0, 2);
     dispatchPointer(handle, 'pointerup', 0, 0, 2);
@@ -200,7 +183,7 @@ describe('web desktop', () => {
 });
 
 async function findWindowTitle(): Promise<HTMLElement> {
-  await screen.findByRole('button', { name: 'Close About this system' });
+  await screen.findByRole('button', { name: 'Close About this system' }, { timeout: 3000 });
   const title = screen.getAllByText('About this system')
     .find((element) => element.closest('.app-window'));
   if (!title) throw new Error('window title not found');

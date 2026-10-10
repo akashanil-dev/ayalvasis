@@ -11,6 +11,7 @@ export const manifest: ModuleManifest = {
       id: 'chmod-arcade',
       title: 'chmod Arcade',
       icon: 'chmod-arcade',
+      category: 'Games',
       description: 'A 60-second game: turn rwx permissions into numbers and back.',
     }],
   },

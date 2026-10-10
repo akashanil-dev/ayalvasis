@@ -8,12 +8,14 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@tuxos/appearance": "*",
     "@tuxos/module-about": "*",
     "@tuxos/module-chmod-arcade": "*",
     "@tuxos/module-editor": "*",
     "@tuxos/module-files": "*",
     "@tuxos/module-learn-docker": "*",
     "@tuxos/module-learn-linux": "*",
+    "@tuxos/module-settings": "*",
     "@tuxos/module-terminal": "*",
     "@tuxos/sdk": "*",
     "@tuxos/system": "*",

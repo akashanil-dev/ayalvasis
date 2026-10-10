@@ -11,6 +11,7 @@ export const manifest: ModuleManifest = {
       id: 'editor',
       title: 'Text Editor',
       icon: 'editor',
+      category: 'Utilities',
       description: 'Open, change and save text files.',
     }],
   },

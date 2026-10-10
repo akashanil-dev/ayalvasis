@@ -28,6 +28,13 @@ function args(payload: unknown): Record<string, string> | undefined {
   return { ...(value as Record<string, string>) };
 }
 
+/** Desktop and wallpaper names are short lowercase ids; which ones exist is the desktop's business. */
+function settingId(payload: unknown, key: string): string {
+  const value = field(payload, key, 'string') as string;
+  if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(value)) throw new KernelError('EINVAL', `invalid ${key}: ${value}`);
+  return value;
+}
+
 function id(payload: unknown): string {
   return field(payload, 'id', 'string') as string;
 }
@@ -84,6 +91,18 @@ export const sessionActions: ActionDefinition[] = [
       }
       return undefined;
     },
+  },
+  {
+    type: 'session.setDesktop', capability: 'session:control', mutates: true,
+    description: 'Switch the desktop environment, e.g. "plasma" (KDE Plasma) or "gnome".',
+    params: { type: 'object', properties: { desktop: { type: 'string' } }, required: ['desktop'] },
+    run: ({ state }, payload) => { state.session.desktop = settingId(payload, 'desktop'); },
+  },
+  {
+    type: 'session.setWallpaper', capability: 'session:control', mutates: true,
+    description: 'Change the desktop wallpaper by name.',
+    params: { type: 'object', properties: { wallpaper: { type: 'string' } }, required: ['wallpaper'] },
+    run: ({ state }, payload) => { state.session.wallpaper = settingId(payload, 'wallpaper'); },
   },
   {
     type: 'session.setTitle', capability: 'session:control', description: 'Change a window title.', mutates: true,

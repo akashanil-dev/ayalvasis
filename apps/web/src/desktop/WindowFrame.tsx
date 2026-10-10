@@ -4,10 +4,20 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { usePointerDrag } from '../hooks/usePointerDrag';
 import { getLazyView } from '../views';
 
+export interface Insets {
+  top: number;
+  bottom: number;
+}
+
 interface WindowFrameProps {
   system: SystemClient;
   window: SessionWindow;
   focused: boolean;
+  /** Space the desktop's panels take, which windows keep clear of. */
+  insets: Insets;
+  /** Window decorations: KDE's Breeze (icon, title, three buttons) or GNOME's Adwaita (title, close only). */
+  decoration: 'breeze' | 'adwaita';
+  icon?: React.ReactNode;
 }
 
 interface Geometry {
@@ -19,9 +29,7 @@ interface Geometry {
 
 const MIN_WIDTH = 240;
 const MIN_HEIGHT = 160;
-const PANEL_HEIGHT = 56;
-
-export function WindowFrame({ system, window, focused }: WindowFrameProps) {
+export function WindowFrame({ system, window, focused, insets, decoration, icon }: WindowFrameProps) {
   const [preview, setPreview] = useState<Geometry>(() => geometryOf(window));
   const dragOrigin = useRef({ x: 0, y: 0 });
   const resizeOrigin = useRef({ width: 0, height: 0, x: 0, y: 0 });
@@ -42,7 +50,7 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
       pointerX(event) - dragOrigin.current.x,
       pointerY(event) - dragOrigin.current.y,
       preview.width,
-      preview.height,
+      insets,
     );
     setPreview((current) => ({ ...current, ...position }));
   };
@@ -51,7 +59,7 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
       pointerX(event) - dragOrigin.current.x,
       pointerY(event) - dragOrigin.current.y,
       preview.width,
-      preview.height,
+      insets,
     );
     setPreview((current) => ({ ...current, ...position }));
     void system.dispatch('session.move', { id: window.id, ...position });
@@ -75,7 +83,7 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
     if (!focused) void system.dispatch('session.focus', { id: window.id });
   };
   const stopPointer = (event: React.PointerEvent) => event.stopPropagation();
-  const style = window.maximized ? maximizedStyle() : {
+  const style = window.maximized ? maximizedStyle(insets) : {
     left: preview.x,
     top: preview.y,
     width: preview.width,
@@ -83,7 +91,7 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
   };
 
   return <section
-    className={`app-window ${focused ? 'focused' : ''}`}
+    className={`app-window deco-${decoration} ${focused ? 'focused' : ''} ${window.maximized ? 'maximized' : ''}`}
     style={{ ...style, zIndex: window.z, display: window.minimized ? 'none' : undefined }}
     aria-hidden={window.minimized || undefined}
     data-tutor-target={`window:${window.id}`}
@@ -98,23 +106,25 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
       onPointerUp={drag.onPointerUp}
       onDoubleClick={() => void system.dispatch('session.toggleMaximize', { id: window.id })}
     >
-      <span>{window.title}</span>
-      <div>
-        <WindowButton
-          label={`Minimize ${window.title}`}
-          onClick={() => void system.dispatch('session.minimize', { id: window.id })}
-          onPointerDown={stopPointer}
-        >−</WindowButton>
-        <WindowButton
-          label={`Maximize ${window.title}`}
-          onClick={() => void system.dispatch('session.toggleMaximize', { id: window.id })}
-          onPointerDown={stopPointer}
-        >□</WindowButton>
-        <WindowButton
-          label={`Close ${window.title}`}
-          onClick={close}
-          onPointerDown={stopPointer}
-        >×</WindowButton>
+      {decoration === 'breeze' && <span className="window-app-icon">{icon}</span>}
+      <span className="window-title">{window.title}</span>
+      <div className="window-buttons">
+        {/* GNOME shows only a close button by default; KDE's Breeze shows all three. */}
+        {decoration === 'breeze' && <>
+          <WindowButton
+            label={`Minimize ${window.title}`}
+            kind="minimize"
+            onClick={() => void system.dispatch('session.minimize', { id: window.id })}
+            onPointerDown={stopPointer}
+          />
+          <WindowButton
+            label={`Maximize ${window.title}`}
+            kind="maximize"
+            onClick={() => void system.dispatch('session.toggleMaximize', { id: window.id })}
+            onPointerDown={stopPointer}
+          />
+        </>}
+        <WindowButton label={`Close ${window.title}`} kind="close" onClick={close} onPointerDown={stopPointer} />
       </div>
     </header>
     <div className="window-content">
@@ -141,39 +151,45 @@ export function WindowFrame({ system, window, focused }: WindowFrameProps) {
   </section>;
 }
 
-function WindowButton({
-  label,
-  onClick,
-  onPointerDown,
-  children,
-}: {
+const GLYPHS = {
+  minimize: <path d="M4 8.5h8" />,
+  maximize: <path d="M4.5 9.5 8 6l3.5 3.5" />,
+  close: <path d="M5 5l6 6M11 5l-6 6" />,
+};
+
+function WindowButton({ label, kind, onClick, onPointerDown }: {
   label: string;
+  kind: keyof typeof GLYPHS;
   onClick(): void;
   onPointerDown(event: React.PointerEvent): void;
-  children: string;
 }) {
-  return <button aria-label={label} onClick={onClick} onPointerDown={onPointerDown}>{children}</button>;
+  return <button aria-label={label} className={`window-button ${kind}`} onClick={onClick} onPointerDown={onPointerDown}>
+    <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      {GLYPHS[kind]}
+    </svg>
+  </button>;
 }
 
 function geometryOf(window: SessionWindow): Geometry {
   return { x: window.x, y: window.y, width: window.width, height: window.height };
 }
 
-function clampPosition(x: number, y: number, width: number, height: number) {
+/** Keep at least 40px of the title bar on screen, and never under a panel. */
+function clampPosition(x: number, y: number, width: number, insets: Insets) {
   const desktopWidth = globalThis.innerWidth;
-  const desktopHeight = globalThis.innerHeight - PANEL_HEIGHT;
+  const bottom = globalThis.innerHeight - insets.bottom;
   return {
     x: Math.min(desktopWidth - 40, Math.max(40 - width, x)),
-    y: Math.min(desktopHeight - 40, Math.max(0, y)),
+    y: Math.min(bottom - 40, Math.max(insets.top, y)),
   };
 }
 
-function maximizedStyle() {
+function maximizedStyle(insets: Insets) {
   return {
     left: 0,
-    top: 0,
+    top: insets.top,
     width: Math.max(MIN_WIDTH, globalThis.innerWidth),
-    height: Math.max(MIN_HEIGHT, globalThis.innerHeight - PANEL_HEIGHT),
+    height: Math.max(MIN_HEIGHT, globalThis.innerHeight - insets.top - insets.bottom),
   };
 }
 

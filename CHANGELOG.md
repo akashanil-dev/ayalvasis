@@ -4,6 +4,30 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T03:08:17+05:30 — Boot sequence, login screens and desktop environments (KDE Plasma, GNOME)
+
+- Changed:
+  - A real-PC start-up: GRUB menu (countdown, advanced options, memory test), kernel and systemd boot log,
+    shutdown log and a power-off screen.
+  - Login screens per desktop: SDDM (Breeze) for KDE Plasma and GDM for GNOME, with a session chooser,
+    restart and shut down; lock and log out return to them.
+  - Desktop environments as pluggable shells: KDE Plasma (panel, task manager, Kickoff with categories,
+    KRunner on Alt+Space, Peek at Desktop, Leave menu, desktop icons, Breeze decorations) and GNOME (top bar,
+    Activities overview with window previews, dash, app grid, hot corner, system menu, Adwaita decorations).
+    The Super key opens the launcher; right-click menus on the desktop; a one-time welcome per desktop.
+  - The kernel session stores the desktop and wallpaper (`session.setDesktop`, `session.setWallpaper`), so the
+    tutor can switch them too. New `packages/appearance` lists desktops and CSS-only wallpapers; new
+    `modules/settings` switches them live. Apps declare a launcher category in their manifests.
+  - Fixed: out-of-order session reads could hide a just-opened window; the login screen could show "choose a
+    username" to a returning learner; Plasma shortcuts didn't work while the terminal had focus.
+  - Design inspired by the team's earlier Tuxplore project; all code, styles and artwork here were written at
+    the event (Tuxplore's files are not part of this repository).
+- Why: The team wants TuxOS to look and feel like a real Linux computer from the moment it starts.
+- Validation: `npm run check` — type check passed; Vitest reported 22 test files and 246 tests passed.
+  `npm run build` passed. Walked through GRUB, boot log, SDDM, Plasma, Kickoff and the terminal in Chromium.
+- Limitations: GNOME, the overview and Settings were covered by tests but the in-browser walkthrough stopped
+  before them; only two desktop environments so far.
+
 ## 2026-10-11T02:54:39+05:30 — Renamed the project to TuxOS
 
 - Changed: the product is now called TuxOS. Package scope `@ayalvasis/*` became `@tuxos/*`, the hostname and

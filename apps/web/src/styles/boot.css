@@ -1,65 +1,145 @@
-:root {
-  color-scheme: dark;
-  font-family: Inter, system-ui, sans-serif;
-  background: #0b1020;
-  color: #e8ecf7;
+/* GRUB's text-mode menu: light grey on black, a boxed list, the highlighted entry inverted. */
+.grub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 6vh 20px;
+  background: #000;
+  color: #aaa;
+  font: 16px/1.5 var(--font-mono);
+  cursor: default;
 }
 
-* {
-  box-sizing: border-box;
+.grub-title {
+  margin: 0 0 3vh;
 }
 
-button,
-input {
-  font: inherit;
+.grub-menu {
+  width: min(78ch, 100%);
+  min-height: 46vh;
+  margin: 0;
+  padding: 6px 0;
+  border: 1px solid #aaa;
+  list-style: none;
 }
 
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid #8bd5ff;
-  outline-offset: 3px;
+.grub-menu li {
+  padding: 0 8px;
+  white-space: pre;
 }
 
-.boot-screen {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #090d19;
+.grub-menu li.selected {
+  background: #aaa;
+  color: #000;
 }
 
-.boot-card {
-  width: min(440px, 90vw);
-  padding: 34px;
-  text-align: center;
+.grub-help {
+  width: min(78ch, 100%);
+  margin-top: 2vh;
+  padding: 0 8px;
 }
 
-.boot-logo,
-.login-logo {
-  margin: auto;
+.grub-help p {
+  margin: 0;
+}
+
+/* The kernel and systemd log. */
+.bootlog {
+  height: 100%;
+  overflow: hidden;
+  padding: 10px 14px;
+  background: #000;
+  color: #d0d0d0;
+  font: 14px/1.45 var(--font-mono);
+  white-space: pre;
+}
+
+.bootlog-ok {
+  color: #4e9a06;
+  font-weight: 700;
+}
+
+.bootlog-bracket {
+  color: #d0d0d0;
+}
+
+.power-off {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: 100%;
+  background: #000;
+  color: #666;
+  font-size: 14px;
+}
+
+.power-button {
   width: 72px;
   height: 72px;
-  display: grid;
-  place-items: center;
-  border-radius: 22px;
-  background: #6c63ff;
-  color: white;
-  font-size: 44px;
-  box-shadow: 0 0 40px #6c63ff66;
-}
-
-.boot-log {
-  margin: 28px 0;
-  color: #91a0bd;
-  font: 13px/2 ui-monospace, monospace;
-  text-align: left;
-}
-
-.boot-card button,
-.login-card button {
-  border: 0;
-  border-radius: 9px;
-  padding: 10px 18px;
-  background: #6c63ff;
-  color: white;
+  border: 2px solid #333;
+  border-radius: 50%;
+  background: #0a0a0a;
+  color: #4e9a06;
+  font-size: 34px;
   cursor: pointer;
+}
+
+.power-button:hover {
+  border-color: #4e9a06;
+  box-shadow: 0 0 18px rgb(78 154 6 / 50%);
+}
+
+/* Session splash screens. */
+.splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: 100%;
+  background: #000;
+  color: #eff0f1;
+}
+
+.splash-plasma {
+  background: radial-gradient(circle at 50% 45%, #1d2b3a, #0b0f14 70%);
+}
+
+.splash-logo {
+  width: 96px;
+  height: 96px;
+  animation: splash-in 600ms ease-out;
+}
+
+.splash-name {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+
+.splash-progress {
+  width: 200px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 15%);
+}
+
+.splash-progress i {
+  display: block;
+  height: 100%;
+  background: #3daee9;
+  animation: splash-progress 1.3s ease-in-out forwards;
+}
+
+@keyframes splash-in {
+  from { opacity: 0; scale: 0.85; }
+}
+
+@keyframes splash-progress {
+  from { width: 0; }
+  to { width: 100%; }
 }

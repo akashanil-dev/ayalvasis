@@ -13,6 +13,7 @@ export const views: Record<string, () => Promise<ViewModule>> = {
   'learn-linux': () => import('@tuxos/module-learn-linux/view'),
   'learn-docker': () => import('@tuxos/module-learn-docker/view'),
   'chmod-arcade': () => import('@tuxos/module-chmod-arcade/view'),
+  settings: () => import('@tuxos/module-settings/view'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();

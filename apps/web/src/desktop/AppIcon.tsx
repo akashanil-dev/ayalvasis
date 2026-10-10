@@ -37,6 +37,13 @@ const ICONS: Record<string, () => React.JSX.Element> = {
     <circle cx="37" cy="27" r="2.6" fill="#f6d32d" />
     <text x="24" y="44" fontSize="8" textAnchor="middle" fill="#c0bfbc" fontFamily="monospace">755</text>
   </svg>,
+  settings: () => <svg viewBox="0 0 48 48" aria-hidden="true">
+    <circle cx="24" cy="24" r="19" fill="#5e5c64" />
+    <path d="M24 13v4M24 31v4M13 24h4M31 24h4M16.2 16.2l2.8 2.8M29 29l2.8 2.8M16.2 31.8l2.8-2.8M29 19l2.8-2.8"
+      stroke="#deddda" strokeWidth="3.4" strokeLinecap="round" />
+    <circle cx="24" cy="24" r="6.5" fill="#deddda" />
+    <circle cx="24" cy="24" r="3" fill="#5e5c64" />
+  </svg>,
   about: () => <svg viewBox="0 0 48 48" aria-hidden="true">
     <circle cx="24" cy="24" r="19" fill="#613583" />
     <circle cx="24" cy="15" r="3" fill="#fff" />

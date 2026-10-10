@@ -1,0 +1,234 @@
+/* GNOME Shell: a black top bar, the Activities overview with its dash. */
+.gnome-bar {
+  position: absolute;
+  z-index: 9000;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 32px;
+  padding: 0 6px;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gnome-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+}
+
+.gnome-chip:hover,
+.gnome-chip.active {
+  background: rgb(255 255 255 / 16%);
+}
+
+.gnome-activities {
+  justify-self: start;
+}
+
+.gnome-status {
+  justify-self: end;
+}
+
+.gnome-hot-corner {
+  position: absolute;
+  z-index: 9100;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 3px;
+}
+
+.gnome-overview {
+  position: absolute;
+  z-index: 8500;
+  top: 32px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgb(0 0 0 / 55%);
+  backdrop-filter: blur(16px);
+  animation: overview-in 160ms ease-out;
+}
+
+@keyframes overview-in {
+  from { opacity: 0; }
+}
+
+.gnome-search {
+  width: min(320px, 80vw);
+  margin: 18px 0 10px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  text-align: center;
+}
+
+.gnome-search::placeholder {
+  color: rgb(255 255 255 / 60%);
+}
+
+.gnome-overview-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+
+.gnome-windows {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 26px;
+}
+
+.gnome-window-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: default;
+}
+
+.gnome-window-thumb {
+  display: grid;
+  place-items: center;
+  width: 240px;
+  height: 150px;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  background: #242424;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 50%);
+}
+
+.gnome-window-card:hover .gnome-window-thumb,
+.gnome-window-card.active .gnome-window-thumb {
+  border-color: rgb(255 255 255 / 55%);
+}
+
+.gnome-window-label {
+  max-width: 240px;
+  padding: 3px 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 50%);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gnome-empty {
+  color: rgb(255 255 255 / 75%);
+}
+
+.gnome-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 120px);
+  justify-content: center;
+  gap: 18px;
+  width: min(900px, 100%);
+}
+
+.gnome-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 6px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  cursor: default;
+}
+
+.gnome-app .app-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.gnome-app:hover,
+.gnome-app:focus-visible {
+  background: rgb(255 255 255 / 12%);
+  outline: none;
+}
+
+.gnome-dash {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 14px;
+  padding: 8px;
+  border-radius: 22px;
+  background: rgb(255 255 255 / 12%);
+}
+
+.gnome-dash-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #fff;
+  cursor: default;
+}
+
+.gnome-dash-item .app-icon {
+  width: 44px;
+  height: 44px;
+}
+
+.gnome-dash-item .sym-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.gnome-dash-item:hover {
+  background: rgb(255 255 255 / 15%);
+}
+
+/* A dot under apps with open windows. */
+.gnome-dash-item.running::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.gnome-dash-separator {
+  width: 1px;
+  height: 40px;
+  margin: 0 4px;
+  background: rgb(255 255 255 / 25%);
+}

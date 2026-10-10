@@ -1,0 +1,244 @@
+/*
+ * Design tokens. Each desktop environment sets its own: KDE Plasma uses Breeze Dark, GNOME uses Adwaita's
+ * dark style. Apps style themselves with these, so they look native in whichever desktop is running.
+ */
+:root,
+.de-plasma {
+  --font-ui: "Noto Sans", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Hack", "DejaVu Sans Mono", ui-monospace, monospace;
+  --accent: #3daee9;
+  --accent-strong: #93cee9;
+  --accent-soft: rgb(61 174 233 / 20%);
+  --window-bg: #2a2e32;
+  --window-fg: #fcfcfc;
+  --window-sidebar: #232629;
+  --window-border: #3d4147;
+  --titlebar: #31363b;
+  --titlebar-inactive: #2a2e32;
+  --card: #31363b;
+  --hover: rgb(255 255 255 / 7%);
+  --muted: #a1a9b1;
+  --menu-bg: #2a2e32;
+  --radius: 6px;
+  --radius-small: 4px;
+  --shadow: 0 10px 34px rgb(0 0 0 / 55%);
+}
+
+.de-gnome {
+  --font-ui: "Cantarell", "Adwaita Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "Adwaita Mono", "Source Code Pro", "DejaVu Sans Mono", ui-monospace, monospace;
+  --accent: #3584e4;
+  --accent-strong: #99c1f1;
+  --accent-soft: rgb(53 132 228 / 22%);
+  --window-bg: #242424;
+  --window-fg: #ffffff;
+  --window-sidebar: #2e2e32;
+  --window-border: #1b1b1f;
+  --titlebar: #303030;
+  --titlebar-inactive: #242424;
+  --card: #383838;
+  --hover: rgb(255 255 255 / 8%);
+  --muted: #b0b0b6;
+  --menu-bg: #383838;
+  --radius: 12px;
+  --radius-small: 8px;
+  --shadow: 0 2px 14px rgb(0 0 0 / 45%), 0 0 0 1px rgb(0 0 0 / 40%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.desktop-screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background-size: cover;
+  font-family: var(--font-ui);
+  color: var(--window-fg);
+}
+
+.sym-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.status-icons {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Desktop icons (Plasma shows them; GNOME doesn't). */
+.icon-grid {
+  position: absolute;
+  left: 12px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(auto-fill, 96px);
+  gap: 6px;
+  height: calc(100% - 80px);
+}
+
+.desktop-icon {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  width: 92px;
+  padding: 8px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: #fff;
+  font-size: 12.5px;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
+  cursor: default;
+}
+
+.desktop-icon:hover {
+  border-color: rgb(61 174 233 / 40%);
+  background: rgb(61 174 233 / 15%);
+}
+
+.desktop-icon:focus-visible {
+  border-color: var(--accent);
+  background: rgb(61 174 233 / 30%);
+  outline: none;
+}
+
+.app-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.app-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Menus: right-click on the desktop, power menus, the session chooser. */
+.popup-menu {
+  position: fixed;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: 4px;
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius);
+  background: var(--menu-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+}
+
+.popup-menu button {
+  padding: 7px 12px;
+  border: 0;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  white-space: pre;
+  cursor: default;
+}
+
+.popup-menu button:hover,
+.popup-menu button:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.popup-menu hr {
+  width: 100%;
+  margin: 4px 0;
+  border: 0;
+  border-top: 1px solid var(--window-border);
+}
+
+/* A desktop notification, used for the first-login welcome. */
+.notification {
+  position: absolute;
+  z-index: 15000;
+  right: 14px;
+  width: 360px;
+  padding: 12px 36px 12px 14px;
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius);
+  background: var(--menu-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
+  font-size: 13.5px;
+  animation: notification-in 240ms ease-out;
+}
+
+.notification-plasma {
+  bottom: 56px;
+}
+
+.notification-gnome {
+  top: 42px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.notification p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.notification button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@keyframes notification-in {
+  from { opacity: 0; translate: 0 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

@@ -6,13 +6,14 @@ import { manifest as editorManifest } from '@tuxos/module-editor/manifest';
 import { manifest as filesManifest } from '@tuxos/module-files/manifest';
 import { manifest as learnDockerManifest } from '@tuxos/module-learn-docker/manifest';
 import { manifest as learnLinuxManifest } from '@tuxos/module-learn-linux/manifest';
+import { manifest as settingsManifest } from '@tuxos/module-settings/manifest';
 import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
 import { httpTransport } from '@tuxos/tutor';
 import { App } from './app';
+import './styles/base.css';
 import './styles/boot.css';
-import './styles/login.css';
-import './styles/desktop.css';
+import './styles/greeters.css';
 import './styles/window.css';
 import './styles/tutor.css';
 
@@ -52,6 +53,10 @@ const system = createLocalSystem({
     {
       manifest: arcadeManifest,
       load: () => import('@tuxos/module-chmod-arcade').then((module) => module.chmodArcade),
+    },
+    {
+      manifest: settingsManifest,
+      load: () => import('@tuxos/module-settings').then((module) => module.settings),
     },
     { manifest: aboutManifest, load: () => import('@tuxos/module-about').then((module) => module.about) },
   ],

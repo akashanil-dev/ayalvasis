@@ -15,6 +15,7 @@ export type {
 } from './kernel';
 export type { ShellRan } from './actions/shell';
 export type { KernelState, SessionState, UserAccount, Window } from './state';
+export { DEFAULT_DESKTOP, DEFAULT_WALLPAPER } from './state';
 export { resolvePath } from './vfs';
 export type { DirNode, FileNode, Stat, VNode } from './vfs';
 

@@ -11,6 +11,7 @@ export const manifest: ModuleManifest = {
       id: 'about',
       title: 'About this system',
       icon: 'about',
+      category: 'System',
       description: 'Learn about this pretend Linux system.',
     }],
     commands: [{ name: 'uname', summary: 'Print the system name' }],

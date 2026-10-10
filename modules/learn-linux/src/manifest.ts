@@ -13,6 +13,7 @@ export const manifest: ModuleManifest = {
       id: 'learn-linux',
       title: 'Learn Linux',
       icon: 'learn-linux',
+      category: 'Education',
       description: 'Short hands-on lessons that check your work as you go.',
     }],
   },

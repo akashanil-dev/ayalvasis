@@ -49,6 +49,8 @@ export interface AppContribution {
   title: string;
   icon: string;
   description?: string;
+  /** Where launchers file it, like a .desktop file's Categories: e.g. "System", "Education", "Games". */
+  category?: string;
 }
 
 /** A program a module installs into the shell, e.g. "docker". */

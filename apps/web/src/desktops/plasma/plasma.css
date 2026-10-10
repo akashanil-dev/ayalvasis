@@ -1,0 +1,353 @@
+/* KDE Plasma: a floating-look bottom panel in Breeze Dark, Kickoff, KRunner. */
+.plasma-panel {
+  position: absolute;
+  z-index: 9000;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 0 0 4px;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+  background: rgb(32 35 38 / 94%);
+  backdrop-filter: blur(20px);
+  color: #fcfcfc;
+}
+
+.plasma-kickoff {
+  width: 40px;
+  height: 40px;
+  padding: 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.plasma-kickoff:hover,
+.plasma-kickoff.active {
+  background: rgb(61 174 233 / 25%);
+}
+
+.plasma-tasks {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  height: 100%;
+}
+
+.plasma-task {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.plasma-task .app-icon {
+  width: 30px;
+  height: 30px;
+  font-size: 22px;
+}
+
+.plasma-task:hover {
+  background: rgb(255 255 255 / 8%);
+}
+
+/* Running apps get a line along the top edge; the focused one a brighter, wider line. */
+.plasma-task.running::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 3px;
+  border-radius: 0 0 2px 2px;
+  background: rgb(255 255 255 / 45%);
+}
+
+.plasma-task.active {
+  background: rgb(61 174 233 / 18%);
+}
+
+.plasma-task.active::after {
+  left: 4px;
+  right: 4px;
+  background: #3daee9;
+}
+
+.plasma-tray {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 6px;
+}
+
+.plasma-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 78px;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.plasma-clock small {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.plasma-tray-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.plasma-tray-button:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+.plasma-peek {
+  width: 8px;
+  height: 100%;
+  border: 0;
+  border-left: 1px solid rgb(255 255 255 / 12%);
+  background: transparent;
+  cursor: pointer;
+}
+
+.plasma-peek:hover {
+  background: rgb(61 174 233 / 35%);
+}
+
+/* Kickoff */
+.kickoff {
+  position: absolute;
+  z-index: 9500;
+  bottom: 48px;
+  left: 4px;
+  display: flex;
+  flex-direction: column;
+  width: min(620px, calc(100vw - 8px));
+  height: min(560px, calc(100vh - 60px));
+  border: 1px solid #3d4147;
+  border-radius: 6px;
+  background: rgb(42 46 50 / 97%);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(24px);
+  color: #fcfcfc;
+  animation: kickoff-in 140ms ease-out;
+}
+
+@keyframes kickoff-in {
+  from { opacity: 0; translate: 0 10px; }
+}
+
+.kickoff-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #3d4147;
+}
+
+.kickoff-avatar {
+  width: 36px;
+  height: 36px;
+  padding: 3px;
+  border-radius: 50%;
+  background: #eff0f1;
+}
+
+.kickoff-search {
+  flex: 1;
+  margin-left: auto;
+  padding: 6px 10px;
+  border: 1px solid #4d5157;
+  border-radius: 4px;
+  background: #1b1e20;
+  color: inherit;
+}
+
+.kickoff-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.kickoff-categories {
+  display: flex;
+  flex-direction: column;
+  width: 190px;
+  padding: 6px;
+  border-right: 1px solid #3d4147;
+}
+
+.kickoff-categories button,
+.kickoff-app {
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.kickoff-categories button {
+  padding: 8px 10px;
+}
+
+.kickoff-categories button.selected {
+  background: rgb(61 174 233 / 25%);
+}
+
+.kickoff-apps {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.kickoff-app {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+}
+
+.kickoff-app .app-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 22px;
+}
+
+.kickoff-app span {
+  display: flex;
+  flex-direction: column;
+}
+
+.kickoff-app small {
+  color: #a1a9b1;
+  font-size: 12px;
+}
+
+.kickoff-app:hover,
+.kickoff-app:focus-visible {
+  background: rgb(61 174 233 / 20%);
+  outline: none;
+}
+
+.kickoff-empty {
+  color: #a1a9b1;
+  text-align: center;
+}
+
+.kickoff-foot {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-top: 1px solid #3d4147;
+}
+
+.kickoff-foot span {
+  flex: 1;
+}
+
+.kickoff-foot button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+}
+
+.kickoff-foot button:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+/* KRunner */
+.krunner-backdrop {
+  position: absolute;
+  z-index: 9600;
+  inset: 0;
+}
+
+.krunner {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(640px, calc(100vw - 20px));
+  border: 1px solid #3d4147;
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  background: rgb(42 46 50 / 97%);
+  box-shadow: var(--shadow);
+  color: #fcfcfc;
+  transform: translateX(-50%);
+}
+
+.krunner-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.krunner-bar input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.krunner-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 12px;
+  border: 0;
+  border-top: 1px solid #3d4147;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.krunner-result:first-of-type,
+.krunner-result:hover {
+  background: rgb(61 174 233 / 20%);
+}
+
+.krunner-result .app-icon {
+  width: 30px;
+  height: 30px;
+  font-size: 20px;
+}
+
+.krunner-result span {
+  display: flex;
+  flex-direction: column;
+}
+
+.krunner-result small {
+  color: #a1a9b1;
+}

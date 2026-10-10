@@ -27,6 +27,16 @@ export interface SessionState {
   windows: Window[];
   focusedId: string | null;
   nextId: number;
+  /** The desktop environment the learner is logged in to, e.g. "plasma" or "gnome". */
+  desktop: string;
+  wallpaper: string;
+}
+
+export const DEFAULT_DESKTOP = 'plasma';
+export const DEFAULT_WALLPAPER = 'aurora';
+
+export function emptySession(): SessionState {
+  return { windows: [], focusedId: null, nextId: 1, desktop: DEFAULT_DESKTOP, wallpaper: DEFAULT_WALLPAPER };
 }
 
 export interface KernelState {
@@ -38,7 +48,7 @@ export interface KernelState {
 
 // The "message of the day" a terminal prints when it opens, as Ubuntu's does.
 const MOTD = [
-  'Welcome to tuxos, a Linux system for learning.',
+  'Welcome to TuxOS, a Linux system for learning.',
   '',
   ' * Type "help" to see the commands you can use.',
   ' * Press Tab to complete a command or file name, and Up to repeat one.',
@@ -86,6 +96,6 @@ export function createInitialState(username: string, hostname = 'tuxos', now = 0
       usr: dir('root', 0o755, { bin: dir('root', 0o755, {}, now) }, now),
       var: dir('root', 0o755, { log: dir('root', 0o755, {}, now) }, now),
     }, now),
-    session: { windows: [], focusedId: null, nextId: 1 },
+    session: emptySession(),
   };
 }

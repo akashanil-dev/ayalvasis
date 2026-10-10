@@ -13,6 +13,7 @@ export const manifest: ModuleManifest = {
       id: 'learn-docker',
       title: 'Learn Docker',
       icon: 'learn-docker',
+      category: 'Education',
       description: 'Run containers, publish ports and clean up, with a simulated Docker.',
     }],
     commands: [

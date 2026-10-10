@@ -11,6 +11,7 @@ export const manifest: ModuleManifest = {
       id: 'files',
       title: 'Files',
       icon: 'files',
+      category: 'System',
       description: 'Browse folders and files by pointing and clicking.',
     }],
   },

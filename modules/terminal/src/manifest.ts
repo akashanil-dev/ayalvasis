@@ -11,6 +11,7 @@ export const manifest: ModuleManifest = {
       id: 'terminal',
       title: 'Terminal',
       icon: 'terminal',
+      category: 'System',
       description: 'Type commands into a bash shell.',
     }],
     commands: [{ name: 'clear', summary: 'Clear the terminal screen' }],

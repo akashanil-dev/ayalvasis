@@ -5,45 +5,128 @@
   min-width: 240px;
   min-height: 160px;
   overflow: hidden;
-  border: 1px solid #536486;
-  border-radius: 12px;
-  background: #111827;
-  box-shadow: 0 22px 70px #0008;
+  background: var(--window-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
 }
 
-.app-window.focused {
-  border-color: #9d9aff;
-  box-shadow: 0 22px 70px #0009, 0 0 0 1px #7771ff66;
-}
-
-.app-window header {
+.app-window > header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  min-height: 42px;
-  padding-left: 15px;
-  background: #202a43;
-  color: #eef3ff;
-  cursor: grab;
+  gap: 8px;
+  background: var(--titlebar-inactive);
+  color: var(--muted);
+  cursor: default;
   user-select: none;
 }
 
-.app-window header div {
+.app-window.focused > header {
+  background: var(--titlebar);
+  color: var(--window-fg);
+}
+
+.window-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.window-buttons {
   display: flex;
+  gap: 6px;
 }
 
-.app-window header button {
-  width: 38px;
-  height: 38px;
+.window-button {
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: 0;
+  border-radius: 50%;
   background: transparent;
-  color: #dce5fa;
-  cursor: pointer;
-  font-size: 17px;
+  color: inherit;
+  cursor: default;
 }
 
-.app-window header button:hover {
-  background: #ffffff18;
+.window-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* KDE Breeze: app icon on the left, centered title, three round buttons; a thin accent line when focused. */
+.deco-breeze {
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius) var(--radius) 2px 2px;
+}
+
+.deco-breeze.focused {
+  border-color: rgb(61 174 233 / 55%);
+}
+
+.deco-breeze > header {
+  height: 32px;
+  padding: 0 6px 0 8px;
+  font-size: 13px;
+}
+
+.deco-breeze .window-title {
+  text-align: center;
+}
+
+.deco-breeze .window-app-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.deco-breeze .window-app-icon .app-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+}
+
+.deco-breeze .window-button {
+  width: 20px;
+  height: 20px;
+}
+
+.deco-breeze .window-button:hover {
+  background: rgb(255 255 255 / 15%);
+}
+
+.deco-breeze .window-button.close:hover {
+  background: #da4453;
+  color: #fff;
+}
+
+/* GNOME Adwaita: a taller header bar with a centered bold title and a single round close button. */
+.deco-adwaita {
+  border-radius: var(--radius);
+}
+
+.deco-adwaita > header {
+  height: 46px;
+  padding: 0 10px 0 52px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.deco-adwaita .window-title {
+  text-align: center;
+}
+
+.deco-adwaita .window-button {
+  width: 24px;
+  height: 24px;
+  background: rgb(255 255 255 / 10%);
+}
+
+.deco-adwaita .window-button:hover {
+  background: rgb(255 255 255 / 20%);
+}
+
+.app-window.maximized {
+  border-radius: 0;
 }
 
 .window-content {
@@ -52,27 +135,20 @@
   overflow: auto;
 }
 
-/* Apps fill their window edge to edge; simple text views add their own padding. */
-.about-view {
-  padding: 24px;
-}
-
 .resize-handle {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border: 0;
-  background: linear-gradient(
-    135deg,
-    transparent 50%,
-    #8190b3 51%,
-    transparent 62%,
-    #8190b3 63%,
-    transparent 74%
-  );
+  background: transparent;
   cursor: nwse-resize;
+}
+
+/* Apps fill their window edge to edge; simple text views add their own padding. */
+.about-view {
+  padding: 24px;
 }
 
 .about-view h2 {
@@ -80,12 +156,12 @@
 }
 
 .about-mark {
-  color: #a9a0ff;
+  color: var(--accent);
   font-size: 42px;
 }
 
 .about-view p {
-  color: #aeb9cf;
+  color: var(--muted);
 }
 
 .about-view dl {
@@ -96,7 +172,7 @@
 }
 
 .about-view dt {
-  color: #8998b7;
+  color: var(--muted);
 }
 
 .about-view dd {
