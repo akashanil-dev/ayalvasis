@@ -1,28 +1,27 @@
-.tutor-puppet {
+/* Vasi on the desktop: he walks along the bottom of the screen (the transform is set from useStroll). */
+.vasi-actor {
   position: absolute;
   z-index: 10002;
-  right: 14px;
-  bottom: calc(var(--area-bottom, 0px) + 20px);
+  bottom: calc(var(--area-bottom, 0px) + 14px);
+  left: 0;
+  transition-property: transform;
+  transition-timing-function: linear;
+}
+
+.tutor-puppet {
+  display: block;
   width: 64px;
-  height: 64px;
+  height: 77px;
   padding: 0;
   border: 0;
   background: transparent;
-  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 40%));
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 35%));
   cursor: pointer;
   transition: transform 160ms ease;
 }
 
-.tutor-puppet:not(.busy) .puppet-svg {
-  animation: puppet-idle 3s ease-in-out infinite;
-}
-
-@keyframes puppet-idle {
-  50% { transform: translateY(-3px); }
-}
-
 .tutor-puppet:hover {
-  transform: translateY(-3px) rotate(-3deg);
+  transform: translateY(-3px);
 }
 
 .tutor-puppet:focus-visible {
@@ -34,14 +33,93 @@
 .puppet-svg {
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
 
-.tutor-puppet.busy .puppet-svg {
+.puppet-body,
+.puppet-wing,
+.puppet-foot,
+.puppet-eyes {
+  transform-box: fill-box;
+}
+
+.puppet-body {
+  transform-origin: 50% 100%;
+}
+
+/* Standing: a gentle breath and a blink now and then. */
+.vasi-actor:not(.walking) .tutor-puppet:not(.busy) .puppet-body {
+  animation: puppet-breathe 3.2s ease-in-out infinite;
+}
+
+.puppet-eyes {
+  transform-origin: 50% 50%;
+  animation: puppet-blink 5.5s infinite;
+}
+
+@keyframes puppet-breathe {
+  50% { transform: translateY(-1.5px) scaleY(1.015); }
+}
+
+@keyframes puppet-blink {
+  0%, 95%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+/* Walking: a penguin waddle, rocking side to side while the feet take turns and the wings swing. */
+.vasi-actor.walking .puppet-body {
+  animation: puppet-waddle 0.46s ease-in-out infinite alternate;
+}
+
+.vasi-actor.walking .puppet-foot-left {
+  animation: puppet-step 0.46s ease-in-out infinite alternate;
+}
+
+.vasi-actor.walking .puppet-foot-right {
+  animation: puppet-step 0.46s ease-in-out infinite alternate-reverse;
+}
+
+.vasi-actor.walking .puppet-wing-left {
+  transform-origin: 90% 10%;
+  animation: puppet-swing 0.46s ease-in-out infinite alternate;
+}
+
+.vasi-actor.walking .puppet-wing-right {
+  transform-origin: 10% 10%;
+  animation: puppet-swing 0.46s ease-in-out infinite alternate-reverse;
+}
+
+.vasi-actor.walking .puppet-shadow {
+  animation: puppet-shadow 0.46s ease-in-out infinite alternate;
+}
+
+@keyframes puppet-waddle {
+  from { transform: rotate(-7deg) translateY(0); }
+  50% { transform: rotate(0deg) translateY(-2.5px); }
+  to { transform: rotate(7deg) translateY(0); }
+}
+
+@keyframes puppet-step {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px) rotate(-6deg); }
+}
+
+@keyframes puppet-swing {
+  from { transform: rotate(-12deg); }
+  to { transform: rotate(10deg); }
+}
+
+@keyframes puppet-shadow {
+  from { transform: scaleX(0.92); }
+  to { transform: scaleX(1.04); }
+}
+
+.tutor-puppet.busy .puppet-body {
   animation: puppet-think 1.1s ease-in-out infinite;
 }
 
-.tutor-puppet.pointing .puppet-wing {
-  transform-origin: 13px 32px;
+.tutor-puppet.pointing .puppet-wing-right {
+  transform-origin: 10% 10%;
   animation: puppet-wave 0.5s ease-in-out 4 alternate;
 }
 
@@ -50,7 +128,123 @@
 }
 
 @keyframes puppet-wave {
-  to { transform: rotate(-35deg); }
+  to { transform: rotate(-60deg); }
+}
+
+/* Vasi's speech bubble: above him, kept on screen whichever side he stands. */
+.vasi-bubble {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: min(360px, calc(100vw - 28px));
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px 16px 4px 16px;
+  background: var(--window-bg);
+  color: var(--window-fg);
+  box-shadow: var(--shadow);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  line-height: 1.5;
+  animation: vasi-bubble-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1.2);
+  transform-origin: bottom right;
+}
+
+.on-left .vasi-bubble {
+  right: auto;
+  left: 0;
+  border-radius: 16px 16px 16px 4px;
+  transform-origin: bottom left;
+}
+
+@keyframes vasi-bubble-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+}
+
+.vasi-bubble p {
+  margin: 0 0 8px;
+}
+
+.vasi-bubble-hello {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.vasi-bubble-question {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.vasi-bubble-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.vasi-bubble-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 10px;
+}
+
+.vasi-bubble-topics button {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--window-fg);
+  font-size: 12px;
+}
+
+.vasi-bubble-topics button:hover {
+  border-color: var(--accent);
+}
+
+.vasi-bubble-topics button.asked {
+  color: var(--muted);
+}
+
+.vasi-bubble-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.vasi-bubble-actions button {
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--window-fg);
+  font-weight: 600;
+}
+
+.vasi-bubble-actions button.primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.tutor-about {
+  padding: 2px 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 999px;
+  color: var(--muted) !important;
+  font-size: 11.5px !important;
+}
+
+.de-cde .vasi-bubble {
+  border: 0;
+  border-radius: 0;
+  box-shadow: var(--shadow);
+}
+
+.de-hyprland .vasi-bubble {
+  border: 2px solid #cba6f7;
 }
 
 /* Vasi's panel takes each desktop's own colours, corners and type, like any other app on it. */

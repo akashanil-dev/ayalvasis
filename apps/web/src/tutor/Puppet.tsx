@@ -1,18 +1,72 @@
-/** Vasi, drawn as a small round penguin. */
-export function Puppet() {
-  return <svg viewBox="0 0 64 64" aria-hidden="true" className="puppet-svg">
-    <ellipse cx="32" cy="60" rx="16" ry="3" fill="rgb(0 0 0 / 25%)" />
-    <path d="M32 6c-12 0-19 10-19 24 0 15 7 26 19 26s19-11 19-26C51 16 44 6 32 6z" fill="#241f31" />
-    <path d="M32 20c-8 0-12 8-12 17 0 10 5 16 12 16s12-6 12-16c0-9-4-17-12-17z" fill="#f6f5f4" />
-    <g className="puppet-eyes">
-      <circle cx="26" cy="22" r="3.2" fill="#f6f5f4" />
-      <circle cx="38" cy="22" r="3.2" fill="#f6f5f4" />
-      <circle cx="26.8" cy="22.6" r="1.6" fill="#241f31" />
-      <circle cx="38.8" cy="22.6" r="1.6" fill="#241f31" />
+import { useId } from 'react';
+
+/**
+ * Vasi, a penguin teacher, drawn with shading so he reads as a rounded, 3D figure: lit from the top left, with a
+ * soft shadow under his feet and a graduation cap. His wings, feet and eyes are separate parts so CSS can make him
+ * waddle, step, wave and blink (see tutor.css).
+ */
+export function Puppet({ facing = 'front' }: { facing?: 'left' | 'right' | 'front' }) {
+  // Gradient ids must be unique on the page: Vasi can appear twice (his button and the sudo dialog).
+  const id = useId().replace(/:/g, '');
+  const look = facing === 'left' ? -1.6 : facing === 'right' ? 1.6 : 0;
+  return <svg viewBox="0 0 80 96" aria-hidden="true" className="puppet-svg">
+    <defs>
+      <radialGradient id={`${id}-body`} cx="38%" cy="28%" r="78%">
+        <stop offset="0%" stopColor="#4a4a5e" />
+        <stop offset="45%" stopColor="#24242f" />
+        <stop offset="100%" stopColor="#0c0c11" />
+      </radialGradient>
+      <radialGradient id={`${id}-belly`} cx="42%" cy="35%" r="70%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="70%" stopColor="#ece7dd" />
+        <stop offset="100%" stopColor="#c9c1b2" />
+      </radialGradient>
+      <linearGradient id={`${id}-beak`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#ffc54d" />
+        <stop offset="100%" stopColor="#e08a12" />
+      </linearGradient>
+      <linearGradient id={`${id}-foot`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#ffb53a" />
+        <stop offset="100%" stopColor="#d47a0c" />
+      </linearGradient>
+      <radialGradient id={`${id}-eye`} cx="40%" cy="35%" r="65%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="100%" stopColor="#dcd8d0" />
+      </radialGradient>
+      <radialGradient id={`${id}-shadow`} cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="rgb(0 0 0 / 45%)" />
+        <stop offset="100%" stopColor="rgb(0 0 0 / 0%)" />
+      </radialGradient>
+    </defs>
+
+    <ellipse className="puppet-shadow" cx="40" cy="90" rx="24" ry="5" fill={`url(#${id}-shadow)`} />
+    <g className="puppet-feet">
+      <path className="puppet-foot puppet-foot-left" d="M22 84c-4 0-7 3-5 5h14c2-2-3-5-9-5z" fill={`url(#${id}-foot)`} />
+      <path className="puppet-foot puppet-foot-right" d="M58 84c4 0 7 3 5 5H49c-2-2 3-5 9-5z" fill={`url(#${id}-foot)`} />
     </g>
-    <path d="M27 28l5 4 5-4z" fill="#f5a524" />
-    <path className="puppet-wing" d="M13 32c-5 4-6 12-4 16 3-2 6-8 6-14z" fill="#241f31" />
-    <path d="M51 32c5 4 6 12 4 16-3-2-6-8-6-14z" fill="#241f31" />
-    <path d="M22 54c-3 0-5 2-3 4h9c1-2-2-4-6-4zM42 54c3 0 5 2 3 4h-9c-1-2 2-4 6-4z" fill="#f5a524" />
+    <g className="puppet-body">
+      <path className="puppet-wing puppet-wing-left" d="M17 42c-7 5-11 17-9 26 3 1 8-6 10-13z" fill="#15151c" />
+      <path className="puppet-wing puppet-wing-right" d="M63 42c7 5 11 17 9 26-3 1-8-6-10-13z" fill="#15151c" />
+      <path d="M40 14C25 14 16 27 16 46c0 22 10 40 24 40s24-18 24-40C64 27 55 14 40 14z" fill={`url(#${id}-body)`} />
+      <path d="M40 34c-11 0-17 12-17 26 0 14 7 24 17 24s17-10 17-24c0-14-6-26-17-26z" fill={`url(#${id}-belly)`} />
+      {/* A rim of light along his left side sells the roundness. */}
+      <path d="M22 34c-3 7-4 15-3 23" fill="none" stroke="rgb(255 255 255 / 18%)" strokeWidth="2" strokeLinecap="round" />
+      <g className="puppet-eyes" transform={`translate(${look} 0)`}>
+        <ellipse cx="33" cy="30" rx="5" ry="6" fill={`url(#${id}-eye)`} />
+        <ellipse cx="47" cy="30" rx="5" ry="6" fill={`url(#${id}-eye)`} />
+        <circle cx={34 + look * 0.4} cy="31" r="2.6" fill="#141418" />
+        <circle cx={46 + look * 0.4} cy="31" r="2.6" fill="#141418" />
+        <circle cx={35 + look * 0.4} cy="29.8" r="0.9" fill="#fff" />
+        <circle cx={47 + look * 0.4} cy="29.8" r="0.9" fill="#fff" />
+      </g>
+      <path d="M34 37q6-4 12 0-6 6-12 0z" fill={`url(#${id}-beak)`} transform={`translate(${look} 0)`} />
+      {/* The teacher's cap. */}
+      <g className="puppet-cap">
+        <path d="M27 17l13-6 13 6-13 6z" fill="#1b1b24" stroke="#33334a" strokeWidth="0.6" />
+        <path d="M33 19v4c4 2 10 2 14 0v-4l-7 3z" fill="#22222d" />
+        <path d="M53 17v7" stroke="#f5b82e" strokeWidth="1.2" />
+        <circle cx="53" cy="25" r="1.4" fill="#f5b82e" />
+      </g>
+    </g>
   </svg>;
 }

@@ -1,7 +1,7 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import type { ChatMessage, CompletionRequest, Transport } from '@tuxos/tutor';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Desktop } from '../screens/Desktop';
 import { manifest as terminalManifest } from '../../../../modules/terminal/src/manifest';
 
@@ -159,6 +159,30 @@ describe('tutor panel', () => {
     expect(await screen.findByText('Stopped. You have control again.')).toBeTruthy();
     await waitFor(() => expect(screen.queryByRole('button', { name: /Stop/ })).toBeNull());
   });
+
+  it('introduces himself once to a new learner, and answers questions about what he can do', async () => {
+    const system = await boot();
+    const transport = scripted();
+    render(<Desktop system={system} tutor={transport} />);
+    const intro = await screen.findByRole('dialog', { name: 'Vasi introduces himself' }, { timeout: 5000 });
+    expect(intro.textContent).toContain('your Linux teacher');
+    fireEvent.click(within(intro).getByRole('button', { name: 'Can you become root?' }));
+    expect(intro.textContent).toContain('Only if you let me');
+    fireEvent.click(within(intro).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog', { name: 'Vasi introduces himself' })).toBeNull();
+    // He only introduces himself once; nothing was sent to the AI.
+    expect(localStorage.getItem('tuxos.vasi.met.ada')).toBe('1');
+    expect(transport.requests).toHaveLength(0);
+  }, 15_000);
+
+  it('opens Learn Linux from his introduction', async () => {
+    const system = await boot();
+    render(<Desktop system={system} tutor={scripted()} />);
+    const intro = await screen.findByRole('dialog', { name: 'Vasi introduces himself' }, { timeout: 5000 });
+    const open = vi.spyOn(system, 'openApp');
+    fireEvent.click(within(intro).getByRole('button', { name: "Let's start learning" }));
+    expect(open).toHaveBeenCalledWith('learn-linux');
+  }, 15_000);
 
   it('shows the service error in plain words', async () => {
     const system = await boot();

@@ -4,6 +4,24 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T07:34:03+05:30 — Vasi in 3D: he walks, and introduces himself
+
+- Changed:
+  - Vasi is redrawn as a shaded, rounded penguin (lit from the top left, glossy eyes, a soft shadow and a
+    teacher's graduation cap), built from separate parts so CSS can animate him (`apps/web/src/tutor/Puppet.tsx`).
+  - He strolls along the bottom of the screen when nobody needs him: a penguin waddle with alternating steps,
+    swinging wings and eyes looking where he is going; he walks home and faces the learner whenever his chat,
+    a nudge, his introduction, a sudo request or his own work needs him (`useStroll.ts`). Reduced motion keeps
+    him still.
+  - The first time a learner meets him, he introduces himself in a speech bubble and answers questions about
+    what he can teach, using the computer, watching your work, sudo and how to stop him; "Let's start learning"
+    opens Learn Linux and "Ask me something" opens his chat. "About me" in his chat brings it back (`VasiIntro.tsx`).
+- Why: The team wants Vasi to feel like a teacher living in the computer, and new learners to know what he can do.
+- Validation: `npm run typecheck` passed; 26 test files and 290 tests passed (new: the introduction shows once and
+  sends nothing to the AI; "Let's start learning" opens Learn Linux). In Chromium: the introduction, an answer, and
+  Vasi mid-walk were screenshotted.
+- Limitations: "3D" is shaded 2D artwork, not a 3D model. The introduction is remembered per user in this browser.
+
 ## 2026-10-11T07:26:17+05:30 — Learn Linux, Learn Docker and chmod Arcade follow each desktop's theme
 
 - Changed:

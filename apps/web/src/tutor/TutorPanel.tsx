@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { PointerOverlay } from './PointerOverlay';
 import { Puppet } from './Puppet';
 import { SudoDialog } from './SudoDialog';
+import { useStroll } from './useStroll';
 import { useStuckNudge } from './useStuckNudge';
 import { useTutor, type CursorState, type Entry } from './useTutor';
+import { hasMetVasi, rememberMetVasi, VasiIntro } from './VasiIntro';
 
 export function TutorPanel({ system, transport, verifySudo = null }: {
   system: SystemClient;
@@ -18,6 +20,26 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   const [draft, setDraft] = useState('');
   const { nudge, dismiss } = useStuckNudge(system);
   const log = useRef<HTMLOListElement>(null);
+  const [user, setUser] = useState('');
+  const [intro, setIntro] = useState(false);
+
+  // The first time a learner meets Vasi, he introduces himself once the desktop has settled.
+  useEffect(() => {
+    let active = true;
+    void system.user().then((name) => {
+      if (!active) return;
+      setUser(name);
+      if (!hasMetVasi(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
+    });
+    return () => { active = false; };
+  }, [system]);
+  const closeIntro = () => {
+    setIntro(false);
+    rememberMetVasi(user);
+  };
+
+  // He strolls along the bottom of the screen whenever nobody needs him.
+  const stroll = useStroll(!open && !intro && !nudge && !tutor.busy && !tutor.pointer && !tutor.sudoRequest);
 
   useEffect(() => {
     log.current?.lastElementChild?.scrollIntoView?.({ block: 'end' });
@@ -56,6 +78,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
           title="Vasi can use sudo. Click to take it back."
           onClick={tutor.revokeSudo}
         >sudo · Revoke</button>}
+        <button className="tutor-about" title="What can Vasi do?" onClick={() => { setOpen(false); setIntro(true); }}>About me</button>
         <button aria-label="Close tutor" onClick={() => setOpen(false)}>×</button>
       </header>
       <ol className="tutor-log" ref={log}>
@@ -84,14 +107,25 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
     {nudge && !open && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
       {nudge.text} <span>Ask Vasi</span>
     </button>}
-    <button
-      className={`tutor-puppet ${tutor.busy ? 'busy' : ''} ${tutor.pointer ? 'pointing' : ''}`}
-      aria-label={open ? 'Hide Vasi' : 'Ask Vasi, your Linux tutor'}
-      aria-expanded={open}
-      onClick={() => setOpen(!open)}
+    <div
+      className={`vasi-actor ${stroll.walking ? 'walking' : ''} ${stroll.x < globalThis.innerWidth / 2 ? 'on-left' : ''}`}
+      style={{ transform: `translateX(${stroll.x}px)`, transitionDuration: `${stroll.durationMs}ms` }}
     >
-      <Puppet />
-    </button>
+      {intro && <VasiIntro
+        user={user}
+        onClose={closeIntro}
+        onChat={() => { closeIntro(); setOpen(true); }}
+        onLearn={() => { closeIntro(); void system.openApp('learn-linux'); }}
+      />}
+      <button
+        className={`tutor-puppet ${tutor.busy ? 'busy' : ''} ${tutor.pointer ? 'pointing' : ''}`}
+        aria-label={open ? 'Hide Vasi' : 'Ask Vasi, your Linux tutor'}
+        aria-expanded={open}
+        onClick={() => { if (intro) closeIntro(); setOpen(!open); }}
+      >
+        <Puppet facing={stroll.facing} />
+      </button>
+    </div>
   </>;
 }
 
