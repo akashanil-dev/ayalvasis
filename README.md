@@ -34,9 +34,10 @@ This template has no application code or required technology stack. The document
 - **Project name:** TuxOS
 - **Short description:** A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor guides each learner and can operate the system itself. Every activity (Learn Linux, Learn Docker, games) is a module that shows up as a desktop icon.
 - **Team:** TODO — participant names and GitHub handles; maximum 4 members.
-- **Working demo:** TODO — link or local demo instructions.
-- **Technology stack:** TypeScript, npm workspaces, React, Vite, xterm.js, Vitest, Node.js (API server),
-  OpenAI Chat Completions with tool calling (AI tutor).
+- **Working demo:** https://tuxos.akashanil.dev (or run it locally, see below).
+- **Technology stack:** TypeScript, npm workspaces, React, Vite, xterm.js, Vitest, Node.js (API server, with
+  its built-in SQLite for accounts), OpenAI Chat Completions with tool calling (AI tutor and trainers), GitHub
+  Actions, Caddy and systemd (deployment).
 
 ### Architecture
 
@@ -67,9 +68,13 @@ This template has no application code or required technology stack. The document
     desktop/wallpaper and every module action (e.g. `learn-linux__start`). The browser side is
     `apps/web/src/tutor/screen-agent.ts`.
   - Root: Vasi starts as an ordinary user. `request_sudo` shows an authentication dialog with his reason; if the
-    learner allows it and types a password, he is granted `user:switch` until logout or until the learner
-    clicks Revoke. If they deny it, he is told so and takes it with good humour. TuxOS accounts have no real
-    password, so any password is accepted (the dialog says so).
+    learner allows it and (for an account) types their real account password, he is granted `user:switch` until
+    logout or until the learner clicks Revoke. Guests have no password, so they only confirm. If the learner
+    denies it, he is told so and takes it with good humour.
+  - On the desktop he is a shaded penguin with a teacher's cap who strolls along the bottom of the screen in
+    profile and rests facing the learner; clicking him (or anything that needs him) sends him back to his
+    corner. The first time a learner meets him he introduces himself in a speech bubble and answers questions
+    about what he can do (`apps/web/src/tutor/Puppet.tsx`, `useStroll.ts`, `VasiIntro.tsx`).
   - While Vasi works, a bar shows what he is doing with a **Stop** button (or Esc) that hands control back.
   - Every module action becomes a tool automatically (e.g. `learn-linux__start`), so new modules extend
     what the tutor can do without tutor changes.
@@ -111,7 +116,8 @@ This template has no application code or required technology stack. The document
 
 ### Run the project
 
-1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
+1. Prerequisites and versions: Node.js 22.18 or newer (the API runs its TypeScript directly and uses the built-in
+   `node:sqlite`); CI and production use Node 24, development used Node 26.7 and npm 11.19.
 2. Dependency installation: `npm install`
 3. Environment setup: for the AI tutor, copy `.env.example` to `.env` and set `OPENAI_API_KEY` (optionally
    `OPENAI_MODEL`, default `gpt-4.1-mini`). Linux uses `gpt-5.6-luna` by default for lower-cost assessment; override it with `OPENAI_MODEL_LINUX`. Set `OPENAI_MODEL_DOCKER`, `OPENAI_MODEL_TERMINAL`, and
@@ -161,9 +167,12 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
 ### Current status
 
 - Working features:
-  - **Browser desktop:** boot/login flow, saved-system continuation, four switchable desktop environments
-    (KDE Plasma, GNOME, CDE, Hyprland) with matching login screens, image wallpapers, per-desktop icon themes,
-    workspaces (CDE, Hyprland), tiling (Hyprland) and accessible kernel-backed windows.
+  - **Browser desktop:** GRUB, boot log, login and a Breeze-style Plasma splash; four switchable desktop
+    environments (KDE Plasma, GNOME, CDE, Hyprland) with matching login screens, image wallpapers, per-desktop
+    icon themes, workspaces (CDE, Hyprland), tiling (Hyprland) and accessible kernel-backed windows. Open
+    windows are part of the saved system, so a learner's desktop comes back as they left it.
+  - **Accounts:** create an account, sign in on any device, or try without an account. Unlocking the screen or
+    continuing a signed-in account after a restart asks for the password; logging out signs the account out.
   - **System client:** local in-process boot/restore, debounced injected-storage persistence, event
     subscriptions, module activation, session API and terminal API. A Web Worker is planned.
   - **Terminal:** one bash-like shell per window with the prompt `user@host:dir$ `, the motd on start, Tab
@@ -175,22 +184,27 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
     from anywhere (for example the terminal). Double-clicking a file opens it in the Text Editor.
   - **Text Editor:** opens a window's file, dirty marker in the title, Ctrl+S to save, Save As for new
     documents, a prompt before closing with unsaved changes, and a sudo tip on permission errors.
-  - **Learn Linux:** six lessons (first commands, moving around, making files, reading and searching,
-    pipes, permissions and sudo). Each step is checked automatically from what the learner does in the
-    terminal or on the desktop, with hints on demand and an explanation after each step. Progress survives
-    reloads and keeps tracking while the window is closed. Lesson start, quit, reset and status are kernel
-    actions, so the AI tutor can drive lessons the same way. With the learning API configured, a Linux
-    certification trainer generates industry scenarios and terminal `/hint`, `/answer`, `/task`, and `/next`
-    controls work across the active course; the reviewed JSON course is the offline fallback.
+  - **Learn Linux:** an AI Linux certification trainer generates a seven-day lab of industry scenarios, one
+    command per task. Each task is taught first (a short "Learn first" lesson with an example), then the
+    learner tries it in the lab's terminal and the trainer's verdict appears under the command ("✓ Correct!" or
+    "✗ Not quite" with what to do next). `/hint`, `/answer`, `/task` and `/next` (or the Hint and Show answer
+    buttons) help along the way. Learn Linux needs the learning API: without it the lab says the trainer is
+    unavailable and offers a retry. Course start, quit, reset and status are kernel actions, so the AI tutor
+    can drive the course too. The reviewed six-lesson course in `course.json` is kept for tests.
+  - **Course windows** (Learn Linux, Learn Docker, chmod Arcade) use the current desktop's colours and
+    controls, so they look native in KDE, GNOME, CDE and Hyprland; their terminals stay dark.
   - **Learn Docker:** a simulated Docker with real-looking output and errors: `run` (with `-d`, `--name`,
     `-p`, `-e`, `--rm`), `ps [-a]`, `images`, `pull`, `stop`, `start`, `restart`, `rm [-f]`, `rmi`, `logs`,
     `exec`, and images hello-world, alpine, ubuntu, python, nginx, redis and postgres. Published ports work
     with `curl localhost:PORT`, which nginx answers and logs. State persists in a root-only
-    `/var/lib/docker`. Five lessons: first container, images, serving a website, cleaning up, and
-    configuring with environment variables.
-  - **chmod Arcade:** alternating questions (rwx to octal, octal to rwx with toggle buttons), streak bonuses,
-    an explanation of each wrong answer, and the best score saved in `~/.local/share/tuxos/`.
-  - **AI tutor (Vasi):** a penguin puppet in the corner opens a chat. Vasi looks at the learner's recent
+    `/var/lib/docker`. With the learning API, a platform-engineering trainer designs the lab (teach first,
+    then test, as in Learn Linux); without it, five reviewed lessons are used: first container, images,
+    serving a website, cleaning up, and configuring with environment variables.
+  - **chmod Arcade:** a permissions lab task in its own terminal next to a 60-second game: alternating
+    questions (rwx to octal, octal to rwx with toggle buttons), streak bonuses, an explanation of each wrong
+    answer, and the best score saved in `~/.local/share/tuxos/`.
+  - **AI tutor (Vasi):** a penguin teacher who walks along the bottom of the screen and introduces himself on
+    first meeting; clicking him opens a chat. Vasi looks at the learner's recent
     commands and the screen before answering, and can use the computer himself: his own pointer glides to
     what he clicks, he types into fields and into his own visible terminal, presses shortcuts, arranges
     windows, switches desktops, writes files and starts lessons. He asks for sudo (with the learner's
@@ -230,9 +244,13 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
   - `ls -l` shows times in UTC rather than the browser's time zone.
   - The terminal redraws an edited line with a carriage return, so a line longer than the terminal width
     redraws imperfectly. A command's error output is shown after its normal output, not interleaved.
-  - The AI tutor has been tested with a scripted model and, in a real browser, through the API server
-    against a local stand-in for the OpenAI API. It has not yet been run against a real OpenAI model in this
-    environment (no API key here), so answer quality is unverified.
+  - The tutor's agent flow (looking, clicking, typing, sudo, Stop) was tested with a scripted model and in a
+    real browser against a stand-in for the OpenAI API. Production runs against the real API (the learning
+    trainers' syllabuses were checked live there), but the quality of Vasi's real answers and how well the model
+    follows his persona have not been systematically reviewed.
+  - Accounts have no password reset, by design: a forgotten password means a new account.
+  - "3D" Vasi is shaded 2D artwork. His introduction and the lessons a learner has read are remembered per
+    browser, not per account.
   - The Docker simulation covers the commands and images listed above. Commands inside containers are
     limited to a few (echo, cat /etc/os-release, env, ls, uname...), and interactive shells (`-it ... sh`)
     are not available yet.
@@ -248,8 +266,13 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
     and capability grants.
 - Libraries, APIs, and public datasets used: [TypeScript](https://www.typescriptlang.org/),
   [Vitest](https://vitest.dev/), [React](https://react.dev/), [Vite](https://vite.dev/) and
-  [xterm.js](https://xtermjs.org/) (MIT) with its fit addon. The Terminal uses the Tango colour palette.
-  The AI tutor calls the [OpenAI API](https://platform.openai.com/docs/api-reference/chat) (Chat Completions
-  with tool calling) from the API server. No public datasets are used.
+  [xterm.js](https://xtermjs.org/) (MIT) with its fit addon; Testing Library and jsdom for tests. The Terminal
+  uses a GitHub-dark style palette. Fonts: [Inter](https://rsms.me/inter/) and
+  [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL Open Font License) from Google Fonts. Desktop icon
+  themes: GNOME app icons (GNOME Design Team, CC-BY-SA / GPL-3.0), Breeze (KDE, LGPL-3.0) and Papirus
+  (GPL-3.0), used unmodified; details in [`apps/web/public/icons/CREDITS.md`](apps/web/public/icons/CREDITS.md).
+  The AI tutor and trainers call the [OpenAI API](https://platform.openai.com/docs/api-reference/chat) (Chat
+  Completions with tool calling) from the API server; accounts use Node's built-in `node:sqlite`. No public
+  datasets are used.
 
 See [AI_USAGE.md](AI_USAGE.md) for AI assistance and [CHANGELOG.md](CHANGELOG.md) for the development record.

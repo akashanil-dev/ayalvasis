@@ -4,6 +4,22 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T07:53:16+05:30 — Documentation brought up to date
+
+- Changed:
+  - README: corrected the sudo description (real account password; guests only confirm), the Node requirement
+    (22.18 or newer, also in `package.json` engines), Learn Linux having no offline fallback, and the terminal
+    palette; added accounts, unlock, session restore, teach-first labs, themed course windows, Vasi's walk and
+    introduction, the live demo link, and credits for fonts and icon themes; updated the AI-testing limitation.
+  - SUBMISSION.md: filled in the project, repository, final implementation commit, demo, run steps, walkthrough,
+    checks, limitations and libraries. The team table and the checklist are left for the team to complete.
+  - CHANGELOG.md and AI_USAGE.md: entries sorted newest first (merges had left some out of order) and every AI
+    usage row moved under its table header so the table renders; no entry was changed.
+- Why: The team asked for the documentation to be complete and correct before submission.
+- Validation: each README claim was checked against the code (scripts, course fallbacks, models, deployment);
+  the reordering was checked to keep every line; `npm run check` passed (291 tests).
+- Limitations: team names and GitHub handles are still TODO in README and SUBMISSION.md.
+
 ## 2026-10-11T07:48:15+05:30 — Teach first, then test; clearer trainer feedback
 
 - Changed:
@@ -186,35 +202,6 @@ Record each meaningful project change during the event, newest first. Update thi
 - Limitations: not yet run on the real server or in GitHub Actions. The Caddy block was not validated with
   `caddy validate` locally (no Caddy here); validate it on the server before reloading.
 
-## 2026-10-11T05:00:28+05:30 — Vasi becomes a teaching agent with full control
-
-- Changed:
-  - Vasi has a teacher persona: kind, patient, shows then hands the keyboard back, never does lesson steps for
-    the learner, may set up exercises and rescue a broken system (`apps/api/src/prompt.ts`).
-  - The Guide / Demo / Drive autonomy switch is gone: Vasi always has every tool.
-  - New agent tools (`packages/tutor/src/tools.ts`): `look_at_screen` now lists clickable and typeable elements
-    with ids; `click`, `type_text`, `press_keys`, `type_in_terminal` (types live into a visible "Vasi's
-    terminal" whose commands run as the tutor), `manage_window`, `change_appearance` and `request_sudo`.
-  - The browser side (`apps/web/src/tutor/screen-agent.ts`) reads the screen like a screen reader and acts with
-    Vasi's own drawn pointer (gliding arrow with a name tag and click ripple) and synthetic events.
-  - Sudo: `request_sudo` shows an authentication dialog with Vasi's reason, then a password prompt; allowing it
-    grants `user:switch` until logout or Revoke. Denial is reported to Vasi, who is told to take it with humour.
-  - A "Vasi is using the computer · Stop (Esc)" bar; Stop ends the current answer without further actions.
-  - Longer agent turns: up to 16 model rounds per question, the current question is always kept in the request
-    even when trimming history, and the API accepts up to 160 messages and 60 tools.
-  - Terminal app: a `tuxos:terminal-type` window event lets Vasi type into a terminal; windows opened with
-    `owner: 'vasi'` run a tutor shell and are titled "Vasi's terminal".
-  - Fixed: `sudo` read options meant for the command (`sudo head -n 2 f` failed); options now end at the command.
-- Why: The team wants Vasi to act like a teacher at the learner's shoulder who can use the computer himself.
-- Validation: `npm run typecheck` passed. `npx vitest run`: 24 test files, 270 tests passed (new tests for the
-  agent tools, sudo granted/denied/revoked, Stop, long turns, the screen agent and sudo option parsing).
-  `npm run build` passed. In headless Chromium with a scripted stand-in for the model API: Vasi looked at the
-  screen, double-clicked Files, typed `ls -l /etc` in his terminal, asked for sudo (allowed with a password, then
-  ran `sudo head -n 2 /etc/shadow`) and, in a second run, was denied and answered with a joke.
-- Limitations: not yet tried against the real model, so how well it follows the persona and uses element ids is
-  untested. Any password is accepted because TuxOS accounts have none. Clicks and typing outside Vasi's own
-  terminal run as the learner, so the persona (not the kernel) keeps him from doing lesson work through the UI.
-  `head` and `tail` still accept only `-n N`, not the `-N` shorthand.
 ## 2026-10-11T05:29:29+05:30 — Keep cached Linux history out of syllabus planning
 
 - Changed: Stopped attaching the full module memory cache to new syllabus requests. Hints and answers now receive only the last three short memory entries for the active task; Linux assessments continue to receive no prior-attempt history.
@@ -254,6 +241,36 @@ Record each meaningful project change during the event, newest first. Update thi
 - Files: `apps/api/src/server.ts`, `apps/api/src/learning.ts`, `apps/api/src/learning.test.ts`, `.env.example`, `README.md`, and this changelog.
 - Validation: `npm run check` passed (23 test files, 254 tests); `npm run build` passed; `git diff --check` passed.
 - Limitations: Existing local `.env` model overrides are not modified automatically; restart the API after updating configuration.
+
+## 2026-10-11T05:00:28+05:30 — Vasi becomes a teaching agent with full control
+
+- Changed:
+  - Vasi has a teacher persona: kind, patient, shows then hands the keyboard back, never does lesson steps for
+    the learner, may set up exercises and rescue a broken system (`apps/api/src/prompt.ts`).
+  - The Guide / Demo / Drive autonomy switch is gone: Vasi always has every tool.
+  - New agent tools (`packages/tutor/src/tools.ts`): `look_at_screen` now lists clickable and typeable elements
+    with ids; `click`, `type_text`, `press_keys`, `type_in_terminal` (types live into a visible "Vasi's
+    terminal" whose commands run as the tutor), `manage_window`, `change_appearance` and `request_sudo`.
+  - The browser side (`apps/web/src/tutor/screen-agent.ts`) reads the screen like a screen reader and acts with
+    Vasi's own drawn pointer (gliding arrow with a name tag and click ripple) and synthetic events.
+  - Sudo: `request_sudo` shows an authentication dialog with Vasi's reason, then a password prompt; allowing it
+    grants `user:switch` until logout or Revoke. Denial is reported to Vasi, who is told to take it with humour.
+  - A "Vasi is using the computer · Stop (Esc)" bar; Stop ends the current answer without further actions.
+  - Longer agent turns: up to 16 model rounds per question, the current question is always kept in the request
+    even when trimming history, and the API accepts up to 160 messages and 60 tools.
+  - Terminal app: a `tuxos:terminal-type` window event lets Vasi type into a terminal; windows opened with
+    `owner: 'vasi'` run a tutor shell and are titled "Vasi's terminal".
+  - Fixed: `sudo` read options meant for the command (`sudo head -n 2 f` failed); options now end at the command.
+- Why: The team wants Vasi to act like a teacher at the learner's shoulder who can use the computer himself.
+- Validation: `npm run typecheck` passed. `npx vitest run`: 24 test files, 270 tests passed (new tests for the
+  agent tools, sudo granted/denied/revoked, Stop, long turns, the screen agent and sudo option parsing).
+  `npm run build` passed. In headless Chromium with a scripted stand-in for the model API: Vasi looked at the
+  screen, double-clicked Files, typed `ls -l /etc` in his terminal, asked for sudo (allowed with a password, then
+  ran `sudo head -n 2 /etc/shadow`) and, in a second run, was denied and answered with a joke.
+- Limitations: not yet tried against the real model, so how well it follows the persona and uses element ids is
+  untested. Any password is accepted because TuxOS accounts have none. Clicks and typing outside Vasi's own
+  terminal run as the learner, so the persona (not the kernel) keeps him from doing lesson work through the UI.
+  `head` and `tail` still accept only `-n N`, not the `-N` shorthand.
 
 ## 2026-10-11T04:55:20+05:30 — Align AI syllabus recap schema and surface planning failures
 
@@ -307,6 +324,7 @@ Record each meaningful project change during the event, newest first. Update thi
 - Files: `packages/course-view/src/index.tsx`, `packages/course-view/src/course.css`, `modules/learn-linux/src/view.tsx`, `modules/learn-docker/src/view.tsx`, `modules/learn-docker/src/index.ts`, `modules/chmod-arcade/src/view.tsx`, and `modules/chmod-arcade/src/arcade.css`.
 - Validation: `npm run check` passed with 23 test files and 257 tests; `npm run build` passed; `git diff --check` passed.
 - Limitation: The Docker visualization is intentionally a concise engine summary; detailed diagnostics remain in the terminal output.
+
 ## 2026-10-11T04:14:36+05:30 — Module-local learning memory and model routing
 
 - What changed: Added bounded local memory files per learning module, memory-aware planning/hints/answers/evaluation, and independent environment-configurable model routing for Linux, Docker, Terminal, and chmod-arcade.
@@ -314,18 +332,6 @@ Record each meaningful project change during the event, newest first. Update thi
 - Affected files: `packages/lessons/src/ai.ts`, `apps/api/src/learning.ts`, `apps/api/src/server.ts`, `apps/api/src/tutor.ts`, `.env.example`, `README.md`, and learning tests.
 - Validation: `npm run check` passed with 22 test files and 251 tests; `npm run build` passed; `git diff --check` passed.
 - Known limitation: OpenAI-compatible generation is remote unless `OPENAI_BASE_URL` points to a local inference server; persisted state and memory are always local to the virtual filesystem.
-
-## 2026-10-11T04:10:23+05:30 — AI-designed terminal learning backend
-
-- Changed:
-  - Added server-side `/api/learning/plan`, `/evaluate`, `/hint`, and `/answer` endpoints with structured response validation and per-module trainer personas.
-  - Added AI course runners for Learn Linux and Learn Docker. They generate seven-day, industry-scenario syllabi, require recap tasks after day one, evaluate actual terminal evidence, and persist progress.
-  - Added terminal-native `/hint`, `/answer`, `/task`, and `/next` commands without changing frontend components; AI-mode command results include an explicit trainer assessment.
-  - Preserved the existing reviewed JSON courses as a deterministic fallback when the AI service is unavailable.
-- Why: Make learning content adaptive and realistic while keeping execution local, auditable, and safe.
-- Validation: `npm run check` passed with 22 test files and 250 tests; `npm run build` passed; `npm install --package-lock-only --ignore-scripts` completed.
-- Limitations: AI content quality depends on the configured model; the fallback is intentionally deterministic; real API/browser validation requires a valid server-side key and running local servers.
-
 
 ## 2026-10-11T04:11:58+05:30 — UI redesign and four desktop environments (adds CDE and Hyprland)
 
@@ -357,6 +363,17 @@ Record each meaningful project change during the event, newest first. Update thi
 - Limitations: the Google Fonts stylesheet needs network access (system fonts are used offline). Learn Linux
   and About have no themed icon, so they use TuxOS's own icons in every desktop. Phone-width layouts were
   styled but not checked in a browser.
+
+## 2026-10-11T04:10:23+05:30 — AI-designed terminal learning backend
+
+- Changed:
+  - Added server-side `/api/learning/plan`, `/evaluate`, `/hint`, and `/answer` endpoints with structured response validation and per-module trainer personas.
+  - Added AI course runners for Learn Linux and Learn Docker. They generate seven-day, industry-scenario syllabi, require recap tasks after day one, evaluate actual terminal evidence, and persist progress.
+  - Added terminal-native `/hint`, `/answer`, `/task`, and `/next` commands without changing frontend components; AI-mode command results include an explicit trainer assessment.
+  - Preserved the existing reviewed JSON courses as a deterministic fallback when the AI service is unavailable.
+- Why: Make learning content adaptive and realistic while keeping execution local, auditable, and safe.
+- Validation: `npm run check` passed with 22 test files and 250 tests; `npm run build` passed; `npm install --package-lock-only --ignore-scripts` completed.
+- Limitations: AI content quality depends on the configured model; the fallback is intentionally deterministic; real API/browser validation requires a valid server-side key and running local servers.
 
 ## 2026-10-11T03:08:17+05:30 — Boot sequence, login screens and desktop environments (KDE Plasma, GNOME)
 
