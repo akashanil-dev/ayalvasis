@@ -115,13 +115,18 @@ describe('Learn Linux course', () => {
     expect(current.lastExplain).toContain('AI trainer unavailable: Every day after day one');
   });
 
-  it('serves AI hints and detailed answers through terminal commands', async () => {
+  it('nudges instead of answering until the learner has missed five times, then reveals it to type', async () => {
     const system = await boot();
     const terminal = await system.createTerminal({ learningModule: 'learn-linux' });
     expect((await terminal.run('/hint')).stdout).toContain('AI test hint');
+    const early = await terminal.run('/answer');
+    expect(early.stdout).toContain('A nudge instead: AI test hint');
+    expect(early.stdout).toContain('after 5 more tries');
+    expect(early.stdout).not.toContain('whoami');
+    for (let miss = 0; miss < 5; miss += 1) await terminal.run('ls');
     const answer = await terminal.run('/answer');
     expect(answer.stdout).toContain('whoami');
-    expect(answer.stdout.length).toBeLessThanOrEqual(141);
+    expect(answer.stdout).toContain('Now type it yourself');
     expect(answer.stdout).not.toContain('Detailed Solution');
   });
 
@@ -129,6 +134,7 @@ describe('Learn Linux course', () => {
     const system = await boot(true);
     await system.dispatch('learn-docker.start', { lesson: 'day-1' });
     const linuxTerminal = await system.createTerminal({ learningModule: 'learn-linux' });
+    for (let miss = 0; miss < 5; miss += 1) await linuxTerminal.run('ls');
     const answer = await linuxTerminal.run('/answer');
     expect(answer.stdout).toContain('whoami');
     expect(answer.stdout).not.toContain('docker --version');

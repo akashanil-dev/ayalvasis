@@ -4,6 +4,24 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T08:31:00+05:30 — Trainers guide learners to the answer instead of giving it
+
+- Changed:
+  - `packages/lessons/src/ai.ts` counts wrong attempts per task (saved with progress, cleared on reset) and sends
+    the count with evaluate, hint and answer requests. `/answer` and Show answer give a nudge and say how many
+    tries are left until five wrong attempts, then show the answer and ask the learner to type it. Hints get a
+    step more specific each time, including the offline fallback, which walks through the task's own hints.
+  - `apps/api/src/learning.ts`: corrections only nudge for the first four misses; from the fifth they reveal
+    the command name, then its option, then the full line with encouragement. A guard replaces any early
+    correction that still contains the answer with a hint that does not. The failure count is validated.
+  - `modules/terminal/src/manifest.ts` and README describe the new `/answer` behaviour.
+- Why: Learners were being told "Run exactly: ls -la" on their first wrong try. The team wants learners to reach
+  the answer themselves, with the answer revealed slowly only after five or more failures.
+- Validation: `npm run check` passed (294 tests), with new tests for the gated `/answer`, the early-answer guard,
+  the reveal prompt after five misses, and failure-count validation. Not checked against the live model.
+- Limitations: the guard only catches the answer written out in full; a model could still describe it in other
+  words, which the prompt forbids. The Vasi tutor is a separate agent and is not bound by the five-try rule.
+
 ## 2026-10-11T08:13:00+05:30 — Learn Linux syllabus no longer thrown away over one flawed task
 
 - Changed: `apps/api/src/learning.ts` now repairs a generated syllabus instead of rejecting it whole. Tasks that

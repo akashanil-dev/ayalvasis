@@ -52,6 +52,8 @@ interface AIProgress {
   active: { day: number; task: number } | null;
   lastFeedback: string | null;
   lastResult: 'correct' | 'wrong' | null;
+  /** Wrong attempts per task ID, so the trainer only starts revealing the answer after real effort. */
+  failures?: Record<string, number>;
 }
 
 export interface LearningMemoryEntry {
@@ -81,6 +83,8 @@ const MEMORY_DIR = '~/.local/share/tuxos/ai-learning/memory';
 const MAX_MEMORY_ENTRIES = 50;
 const MAX_MEMORY_SUMMARY = 1_200;
 const MAX_LINUX_ANSWER = 140;
+/** Wrong attempts on one task before the trainer starts revealing its answer; until then it only nudges. */
+export const REVEAL_AFTER_FAILURES = 5;
 
 function progressPath(courseId: string, home: string): string {
   // Keep any previously generated multi-command Linux syllabus available as local legacy data.
@@ -252,30 +256,48 @@ export class AICourseRunner {
     this.state.active = null;
     this.state.lastFeedback = null;
     this.state.lastResult = null;
+    this.state.failures = {};
     this.save();
+  }
+
+  private failuresOn(taskId: string): number { return this.state?.failures?.[taskId] ?? 0; }
+
+  private recordFailure(state: AIProgress, taskId: string): void {
+    state.failures = { ...state.failures, [taskId]: this.failuresOn(taskId) + 1 };
+  }
+
+  private hintsGiven(taskId: string): number {
+    return this.memory.entries.filter((entry) => entry.kind === 'hint' && entry.taskId === taskId).length;
   }
 
   private async askFor(kind: 'hint' | 'answer'): Promise<string> {
     const task = this.currentTask();
     if (!task) return 'There is no active task. Start a day with the course action first.';
-    if (!this.ctx.learning) {
-      const text = kind === 'hint' ? task.hints[0] ?? 'Read the task carefully and inspect the system.'
-        : this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
-      this.remember({ kind, taskId: task.id, summary: text });
-      return text;
+    const failures = this.failuresOn(task.id);
+    // The learner should find the answer themselves: until they have really tried, an answer request gets a nudge.
+    if (kind === 'answer' && failures < REVEAL_AFTER_FAILURES) {
+      const left = REVEAL_AFTER_FAILURES - failures;
+      const hint = await this.askFor('hint');
+      return `You can work this one out. A nudge instead: ${hint}\nKeep trying: after ${left} more ${left === 1 ? 'try' : 'tries'} I'll start showing you the answer.`;
     }
-    try {
-      const result = await this.ctx.learning.request(`/${kind}`, { module: this.ctx.id, trainer: this.profile, task, memory: this.taskMemory(task.id) });
-      const responseText = (result as { text?: string }).text ?? (kind === 'hint' ? task.hints[0] ?? 'Inspect the task and try one small command.' : task.answer);
-      const text = this.ctx.id === 'learn-linux' && kind === 'answer' ? conciseLinuxAnswer(responseText, task) : responseText;
-      this.remember({ kind, taskId: task.id, summary: text });
-      return text;
-    } catch {
-      const text = kind === 'hint' ? task.hints[0] ?? 'Break the task into one small command.'
-        : this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
-      this.remember({ kind, taskId: task.id, summary: text });
-      return text;
+    // Each hint gets a little more specific; the task's own hints are ordered from vague to close.
+    const localHint = task.hints[Math.min(this.hintsGiven(task.id), task.hints.length - 1)] ?? 'Re-read the lesson above and try one small command.';
+    const localAnswer = this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
+    let text: string;
+    if (!this.ctx.learning) text = kind === 'hint' ? localHint : localAnswer;
+    else {
+      try {
+        const result = await this.ctx.learning.request(`/${kind}`, {
+          module: this.ctx.id, trainer: this.profile, task, failures, hintsGiven: this.hintsGiven(task.id), memory: this.taskMemory(task.id),
+        });
+        const responseText = (result as { text?: string }).text ?? (kind === 'hint' ? localHint : task.answer);
+        text = this.ctx.id === 'learn-linux' && kind === 'answer' ? conciseLinuxAnswer(responseText, task) : responseText;
+      } catch {
+        text = kind === 'hint' ? localHint : localAnswer;
+      }
     }
+    this.remember({ kind, taskId: task.id, summary: text });
+    return kind === 'answer' ? `${text}\nNow type it yourself to finish the task.` : text;
   }
 
   private observe(event: KernelEvent): void {
@@ -302,6 +324,7 @@ export class AICourseRunner {
     const state = this.requireState();
     state.lastResult = correct ? 'correct' : 'wrong';
     state.lastFeedback = correct ? task.explain : 'Not yet. Read the task and compare your command with the expected evidence.';
+    if (!correct) this.recordFailure(state, task.id);
     this.remember({ kind: 'attempt', taskId: task.id, summary: `${run.line || 'session opened'} — ${state.lastFeedback}`, correct });
     if (correct) this.advanceTask(state, task);
     this.save();
@@ -312,7 +335,7 @@ export class AICourseRunner {
     try {
       if (!this.ctx.learning) throw new Error('AI learning service is not configured');
       result = await this.ctx.learning.request('/evaluate', {
-        module: this.ctx.id, trainer: this.profile, task, command: run,
+        module: this.ctx.id, trainer: this.profile, task, command: run, failures: this.failuresOn(task.id),
         ...(this.ctx.id === 'learn-linux' ? {} : { memory: this.memory }),
       }) as typeof result;
     } catch {
@@ -327,6 +350,7 @@ export class AICourseRunner {
     this.remember({ kind: 'attempt', taskId: task.id, summary: `${evidence} — ${state.lastFeedback}`, correct: !!result.correct });
     this.remember({ kind: 'feedback', taskId: task.id, summary: state.lastFeedback, correct: !!result.correct });
     if (result.correct) this.advanceTask(state, task);
+    else this.recordFailure(state, task.id);
     this.save();
     return { correct: !!result.correct, text: state.lastFeedback };
   }

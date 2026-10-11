@@ -82,9 +82,10 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
       console.error(`learning ${operation} for ${moduleId} with model ${model}: invalid result: ${invalid}`);
       return { status: 502, body: { error: invalid } };
     }
-    if (operation === 'evaluate' && moduleId === 'learn-linux' && result && typeof result === 'object') {
+    if (operation === 'evaluate' && result && typeof result === 'object') {
       const evaluation = result as Record<string, unknown>;
-      result = { ...evaluation, feedback: conciseFeedback(evaluation.feedback) };
+      const feedback = moduleId === 'learn-linux' ? conciseFeedback(evaluation.feedback) : evaluation.feedback;
+      result = { ...evaluation, feedback: evaluation.correct === true ? feedback : withheldAnswer(feedback, request.task, failuresOf(request)) };
     }
     if (operation === 'answer' && moduleId === 'learn-linux' && result && typeof result === 'object') {
       const answer = result as Record<string, unknown>;
@@ -96,6 +97,39 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     console.error(`learning ${operation} for ${moduleId} with model ${model} failed: ${timeout ? 'timed out' : String(error)}`);
     return { status: 504, body: { error: timeout ? 'AI learning took too long. Try again.' : 'AI learning service could not be reached.' } };
   }
+}
+
+/** Wrong attempts on one task before the trainer starts revealing its answer (matches the client). */
+export const REVEAL_AFTER_FAILURES = 5;
+
+function failuresOf(request: Record<string, unknown>): number {
+  return typeof request.failures === 'number' ? request.failures : 0;
+}
+
+/**
+ * How much a correction may give away, by how many times the learner has now missed (this attempt included):
+ * only nudges at first, then the command name, then its shape, then the whole line to type themselves.
+ */
+function revealRule(failures: number): string {
+  const misses = failures + 1;
+  const rule = misses < REVEAL_AFTER_FAILURES
+    ? 'give one guiding nudge toward the idea (what to look at, or a short question). Never write the command, its options, or the answer.'
+    : misses === REVEAL_AFTER_FAILURES ? 'they have tried hard: name only the command they need (no options) and encourage them to type it.'
+      : misses === REVEAL_AFTER_FAILURES + 1 ? 'name the command and describe the option they need, without writing the full line, and encourage them.'
+        : 'give the exact command line, and warmly ask them to type it themselves to finish.';
+  return `The learner has already missed this task ${failures} time(s). If this attempt is also wrong, ${rule}`;
+}
+
+/** A model can still slip the answer into an early correction; replace it with a hint that does not contain it. */
+function withheldAnswer(feedback: unknown, task: unknown, failures: number): unknown {
+  if (failures + 1 >= REVEAL_AFTER_FAILURES || typeof feedback !== 'string') return feedback;
+  const { answer, hints } = (task ?? {}) as { answer?: unknown; hints?: unknown };
+  if (typeof answer !== 'string' || !answer.trim()) return feedback;
+  const normalize = (text: string) => text.replace(/\s+/g, ' ').trim().toLowerCase();
+  const reveals = (text: string) => normalize(text).includes(normalize(answer));
+  if (!reveals(feedback)) return feedback;
+  const hint = Array.isArray(hints) ? hints.find((item): item is string => typeof item === 'string' && !reveals(item)) : undefined;
+  return hint ? `Not quite. ${hint}` : 'Not quite. Re-read the lesson above and try again.';
 }
 
 /** Just under Cloudflare's 100-second limit for a proxied request, so the learner sees our error, not its own. */
@@ -116,6 +150,9 @@ export function invalidLearning(body: unknown): string | null {
   const json = JSON.stringify(body);
   if (json.length > 100_000) return 'learning request is too large.';
   const memory = (body as { memory?: unknown })?.memory;
+  const { failures, hintsGiven } = body as { failures?: unknown; hintsGiven?: unknown };
+  if (failures !== undefined && !(Number.isInteger(failures) && (failures as number) >= 0)) return 'failures must be a non-negative integer.';
+  if (hintsGiven !== undefined && !(Number.isInteger(hintsGiven) && (hintsGiven as number) >= 0)) return 'hintsGiven must be a non-negative integer.';
   if (memory !== undefined && (!memory || typeof memory !== 'object' || !Array.isArray((memory as { entries?: unknown }).entries))) return 'memory must contain an entries array.';
   if (memory !== undefined && (memory as { moduleId?: unknown }).moduleId !== value.module) return 'memory must belong to the requested module.';
   return null;
@@ -139,11 +176,11 @@ function promptFor(operation: LearningOperation, request: Record<string, unknown
     + 'For example, day 2 begins with tasks[0].recap=true and tasks[1...].recap=false; its first task must actually review earlier skills, not introduce a new topic. '
     + `Use this reviewed fallback only as topic context: ${JSON.stringify(request.fallback ?? {})}. `
     + 'Do not include or depend on learner attempt history when designing the syllabus; use only the supplied module topic context.';
-  if (operation === 'evaluate' && request.module === 'learn-linux') return `Assess only this Linux task and the current single submitted command plus its observable output. Return {correct,feedback,next}. Ignore all previous commands and module memory; this task must be completed by this one command, not by a sequence. If wrong, give one brief correction; if correct, confirm and let the runner advance to the next task. Feedback must be one short sentence, maximum 110 characters; do not repeat the task or explain the whole lesson. Task: ${JSON.stringify(request.task)} Current attempt: ${JSON.stringify(request.command)}`;
-  if (operation === 'evaluate') return `Assess the learner's terminal attempt against this task. Return {correct,feedback,next} where correct is true only when the command and its observable output satisfy the objective. Be specific, encouraging, and teach the underlying concept. Task: ${JSON.stringify(request.task)} Attempt: ${JSON.stringify(request.command)} Local module memory: ${memory}`;
-  if (operation === 'hint') return `Give one progressive hint for this terminal task without revealing the full answer. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
-  if (request.module === 'learn-linux') return `Give the direct solution for this Linux terminal task in one short line: the exact single command line, then a brief reason. Maximum 140 characters. No headings, markdown, bullets, code fences, long explanations, safety section, or follow-up. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
-  return `Teach the detailed solution for this terminal task. Include the exact command, explain each important token, expected output/evidence, safety considerations, and a small follow-up check. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
+  if (operation === 'evaluate' && request.module === 'learn-linux') return `Assess only this Linux task and the current single submitted command plus its observable output. Return {correct,feedback,next}. Ignore all previous commands and module memory; this task must be completed by this one command, not by a sequence. If correct, confirm and let the runner advance to the next task. ${revealRule(failuresOf(request))} Feedback must be one short sentence, maximum 110 characters; do not repeat the task or explain the whole lesson. Task: ${JSON.stringify(request.task)} Current attempt: ${JSON.stringify(request.command)}`;
+  if (operation === 'evaluate') return `Assess the learner's terminal attempt against this task. Return {correct,feedback,next} where correct is true only when the command and its observable output satisfy the objective. Be encouraging and teach the underlying concept. ${revealRule(failuresOf(request))} Task: ${JSON.stringify(request.task)} Attempt: ${JSON.stringify(request.command)} Local module memory: ${memory}`;
+  if (operation === 'hint') return `Give one progressive hint for this terminal task. The learner has had ${Number(request.hintsGiven ?? 0)} hint(s) and ${failuresOf(request)} wrong attempt(s) on it: make this hint a step more specific than the earlier ones in memory, but never write the full command line; let the learner find it. One or two short sentences. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
+  if (request.module === 'learn-linux') return `Give the direct solution for this Linux terminal task in one short line: the exact single command line, then a brief reason. The learner has tried several times; they will type it themselves. Maximum 140 characters. No headings, markdown, bullets, code fences, long explanations, safety section, or follow-up. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
+  return `Teach the detailed solution for this terminal task. Include the exact command, explain each important token, expected output/evidence, safety considerations, and a small follow-up check. The learner has tried several times; end by asking them to type it themselves. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
 }
 
 function validateResult(operation: LearningOperation, value: unknown): string | null {

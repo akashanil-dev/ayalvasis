@@ -187,8 +187,10 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
   - **Learn Linux:** an AI Linux certification trainer generates a seven-day lab of industry scenarios, one
     command per task. Each task is taught first (a short "Learn first" lesson with an example), then the
     learner tries it in the lab's terminal and the trainer's verdict appears under the command ("✓ Correct!" or
-    "✗ Not quite" with what to do next). `/hint`, `/answer`, `/task` and `/next` (or the Hint and Show answer
-    buttons) help along the way. Learn Linux needs the learning API: without it the lab says the trainer is
+    "✗ Not quite" with a nudge). The trainer never gives the answer away while the learner is still trying:
+    corrections and `/hint` only nudge, each hint a step closer. After five wrong attempts on a task it reveals
+    a little more with each miss (the command name, then its option, then the whole line) and asks the learner
+    to type it themselves; `/answer` (or Show answer) gives a nudge until then. `/task` and `/next` show the task. Learn Linux needs the learning API: without it the lab says the trainer is
     unavailable and offers a retry. Course start, quit, reset and status are kernel actions, so the AI tutor
     can drive the course too. The reviewed six-lesson course in `course.json` is kept for tests.
   - **Course windows** (Learn Linux, Learn Docker, chmod Arcade) use the current desktop's colours and
@@ -213,7 +215,7 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
     help; nothing is sent to the AI until the learner asks. Errors (no key, quota, service down) are shown in
     plain words.
   - **AI-designed learning backend:** `/api/learning/plan` creates a seven-day terminal-first syllabus whose
-    first task on each day after day one is explicitly marked and written as a recap; each Linux mission asks for one command line only (a pipeline is allowed when it is the lesson), and Enter advances only after that command is correct. Linux assessment feedback is capped at 110 characters and `/answer` returns a concise command plus reason (at most 140 characters). Fresh syllabus planning excludes cached attempt history; hints and answers receive only the last three short memory entries for the active task. Learning terminals stay bound to their own module trainer, and the Linux task header marks recap versus new work. Learning endpoints use module-specific trainer personas. The single-command Linux syllabus is saved separately so older local plans remain untouched.
+    first task on each day after day one is explicitly marked and written as a recap; each Linux mission asks for one command line only (a pipeline is allowed when it is the lesson), and Enter advances only after that command is correct. Linux assessment feedback is capped at 110 characters and `/answer`, once unlocked after five wrong attempts, returns a concise command plus reason (at most 140 characters). Fresh syllabus planning excludes cached attempt history; hints and answers receive only the last three short memory entries for the active task. Learning terminals stay bound to their own module trainer, and the Linux task header marks recap versus new work. Learning endpoints use module-specific trainer personas. The single-command Linux syllabus is saved separately so older local plans remain untouched.
     The server validates structured responses and never exposes the API key to the browser. Generated progress and a
     bounded, module-specific memory cache are saved in the user's virtual home under
     `~/.local/share/tuxos/ai-learning/`; the API remains stateless. To keep model execution local too, point

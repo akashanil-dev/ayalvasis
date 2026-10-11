@@ -101,6 +101,25 @@ describe('AI learning backend', () => {
     expect(body.days.map((day) => [day.day, day.recap, day.tasks.map((t) => t.recap)])).toEqual([[1, false, [false]], [2, true, [true, false]]]);
   });
 
+  it('withholds the answer from early corrections and reveals it step by step after five misses', async () => {
+    const task = { id: 't', task: 'Show the current directory', answer: 'pwd', hints: ['Print working directory: pwd', 'Which command names where you are?'] };
+    const leak = upstream({ correct: false, feedback: 'Run exactly: pwd' });
+    const early = await handleLearning({ operation: 'evaluate', module: 'learn-linux', task, command: { line: 'ls' }, failures: 0 }, config, leak.fetcher);
+    expect(early.body).toMatchObject({ correct: false, feedback: 'Not quite. Which command names where you are?' });
+    expect(JSON.parse(leak.calls[0]!.init.body as string).messages[1].content).toContain('Never write the command');
+
+    const late = upstream({ correct: false, feedback: 'Use pwd: type it yourself.' });
+    const reveal = await handleLearning({ operation: 'evaluate', module: 'learn-linux', task, command: { line: 'ls' }, failures: 4 }, config, late.fetcher);
+    expect(reveal.body).toMatchObject({ feedback: 'Use pwd: type it yourself.' });
+    expect(JSON.parse(late.calls[0]!.init.body as string).messages[1].content).toContain('name only the command');
+  });
+
+  it('rejects a malformed failure count', async () => {
+    const { fetcher } = upstream({});
+    const reply = await handleLearning({ operation: 'evaluate', module: 'learn-linux', failures: -1 }, config, fetcher);
+    expect(reply.status).toBe(400);
+  });
+
   it('keeps continuity context module-scoped and validates its shape', async () => {
     const { fetcher, calls } = upstream({ text: 'Use ls -la.' });
     const reply = await handleLearning({ operation: 'hint', module: 'terminal', task: { id: 't' }, memory: { moduleId: 'terminal', entries: [{ id: '1', kind: 'attempt', summary: 'previous shell attempt', at: 1 }] } }, config, fetcher);
