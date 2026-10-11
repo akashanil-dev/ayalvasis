@@ -4,6 +4,28 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T08:58:00+05:30 — Learn Linux asks about the learner's experience before designing the syllabus
+
+- Changed:
+  - `packages/lessons/src/ai.ts`: an AI course can take survey questions. Until they are answered it reports a
+    `survey` in its status and does not plan; a new `<course>.survey` action validates 1-5 star ratings, saves
+    them to `~/.local/share/tuxos/ai-learning/<course>-survey.json` and starts planning with them.
+  - `modules/learn-linux/src/index.ts`: five questions on terminal use, files and permissions, text processing,
+    processes and services, and scripting and administration.
+  - `apps/api/src/learning.ts`: `/plan` validates the ratings and, when present, tells the trainer to pitch the
+    syllabus at them (start where the learner is, spend longer on weak areas, go deeper for strong ones) instead
+    of always starting from beginner level.
+  - `packages/course-view/src/index.tsx` and `course.css`: the star survey screen in the Learn Linux window,
+    using the desktop's theme colours, with keyboard-focusable radio stars.
+  - README describes the survey.
+- Why: The same beginner syllabus did not serve experienced users; the team wants both beginners and advanced
+  users to benefit.
+- Validation: `npm run check` passed (297 tests), with new tests for the survey gate, rating validation (client and
+  server), ratings reaching the plan request, and the level-aware prompt. In headless Chromium the star survey
+  rendered in the Plasma theme, accepted ratings and submitted; no live model call was made (the API was not running).
+- Limitations: learners who already have a saved syllabus keep it and are not surveyed. There is no "retake the
+  survey" control yet. How well the syllabus fits the ratings depends on the model and is not tested.
+
 ## 2026-10-11T08:44:00+05:30 — No password-only screen flash after signing in
 
 - Changed: `apps/web/src/app.tsx` now records the signed-in account in the same update that switches to the

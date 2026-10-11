@@ -184,8 +184,11 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
     from anywhere (for example the terminal). Double-clicking a file opens it in the Text Editor.
   - **Text Editor:** opens a window's file, dirty marker in the title, Ctrl+S to save, Save As for new
     documents, a prompt before closing with unsaved changes, and a sudo tip on permission errors.
-  - **Learn Linux:** an AI Linux certification trainer generates a seven-day lab of industry scenarios, one
-    command per task. Each task is taught first (a short "Learn first" lesson with an example), then the
+  - **Learn Linux:** before the first lab the learner rates their experience in five 1-to-5 star questions
+    (terminal, files and permissions, text processing, processes and services, scripting and administration).
+    An AI Linux certification trainer then generates a seven-day lab of industry scenarios pitched at that level,
+    from first commands for a beginner to troubleshooting and scripting for an experienced user, one
+    command per task. The ratings are saved with the learner's files, so the survey is asked once. Each task is taught first (a short "Learn first" lesson with an example), then the
     learner tries it in the lab's terminal and the trainer's verdict appears under the command ("✓ Correct!" or
     "✗ Not quite" with a nudge). The trainer never gives the answer away while the learner is still trying:
     corrections and `/hint` only nudge, each hint a step closer. After five wrong attempts on a task it reveals

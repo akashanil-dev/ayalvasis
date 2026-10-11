@@ -439,3 +439,18 @@
 .linux-mission-actions button.quiet,
 .lab-task-actions button.link { border-color: transparent; background: transparent; color: var(--accent); }
 .de-cde .linux-mission-learn, .de-cde .lab-lesson { border: 0; box-shadow: inset 1px 1px #fff, inset -1px -1px #8a8a8a; }
+/* The experience survey before the first Linux lab: a few star ratings, in the desktop's colours. */
+.linux-survey { display: flex; height: 100%; flex-direction: column; gap: 14px; overflow-y: auto; padding: clamp(16px, 4vw, 32px); background: var(--window-bg); color: var(--window-fg); font-family: var(--font-ui); }
+.linux-survey > * { width: 100%; max-width: 640px; margin-inline: auto; }
+.linux-survey h2 { margin: 0 0 6px; font-size: 20px; }
+.linux-survey header p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.linux-survey-question { margin-block: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--window-sidebar); }
+.linux-survey-question legend { float: left; width: 100%; margin-bottom: 8px; padding: 0; font-size: 14px; font-weight: 600; line-height: 1.4; }
+.linux-survey-stars { clear: both; display: flex; gap: 4px; }
+.linux-survey-stars button { padding: 0 2px; border: 0; background: none; color: var(--surface-2); font-size: 28px; line-height: 1; cursor: pointer; -webkit-text-stroke: 1px var(--line); }
+.linux-survey-stars button.lit { color: #f5b301; -webkit-text-stroke: 0; }
+.linux-survey-stars button:hover { transform: scale(1.12); }
+.linux-survey-stars button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.linux-survey-scale { display: flex; justify-content: space-between; max-width: 190px; margin-top: 4px; color: var(--muted); font-size: 11px; }
+.linux-survey-error { margin: 0; color: var(--danger, #f85149); font-size: 13px; }
+.linux-survey .linux-mission-actions button:disabled { opacity: .55; cursor: default; }

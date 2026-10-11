@@ -1,4 +1,4 @@
-import type { LessonStatus } from '@tuxos/lessons';
+import type { LessonStatus, SurveyQuestion } from '@tuxos/lessons';
 import { TerminalSurface } from '@tuxos/module-terminal/view';
 import type { SystemClient, TerminalResult, TerminalSession } from '@tuxos/system';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type FormEvent } from 'react';
@@ -197,6 +197,11 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
   const teaching = useTaught(courseId, task?.id);
   const lessonRead = teaching.taught;
   if (!status) return <div className="linux-terminal-loading">{error || 'Connecting to Linux trainer…'}</div>;
+  if (status.survey) return <ExperienceSurvey
+    questions={status.survey.questions}
+    error={error}
+    onSubmit={(answers) => call('survey', { answers })}
+  />;
   // While the first lab is being designed, say so: it is not an error, and the status polls until it is ready.
   if ((!status.lessons.length || !task) && status.lastExplain?.includes('generating')) {
     return <div className="linux-terminal-unavailable" role="status">
@@ -261,6 +266,51 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
     </header>
     <TerminalSurface system={system} learningModule={courseId} inputId={terminalId} />
   </div>;
+}
+
+/** A few 1-to-5 star questions before the first lab, so the trainer designs it at the learner's level. */
+function ExperienceSurvey({ questions, error, onSubmit }: {
+  questions: SurveyQuestion[];
+  error: string;
+  onSubmit: (answers: Record<string, number>) => Promise<void>;
+}) {
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [sending, setSending] = useState(false);
+  const complete = questions.every((question) => answers[question.id]);
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!complete || sending) return;
+    setSending(true);
+    void onSubmit(answers).finally(() => setSending(false));
+  };
+  return <form className="linux-survey" onSubmit={submit}>
+    <header>
+      <span className="linux-mission-label">Before we start</span>
+      <h2>How much Linux do you know?</h2>
+      <p>Rate yourself from 1 to 5 stars. There are no wrong answers: your trainer uses them to design a lab at your
+        level, from your very first command to real server work.</p>
+    </header>
+    {questions.map((question) => <fieldset key={question.id} className="linux-survey-question">
+      <legend>{question.question}</legend>
+      <div className="linux-survey-stars" role="radiogroup" aria-label={question.question}>
+        {[1, 2, 3, 4, 5].map((stars) => <button
+          key={stars}
+          type="button"
+          role="radio"
+          aria-checked={answers[question.id] === stars}
+          aria-label={`${stars} ${stars === 1 ? 'star' : 'stars'}`}
+          className={stars <= (answers[question.id] ?? 0) ? 'lit' : ''}
+          onClick={() => setAnswers((current) => ({ ...current, [question.id]: stars }))}
+        >★</button>)}
+      </div>
+      <div className="linux-survey-scale"><span>{question.low}</span><span>{question.high}</span></div>
+    </fieldset>)}
+    {error && <p className="linux-survey-error" role="alert">{error}</p>}
+    <div className="linux-mission-actions">
+      <span className="linux-mission-help">{complete ? 'Ready when you are.' : 'Answer every question to continue.'}</span>
+      <button type="submit" className="primary" disabled={!complete || sending}>{sending ? 'Sending…' : 'Design my lab'}</button>
+    </div>
+  </form>;
 }
 
 interface LabTerminalHandle { run(command: string): Promise<void>; }

@@ -120,6 +120,20 @@ describe('AI learning backend', () => {
     expect(reply.status).toBe(400);
   });
 
+  it('pitches the syllabus at the learner\'s survey ratings and validates them', async () => {
+    const syllabus = { courseId: 'linux', title: 'Linux', summary: 'Lab', days: [
+      { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'pwd', explain: 'why', recap: false }] },
+    ] };
+    const { fetcher, calls } = upstream(syllabus);
+    const survey = [{ question: 'How comfortable are you typing commands in a terminal?', rating: 5 }];
+    expect((await handleLearning({ operation: 'plan', module: 'learn-linux', survey }, config, fetcher)).status).toBe(200);
+    const prompt = JSON.parse(calls[0]!.init.body as string).messages[1].content as string;
+    expect(prompt).toContain('How comfortable are you typing commands in a terminal? 5/5');
+    expect(prompt).not.toContain('Day 1 must start from beginner level');
+    const bad = await handleLearning({ operation: 'plan', module: 'learn-linux', survey: [{ question: 'x', rating: 9 }] }, config, fetcher);
+    expect(bad.status).toBe(400);
+  });
+
   it('keeps continuity context module-scoped and validates its shape', async () => {
     const { fetcher, calls } = upstream({ text: 'Use ls -la.' });
     const reply = await handleLearning({ operation: 'hint', module: 'terminal', task: { id: 't' }, memory: { moduleId: 'terminal', entries: [{ id: '1', kind: 'attempt', summary: 'previous shell attempt', at: 1 }] } }, config, fetcher);

@@ -2,7 +2,7 @@ import { KernelError } from '@tuxos/kernel';
 import type { KernelEvent, ModuleContext } from '@tuxos/sdk';
 import type { Course, Lesson, SolutionStep } from './types';
 import { expand } from './conditions';
-import type { LessonHost, LessonStatus } from './runner';
+import type { LessonHost, LessonStatus, SurveyQuestion } from './runner';
 
 export interface TrainerProfile {
   id: string;
@@ -15,6 +15,8 @@ export interface TrainerProfile {
 export interface AICourseOptions {
   /** When true, never expose the reviewed JSON course as a learner question. */
   requireAI?: boolean;
+  /** Ask these before designing the syllabus, so it fits a beginner and an experienced learner alike. */
+  survey?: SurveyQuestion[];
 }
 
 export interface AITask {
@@ -86,6 +88,10 @@ const MAX_LINUX_ANSWER = 140;
 /** Wrong attempts on one task before the trainer starts revealing its answer; until then it only nudges. */
 export const REVEAL_AFTER_FAILURES = 5;
 
+function surveyPath(courseId: string, home: string): string {
+  return `${expand(STATE_DIR, home)}/${courseId}-survey.json`;
+}
+
 function progressPath(courseId: string, home: string): string {
   // Keep any previously generated multi-command Linux syllabus available as local legacy data.
   const filename = courseId === 'learn-linux' ? 'learn-linux-v2.json' : `${courseId}.json`;
@@ -106,6 +112,8 @@ export class AICourseRunner {
   private unavailableReason = '';
   private bootstrapPromise: Promise<void> | undefined;
   private planning = false;
+  private readonly survey: SurveyQuestion[];
+  private surveyAnswers: Record<string, number> | undefined;
 
   constructor(
     private readonly ctx: ModuleContext,
@@ -115,6 +123,8 @@ export class AICourseRunner {
     options: AICourseOptions = {},
   ) {
     this.requireAI = options.requireAI === true;
+    this.survey = options.survey ?? [];
+    this.surveyAnswers = this.loadSurvey();
     this.state = this.load();
     this.memory = this.loadMemory();
     this.fallbackMode = !!this.state && this.state.generatedByAI !== true && this.state.syllabus.days.length === this.course.lessons.length
@@ -125,7 +135,7 @@ export class AICourseRunner {
   }
 
   bootstrap(): Promise<void> {
-    if (this.state) return Promise.resolve();
+    if (this.state || this.awaitingSurvey()) return Promise.resolve();
     if (this.bootstrapPromise) return this.bootstrapPromise;
     this.aiUnavailable = false;
     this.unavailableReason = '';
@@ -144,6 +154,7 @@ export class AICourseRunner {
         module: this.ctx.id,
         trainer: this.profile,
         fallback: { title: this.course.title, summary: this.course.summary, lessons: this.course.lessons.map((l) => l.title) },
+        ...(this.surveyAnswers ? { survey: this.survey.map((question) => ({ question: question.question, rating: this.surveyAnswers![question.id]! })) } : {}),
       }) as AISyllabus;
       validateSyllabus(result, this.ctx.id);
       this.state = { syllabus: result, generatedByAI: true, completed: [], active: { day: result.days[0]!.day, task: 0 }, lastFeedback: null, lastResult: null };
@@ -170,7 +181,42 @@ export class AICourseRunner {
 
   dispose(): void { this.disposed = true; this.stop(); }
 
+  /** A syllabus is designed only once the learner has told us about their experience. */
+  private awaitingSurvey(): boolean {
+    return !this.state && this.survey.length > 0 && !this.surveyAnswers;
+  }
+
+  /** Saves the learner's star ratings, then designs their syllabus in the background. */
+  submitSurvey(answers: unknown): void {
+    if (this.state) throw new Error('this course already has a syllabus');
+    const ratings = answers as Record<string, unknown> | null;
+    if (!ratings || typeof ratings !== 'object') throw new Error('answers must be an object of star ratings');
+    for (const question of this.survey) {
+      const rating = ratings[question.id];
+      if (!Number.isInteger(rating) || (rating as number) < 1 || (rating as number) > 5) throw new Error(`rate "${question.question}" from 1 to 5 stars`);
+    }
+    this.surveyAnswers = Object.fromEntries(this.survey.map((question) => [question.id, ratings[question.id] as number]));
+    this.host.mkdir(expand(STATE_DIR, this.host.home));
+    this.host.write(surveyPath(this.ctx.id, this.host.home), `${JSON.stringify(this.surveyAnswers, null, 2)}\n`);
+    void this.bootstrap();
+  }
+
+  private loadSurvey(): Record<string, number> | undefined {
+    const saved = this.host.read(surveyPath(this.ctx.id, this.host.home));
+    if (!saved?.content) return undefined;
+    try {
+      const value = JSON.parse(saved.content) as Record<string, unknown>;
+      return this.survey.every((question) => Number.isInteger(value[question.id])) ? value as Record<string, number> : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   status(): LessonStatus {
+    if (this.awaitingSurvey()) return {
+      course: { id: this.ctx.id, title: this.course.title, summary: 'Tell the trainer about your experience so it can design a lab at your level.' },
+      lessons: [], active: null, lastExplain: null, survey: { questions: this.survey },
+    };
     if (this.aiUnavailable || !this.state) return {
       course: { id: this.ctx.id, title: this.course.title, summary: 'Waiting for the AI trainer to design this terminal lab.' },
       lessons: [], active: null,
@@ -487,6 +533,17 @@ function registerAIActions(ctx: ModuleContext, runner: AICourseRunner): void {
       try { runner.start(lesson); } catch (error) {
         if (error instanceof KernelError) throw error;
         throw new KernelError('ENOENT', error instanceof Error ? error.message : String(error));
+      }
+      return runner.status();
+    },
+  });
+  ctx.registerAction({
+    type: `${ctx.id}.survey`, capability: 'lessons:write', mutates: false,
+    description: 'Submit the learner\'s 1-5 star experience ratings, by question id, so the trainer designs a syllabus at their level.',
+    params: { type: 'object', properties: { answers: { type: 'object' } }, required: ['answers'] },
+    run: (_action, payload) => {
+      try { runner.submitSurvey((payload as { answers?: unknown })?.answers); } catch (error) {
+        throw new KernelError('EINVAL', error instanceof Error ? error.message : String(error));
       }
       return runner.status();
     },

@@ -28,6 +28,16 @@ export interface LessonStatus {
   } | null;
   /** The explanation of the step that was just completed, if it has one. */
   lastExplain: string | null;
+  /** Set while the course waits for the learner to rate their experience before it designs their syllabus. */
+  survey?: { questions: SurveyQuestion[] };
+}
+
+/** One 1-to-5 star question about the learner's experience; `low` and `high` describe 1 and 5 stars. */
+export interface SurveyQuestion {
+  id: string;
+  question: string;
+  low: string;
+  high: string;
 }
 
 export type LessonEvent =

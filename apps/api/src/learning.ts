@@ -153,6 +153,11 @@ export function invalidLearning(body: unknown): string | null {
   const { failures, hintsGiven } = body as { failures?: unknown; hintsGiven?: unknown };
   if (failures !== undefined && !(Number.isInteger(failures) && (failures as number) >= 0)) return 'failures must be a non-negative integer.';
   if (hintsGiven !== undefined && !(Number.isInteger(hintsGiven) && (hintsGiven as number) >= 0)) return 'hintsGiven must be a non-negative integer.';
+  const survey = (body as { survey?: unknown }).survey;
+  if (survey !== undefined && (!Array.isArray(survey) || survey.length > 10 || !survey.every((item) => item && typeof item === 'object'
+    && typeof item.question === 'string' && item.question.length <= 300 && Number.isInteger(item.rating) && item.rating >= 1 && item.rating <= 5))) {
+    return 'survey must be a list of questions with 1-5 star ratings.';
+  }
   if (memory !== undefined && (!memory || typeof memory !== 'object' || !Array.isArray((memory as { entries?: unknown }).entries))) return 'memory must contain an entries array.';
   if (memory !== undefined && (memory as { moduleId?: unknown }).moduleId !== value.module) return 'memory must belong to the requested module.';
   return null;
@@ -167,7 +172,7 @@ function trainerPrompt(trainer: TrainerProfile): string {
 function promptFor(operation: LearningOperation, request: Record<string, unknown>): string {
   const memory = JSON.stringify(request.memory ?? { entries: [] });
   if (operation === 'plan') return `Design a seven-day terminal-first syllabus for ${request.module}. `
-    + 'Day 1 must start from beginner level. Every day after day 1 must start with exactly one task that explicitly recaps a skill from an earlier day. '
+    + levelBrief(request.survey) + ' Every day after day 1 must start with exactly one task that explicitly recaps a skill from an earlier day. '
     + 'Mark that first task with "recap": true; mark all other tasks, including every task on day 1, with "recap": false. '
     + 'Also set each day-level "recap" to false on day 1 and true on every later day. Do not omit either recap marker. '
     + 'Every task must be an industry scenario with one clear, measurable terminal objective, a safe expected answer, three progressive hints, and a teaching explanation. For Learn Linux, each task must ask for exactly ONE terminal command line and one observable result; never bundle independent commands, use command chains, or ask for a sequence. A single pipeline is allowed only when pipes are the specific learning objective. A recap checks one previously learned skill with one submission. '
@@ -181,6 +186,20 @@ function promptFor(operation: LearningOperation, request: Record<string, unknown
   if (operation === 'hint') return `Give one progressive hint for this terminal task. The learner has had ${Number(request.hintsGiven ?? 0)} hint(s) and ${failuresOf(request)} wrong attempt(s) on it: make this hint a step more specific than the earlier ones in memory, but never write the full command line; let the learner find it. One or two short sentences. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
   if (request.module === 'learn-linux') return `Give the direct solution for this Linux terminal task in one short line: the exact single command line, then a brief reason. The learner has tried several times; they will type it themselves. Maximum 140 characters. No headings, markdown, bullets, code fences, long explanations, safety section, or follow-up. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
   return `Teach the detailed solution for this terminal task. Include the exact command, explain each important token, expected output/evidence, safety considerations, and a small follow-up check. The learner has tried several times; end by asking them to type it themselves. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
+}
+
+/**
+ * Where day 1 starts. Without a survey the course assumes a beginner; with one, it fits the learner's own star
+ * ratings, so an experienced user is not walked through `pwd` and a newcomer is not thrown into systemd.
+ */
+function levelBrief(survey: unknown): string {
+  if (!Array.isArray(survey) || !survey.length) return 'Day 1 must start from beginner level.';
+  const ratings = (survey as { question: string; rating: number }[]).map((item) => `- ${item.question} ${item.rating}/5`).join('\n');
+  return 'Before starting, the learner rated their experience from 1 star (none) to 5 stars (expert):\n'
+    + `${ratings}\nPitch the whole syllabus at this learner. Day 1 starts where they are: from first principles if they rated `
+    + 'themselves low, or with a quick refresher and then real depth if they rated themselves high. Spend more days on '
+    + 'the areas they rated low, skip what they rated 5 except as brief recaps, and make later days genuinely challenging '
+    + 'for an experienced learner (scripting, troubleshooting, services, security). Say in the summary which level the course is for.';
 }
 
 function validateResult(operation: LearningOperation, value: unknown): string | null {

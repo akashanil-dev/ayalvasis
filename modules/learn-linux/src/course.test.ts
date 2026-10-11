@@ -5,7 +5,7 @@ import { validateCourse, type LessonStatus } from '@tuxos/lessons';
 import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import type { LearningBackend } from '@tuxos/sdk';
 import { describe, expect, it } from 'vitest';
-import { course, learnLinux } from './index';
+import { course, learnLinux, survey } from './index';
 import { terminal } from '../../terminal/src/index';
 import { learnDocker } from '../../learn-docker/src/index';
 
@@ -35,6 +35,13 @@ const aiLearning = (): LearningBackend => ({
   },
 });
 
+/** The learner rates their experience; the syllabus is designed only after that. */
+async function rate(system: SystemClient, stars = 3): Promise<void> {
+  const result = await system.dispatch('learn-linux.survey', { answers: Object.fromEntries(survey.map((question) => [question.id, stars])) });
+  if (!result.ok) throw new Error(result.error.message);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 async function boot(withDocker = false, learning: LearningBackend = aiLearning()): Promise<SystemClient> {
   const system = createLocalSystem({
     storage: memory(),
@@ -46,6 +53,7 @@ async function boot(withDocker = false, learning: LearningBackend = aiLearning()
     ],
   });
   await system.boot('ada');
+  await rate(system);
   return system;
 }
 
@@ -58,6 +66,30 @@ async function status(system: SystemClient): Promise<LessonStatus> {
 describe('Learn Linux course', () => {
   it('is valid', () => {
     expect(validateCourse(course)).toEqual([]);
+  });
+
+  it('asks about the learner\'s experience first and designs the syllabus from their ratings', async () => {
+    const plans: Record<string, unknown>[] = [];
+    const fixture = aiLearning();
+    const system = createLocalSystem({
+      storage: memory(),
+      learning: { request: async (path, body) => {
+        if (path === '/plan') plans.push(body as Record<string, unknown>);
+        return fixture.request(path, body);
+      } },
+      modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
+    });
+    await system.boot('ada');
+    const waiting = await status(system);
+    expect(waiting.survey?.questions).toHaveLength(survey.length);
+    expect(plans).toHaveLength(0);
+    expect(await system.dispatch('learn-linux.survey', { answers: { terminal: 6 } })).toMatchObject({ ok: false, error: { code: 'EINVAL' } });
+    await rate(system, 5);
+    expect(plans).toHaveLength(1);
+    expect(plans[0]!.survey).toEqual(survey.map((question) => ({ question: question.question, rating: 5 })));
+    const ready = await status(system);
+    expect(ready.survey).toBeUndefined();
+    expect(ready.course.title).toBe('AI Linux Lab');
   });
 
   it('lets the learner log in while the AI is still planning the syllabus', async () => {
@@ -110,6 +142,7 @@ describe('Learn Linux course', () => {
       modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
     });
     await system.boot('ada');
+    await rate(system);
     const current = await status(system);
     expect(current.lessons).toHaveLength(0);
     expect(current.lastExplain).toContain('AI trainer unavailable: Every day after day one');
@@ -147,6 +180,7 @@ describe('Learn Linux course', () => {
     });
     const first = make();
     await first.boot('ada');
+    await rate(first);
     await (await first.createTerminal()).run('whoami');
     const progressFile = '/home/ada/.local/share/tuxos/ai-learning/learn-linux-v2.json';
     const saved = await first.dispatch<string>('fs.read', { path: progressFile });
