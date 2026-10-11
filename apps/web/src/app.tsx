@@ -90,7 +90,6 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
         await storage.set(SAVE_KEY, local);
       }
     }
-    if (mode !== 'guest') setAccount(username);
     accounts?.use(mode === 'guest' ? 'local' : 'account');
     const who = `${mode === 'guest' ? 'guest' : 'account'}:${username}`;
     // Unlocking the running session keeps everything as it was; anyone else gets a fresh boot.
@@ -98,6 +97,9 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
     setBooted(who);
     const session = await system.session();
     if (session.desktop !== desktop) await system.dispatch('session.setDesktop', { desktop });
+    // Set together with the screen change: the greeter is keyed on the account, so setting it earlier remounted
+    // the login form as the password-only unlock screen for as long as the system took to boot.
+    if (mode !== 'guest') setAccount(username);
     setScreen('desktop');
   }, [system, accounts, booted, desktop]);
 

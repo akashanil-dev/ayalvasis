@@ -4,6 +4,15 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T08:44:00+05:30 — No password-only screen flash after signing in
+
+- Changed: `apps/web/src/app.tsx` now records the signed-in account in the same update that switches to the
+  desktop, instead of before booting the system. Added a regression test in `apps/web/src/accounts.test.tsx`.
+- Why: The greeter is keyed on the account, so setting it early remounted the sign-in or sign-up form as the
+  password-only "Continue" unlock screen, which showed for as long as the system took to boot.
+- Validation: the new test failed before the fix and passes after it; `npm run check` passed (295 tests).
+- Limitations: checked in tests only, not yet in a browser or on the live site.
+
 ## 2026-10-11T08:31:00+05:30 — Trainers guide learners to the answer instead of giving it
 
 - Changed:

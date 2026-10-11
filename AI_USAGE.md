@@ -8,6 +8,7 @@ Newest first. Human review stays "Pending" until a team member has reviewed the 
 
 | Date and time with timezone | Tool / model, if known | Task | Assistance and affected files | Human review / corrections | Validation and result |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-11T08:44:00+05:30 | AI coding assistant | Sign-in screen flash | Traced the flash to the greeter remounting when the account was set before boot, moved that update next to the screen change in `apps/web/src/app.tsx`, and added a regression test. | Pending | Test failed before and passed after; 295 tests passed. |
 | 2026-10-11T08:31:00+05:30 | AI coding assistant | Guide learners instead of giving answers | Added per-task failure counting, the five-try gate on `/answer`, progressive hints and reveal prompts, and an early-answer guard in `packages/lessons/src/ai.ts` and `apps/api/src/learning.ts`, with tests and docs. | Pending | Typecheck passed; 294 tests passed. Not yet deployed. |
 | 2026-10-11T08:13:00+05:30 | AI coding assistant | Learn Linux syllabus 502 | Reproduced the production 502, traced it to all-or-nothing syllabus validation, and made `apps/api/src/learning.ts` drop bad tasks and set recap markers itself, with tests. | Pending | Typecheck passed; 292 tests passed. Not yet deployed. |
 | 2026-10-11T07:53:16+05:30 | AI coding assistant | Documentation review | Checked README, SUBMISSION.md, CHANGELOG.md and AI_USAGE.md against the code, corrected and completed them, and sorted the logs. | Pending | Claims checked against code; `npm run check` passed. |

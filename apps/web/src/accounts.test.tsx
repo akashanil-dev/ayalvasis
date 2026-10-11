@@ -116,6 +116,24 @@ describe('accounts', () => {
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
   });
 
+  it('keeps the sign-in form, not the password-only unlock screen, while the system boots', async () => {
+    const { system } = setup(fakeService());
+    let finishBoot!: () => void;
+    const boot = system.boot.bind(system);
+    vi.spyOn(system, 'boot').mockImplementation(async (name) => {
+      await new Promise<void>((resolve) => { finishBoot = resolve; });
+      return boot(name);
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'grace' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await waitFor(() => expect(system.boot).toHaveBeenCalled());
+    expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('grace');
+    finishBoot();
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+  });
+
   it('asks a still-signed-in account for its password, and signs out on log out', async () => {
     const service = fakeService('grace');
     setup(service);
