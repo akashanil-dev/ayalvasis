@@ -84,6 +84,7 @@ function fakeSystem(): TestSystem {
     onSaveError: () => () => undefined,
     flush: vi.fn(async () => undefined),
     tutor: () => { throw new Error('the tutor is not used in this test'); },
+    ai: () => null,
     user: vi.fn(async () => 'ada'),
     hostname: vi.fn(async () => 'tuxos'),
     session: vi.fn(async () => structuredClone(state)),

@@ -38,7 +38,7 @@ const MODULES = new Set(Object.keys(PERSONAS));
 export async function handleLearning(body: unknown, config: TutorConfig, fetcher: typeof fetch = fetch): Promise<Reply> {
   const problem = invalidLearning(body);
   if (problem) return { status: 400, body: { error: problem } };
-  if (!config.apiKey) return { status: 503, body: { error: 'AI learning is not configured: set OPENAI_API_KEY on the API server.' } };
+  if (!config.apiKey) return { status: 503, body: { error: 'The AI trainer needs an OpenAI API key. Add yours in Settings → AI.' } };
   const request = body as Record<string, unknown>;
   const moduleId = request.module as string;
   const trainer = PERSONAS[moduleId]!;

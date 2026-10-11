@@ -44,12 +44,12 @@ describe('POST /api/tutor', () => {
   it('explains clearly when no API key is configured, without calling anything', async () => {
     const { fetcher, calls } = upstream(200, {});
     const reply = await handleTutor(question, { ...config, apiKey: undefined }, fetcher);
-    expect(reply).toMatchObject({ status: 503, body: { error: expect.stringContaining('OPENAI_API_KEY') } });
+    expect(reply).toMatchObject({ status: 503, body: { error: expect.stringContaining('Settings → AI') } });
     expect(calls).toHaveLength(0);
   });
 
   it.each([
-    [401, 'rejected the server\'s API key', 502],
+    [401, 'did not accept the API key', 502],
     [429, 'out of credits', 429],
     [404, 'model configured on the server was not found: no such model', 502],
     [500, 'HTTP 500', 502],

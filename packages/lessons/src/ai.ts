@@ -1,7 +1,7 @@
 import { KernelError } from '@tuxos/kernel';
 import type { KernelEvent, ModuleContext } from '@tuxos/sdk';
 import type { Course, Lesson, SolutionStep } from './types';
-import { expand } from './conditions';
+import { expand, satisfied } from './conditions';
 import type { LessonHost, LessonStatus, SurveyQuestion } from './runner';
 
 export interface TrainerProfile {
@@ -13,7 +13,10 @@ export interface TrainerProfile {
 }
 
 export interface AICourseOptions {
-  /** When true, never expose the reviewed JSON course as a learner question. */
+  /**
+   * When true and AI is available, the learner gets an AI-designed lab or a clear error, never the reviewed JSON
+   * course. Without an AI key the reviewed course is used either way, so the module still teaches.
+   */
   requireAI?: boolean;
   /** Ask these before designing the syllabus, so it fits a beginner and an experienced learner alike. */
   survey?: SurveyQuestion[];
@@ -115,6 +118,8 @@ export class AICourseRunner {
   private readonly survey: SurveyQuestion[];
   private surveyAnswers: Record<string, number> | undefined;
   private retaking = false;
+  /** In the built-in course: the learner's events since the current step began, for its checks. */
+  private stepEvents: KernelEvent[] = [];
 
   constructor(
     private readonly ctx: ModuleContext,
@@ -130,14 +135,22 @@ export class AICourseRunner {
     this.memory = this.loadMemory();
     this.fallbackMode = !!this.state && this.state.generatedByAI !== true && this.state.syllabus.days.length === this.course.lessons.length
       && this.state.syllabus.days.every((day, index) => day.tasks[0]?.id === this.course.lessons[index]?.steps[0]?.id);
-    if (this.requireAI && this.fallbackMode) this.state = undefined;
     if (this.state?.active) learningRuntime.activate(this.ctx.id);
     this.stop = ctx.onEvent((event) => this.observe(event));
+  }
+
+  /** AI calls are possible: there is a learning service and it has a key (an unknown answer counts as yes). */
+  private aiReady(): boolean {
+    return !!this.ctx.learning && this.ctx.learning.available?.() !== false;
   }
 
   bootstrap(): Promise<void> {
     if (this.state || this.awaitingSurvey()) return Promise.resolve();
     if (this.bootstrapPromise) return this.bootstrapPromise;
+    if (!this.aiReady()) {
+      this.useBuiltInCourse();
+      return Promise.resolve();
+    }
     this.aiUnavailable = false;
     this.unavailableReason = '';
     this.planning = true;
@@ -163,7 +176,7 @@ export class AICourseRunner {
       learningRuntime.activate(this.ctx.id);
       this.save();
     } catch (error) {
-      if (this.requireAI) {
+      if (this.requireAI && this.aiReady()) {
         this.aiUnavailable = true;
         this.unavailableReason = error instanceof Error ? error.message : String(error);
         this.ctx.log(`AI syllabus unavailable; Linux has no local question fallback: ${this.unavailableReason}`);
@@ -171,20 +184,40 @@ export class AICourseRunner {
       }
       // A learner should still have a working course without network access or an API key.
       this.ctx.log(`AI syllabus unavailable; using reviewed fallback: ${error instanceof Error ? error.message : String(error)}`);
-      this.state = fallbackProgress(this.course, this.profile, this.ctx.id);
-      this.fallbackMode = true;
-      this.state.active = { day: 1, task: 0 };
-      this.remember({ kind: 'plan', summary: 'Used the reviewed local fallback syllabus because AI planning was unavailable.' });
-      learningRuntime.activate(this.ctx.id);
-      this.save();
+      this.useBuiltInCourse();
     }
+  }
+
+  /** The reviewed course from the module's JSON, checked by its own rules instead of the AI. */
+  private useBuiltInCourse(): void {
+    this.aiUnavailable = false;
+    this.unavailableReason = '';
+    this.state = fallbackProgress(this.course, this.profile, this.ctx.id);
+    this.fallbackMode = true;
+    this.state.active = { day: 1, task: 0 };
+    this.setUpLesson(1);
+    this.remember({ kind: 'plan', summary: 'Using the reviewed built-in course because AI is not available.' });
+    learningRuntime.activate(this.ctx.id);
+    this.save();
+  }
+
+  /** A built-in lesson's starting files and folders. */
+  private setUpLesson(day: number): void {
+    const lesson = this.course.lessons[day - 1];
+    for (const dir of lesson?.setup?.dirs ?? []) this.host.mkdir(expand(dir, this.host.home));
+    for (const [path, content] of Object.entries(lesson?.setup?.files ?? {})) this.host.write(expand(path, this.host.home), content);
+    this.stepEvents = [];
   }
 
   dispose(): void { this.disposed = true; this.stop(); }
 
-  /** A syllabus is designed only once the learner has told us about their experience. */
+  /**
+   * A syllabus is designed only once the learner has told us about their experience. That needs AI; and once a
+   * key is added, a course that requires AI offers the survey in place of the built-in lessons.
+   */
   private awaitingSurvey(): boolean {
-    return this.survey.length > 0 && (this.retaking || (!this.state && !this.surveyAnswers));
+    if (!this.survey.length || !this.aiReady()) return false;
+    return this.retaking || (!this.state && !this.surveyAnswers) || (this.requireAI && this.fallbackMode);
   }
 
   /** Shows the survey again; the current lab is kept until new answers replace it, so cancelling loses nothing. */
@@ -197,7 +230,8 @@ export class AICourseRunner {
 
   /** Saves the learner's star ratings, then designs their syllabus in the background. */
   submitSurvey(answers: unknown): void {
-    if (this.state && !this.retaking) throw new Error('this course already has a syllabus');
+    if (!this.aiReady()) throw new Error('an AI lab needs an OpenAI API key: add yours in Settings → AI');
+    if (!this.awaitingSurvey()) throw new Error('this course already has a syllabus');
     const ratings = answers as Record<string, unknown> | null;
     if (!ratings || typeof ratings !== 'object') throw new Error('answers must be an object of star ratings');
     for (const question of this.survey) {
@@ -207,8 +241,8 @@ export class AICourseRunner {
     this.surveyAnswers = Object.fromEntries(this.survey.map((question) => [question.id, ratings[question.id] as number]));
     this.host.mkdir(expand(STATE_DIR, this.host.home));
     this.host.write(surveyPath(this.ctx.id, this.host.home), `${JSON.stringify(this.surveyAnswers, null, 2)}\n`);
-    if (this.retaking) {
-      // New answers mean a new lab at the new level: drop the old one, including its saved file.
+    if (this.state) {
+      // New answers mean a new lab at the new level: drop the old one (or the built-in course), including its file.
       this.retaking = false;
       this.state = undefined;
       this.fallbackMode = false;
@@ -229,6 +263,8 @@ export class AICourseRunner {
   }
 
   status(): LessonStatus {
+    // The key can be removed at any time (Settings): fall back to the built-in course rather than an error.
+    if (!this.state && !this.planning && !this.aiReady() && !this.awaitingSurvey()) this.useBuiltInCourse();
     if (this.awaitingSurvey()) return {
       course: { id: this.ctx.id, title: this.course.title, summary: 'Tell the trainer about your experience so it can design a lab at your level.' },
       lessons: [], active: null, lastExplain: null, survey: { questions: this.survey, ...(this.retaking ? { retake: true } : {}) },
@@ -268,6 +304,7 @@ export class AICourseRunner {
         },
       } : null,
       lastExplain: state.lastFeedback,
+      ...(this.fallbackMode ? { builtIn: { aiOff: !this.aiReady() } } : {}),
     };
   }
 
@@ -283,11 +320,7 @@ export class AICourseRunner {
       }
     }
     if (!selected) throw new Error(`no such lesson: ${dayId}`);
-    if (this.fallbackMode) {
-      const lesson = this.course.lessons[day - 1];
-      for (const dir of lesson?.setup?.dirs ?? []) this.host.mkdir(expand(dir, this.host.home));
-      for (const [path, content] of Object.entries(lesson?.setup?.files ?? {})) this.host.write(expand(path, this.host.home), content);
-    }
+    if (this.fallbackMode) this.setUpLesson(day);
     const task = selected.tasks.findIndex((item) => !state.completed.includes(item.id));
     state.active = { day, task: Math.max(task, 0) };
     state.lastFeedback = null;
@@ -346,7 +379,7 @@ export class AICourseRunner {
     const localHint = task.hints[Math.min(this.hintsGiven(task.id), task.hints.length - 1)] ?? 'Re-read the lesson above and try one small command.';
     const localAnswer = this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
     let text: string;
-    if (!this.ctx.learning) text = kind === 'hint' ? localHint : localAnswer;
+    if (!this.ctx.learning || !this.aiReady()) text = kind === 'hint' ? localHint : localAnswer;
     else {
       try {
         const result = await this.ctx.learning.request(`/${kind}`, {
@@ -378,24 +411,32 @@ export class AICourseRunner {
     this.pendingAssessment = this.evaluate(task, run).finally(() => { this.evaluating = false; });
   }
 
+  /** Built-in lessons are checked by their own rules (what ran, which files exist...), like the fixed courses. */
   private evaluateFallback(task: AITask, event: KernelEvent, run: ShellRun): void {
-    const expected = task.answer.trim();
-    const correct = event.action.type === 'session.open'
-      ? expected.startsWith('Open ')
-      : run.line.trim() === expected;
     const state = this.requireState();
+    const step = this.course.lessons[state.active!.day - 1]?.steps[state.active!.task];
+    this.stepEvents.push(event);
+    const correct = step
+      ? satisfied(step.check, { events: this.stepEvents, home: this.host.home, read: (path) => this.host.read(path) })
+      : run.line.trim() === task.answer.trim();
+    // Opening an app that isn't the task is not an attempt; only commands count as misses.
+    if (!correct && event.action.type !== 'shell.ran') return;
     state.lastResult = correct ? 'correct' : 'wrong';
-    state.lastFeedback = correct ? task.explain : 'Not yet. Read the task and compare your command with the expected evidence.';
+    state.lastFeedback = correct ? task.explain || 'Correct!' : 'Not quite. Read the task again, or type /hint for a nudge.';
     if (!correct) this.recordFailure(state, task.id);
     this.remember({ kind: 'attempt', taskId: task.id, summary: `${run.line || 'session opened'} — ${state.lastFeedback}`, correct });
-    if (correct) this.advanceTask(state, task);
+    if (correct) {
+      this.stepEvents = [];
+      this.advanceTask(state, task);
+    }
     this.save();
+    if (event.action.type === 'shell.ran') this.pendingAssessment = Promise.resolve({ correct, text: state.lastFeedback });
   }
 
   private async evaluate(task: AITask, run: ShellRun): Promise<TrainerFeedback> {
     let result: { correct?: boolean; feedback?: string; next?: string } = {};
     try {
-      if (!this.ctx.learning) throw new Error('AI learning service is not configured');
+      if (!this.ctx.learning || !this.aiReady()) throw new Error('AI learning service is not configured');
       result = await this.ctx.learning.request('/evaluate', {
         module: this.ctx.id, trainer: this.profile, task, command: run, failures: this.failuresOn(task.id),
         ...(this.ctx.id === 'learn-linux' ? {} : { memory: this.memory }),
@@ -424,6 +465,7 @@ export class AICourseRunner {
     const nextIndex = state.active.task + 1;
     if (nextIndex < day.tasks.length) state.active.task = nextIndex;
     else if (this.fallbackMode) {
+      // Built-in lessons are picked by the learner, as in the fixed courses.
       state.active = null;
     } else {
       const nextDay = state.syllabus.days.find((candidate) => candidate.day > state.active!.day && candidate.tasks.some((item) => !state.completed.includes(item.id)));

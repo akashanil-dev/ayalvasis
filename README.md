@@ -21,7 +21,8 @@ Docker, games) is a module that shows up as a desktop icon.
   trainer then designs a seven-day lab of real-world tasks at that level. Each task is explained first, then
   practised in the terminal, with one command per task. The trainer only nudges: hints and corrections get
   closer step by step, and the full answer is shown only after five wrong attempts, for the learner to type
-  themselves. **Retake survey** designs a new lab.
+  themselves. **Retake survey** designs a new lab. Without an AI key, Learn Linux teaches its six built-in
+  lessons instead, each command checked by the lesson's own rules.
 - **Learn Docker.** A simulated `docker` CLI (`run`, `ps`, `images`, `logs`, `exec`, published ports with
   `curl`...) with an AI-designed lab, or five built-in lessons when no AI is available.
 - **chmod Arcade.** A 60-second game for reading and writing file permissions.
@@ -31,6 +32,9 @@ Docker, games) is a module that shows up as a desktop icon.
   before he can act as root. Every action shows in the chat, and **Stop** (or Esc) takes control back.
 - **Accounts.** Sign up to save your system and continue on any device, or try it without an account and keep
   everything in the browser.
+- **Bring your own AI key.** Vasi and the AI trainers use the learner's own OpenAI API key, added in
+  **Settings → AI**. A signed-in learner's key is saved encrypted with their account; a guest's stays in their
+  browser. Without a key, Vasi explains how to add one and everything else works as normal.
 
 ## Architecture
 
@@ -62,14 +66,19 @@ modules/      terminal, files, editor, settings, learn-linux, learn-docker, chmo
 - **System client** (`packages/system`): the one API the UI uses for boot, saving, sessions, terminals and
   modules.
 - **AI tutor** (`packages/tutor`, `apps/web/src/tutor`, `apps/api`): the browser keeps the conversation and
-  runs the agent's tools (look at the screen, click, type, files, windows, module actions). The API holds the
-  OpenAI key, adds Vasi's instructions and makes one model call per request, so it is stateless. Everything
+  runs the agent's tools (look at the screen, click, type, files, windows, module actions). The API adds Vasi's
+  instructions and makes one model call per request with the learner's key, so it is stateless. Everything
   Vasi does is recorded as the `tutor` actor, so lessons count only the learner's own work.
 - **API** (`apps/api`): a dependency-free Node server. `/api/tutor` serves the tutor, `/api/learning/*`
   (`plan`, `evaluate`, `hint`, `answer`) the trainers, and `/api/auth/*` and `/api/save` accounts. Model
   responses are validated before use. Passwords are stored as salted scrypt hashes and session tokens are
   hashed, both in SQLite (`node:sqlite`). Saves are versioned so an older tab can't overwrite newer progress,
   and requests are rate limited.
+- **API keys** (`apps/api/src/ai-keys.ts`, `apps/web/src/ai-key.ts`): `/api/ai/key` checks a key with OpenAI
+  (listing models, which costs nothing) and saves it sealed with AES-256-GCM. The encryption secret is kept
+  outside the database (`TUXOS_KEY_SECRET`, or a `key-secret` file the server creates beside it). A guest's key
+  goes with each AI request in an `x-openai-key` header and is never stored on the server. Each AI call uses
+  the guest's key, else the account's saved key, else the server's `OPENAI_API_KEY` if one is set.
 
 ## Run locally
 
@@ -77,16 +86,17 @@ Requires Node.js 22.18 or newer. CI and production use Node 24.
 
 ```sh
 npm install
-cp .env.example .env    # then set OPENAI_API_KEY
+cp .env.example .env    # optional settings
 npm run dev             # API on :8787, desktop at http://localhost:5173
 ```
 
-The desktop, terminal, files and fixed lessons work without an API key. Vasi and the AI trainers need it, and
-say so when it is missing. If the trainer doesn't load, check `http://localhost:8787/api/health`.
+To try the AI features, add your OpenAI API key in **Settings → AI** inside TuxOS. Everything else works
+without one. If the trainer doesn't load, check `http://localhost:8787/api/health`.
 
 | Variable | Purpose |
 | --- | --- |
-| `OPENAI_API_KEY` | Required for the tutor and trainers. Read only by the API server, never sent to the browser. |
+| `OPENAI_API_KEY` | Optional. Provides AI for every learner at the server's expense; learners' own keys are used first. |
+| `TUXOS_KEY_SECRET` | Optional. 64 hex characters (`openssl rand -hex 32`) to encrypt saved keys; otherwise `key-secret` is created beside the database. |
 | `OPENAI_MODEL` | Default model (`gpt-4.1-mini`). |
 | `OPENAI_MODEL_LINUX` | Learn Linux trainer (default `gpt-5.6-luna`). |
 | `OPENAI_MODEL_DOCKER`, `OPENAI_MODEL_TERMINAL`, `OPENAI_MODEL_CHMOD_ARCADE` | Other trainers (default `OPENAI_MODEL`). |
@@ -118,10 +128,12 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
   `/run/tuxos/api.sock` ([`deploy/Caddyfile`](deploy/Caddyfile)). The API runs as the unprivileged `tuxos` user
   ([`deploy/tuxos-api.service`](deploy/tuxos-api.service)), with secrets in `/etc/tuxos/tuxos.env` and the
   database at `/var/lib/tuxos/tuxos.db`. `TRUST_PROXY=1` makes rate limits use the visitor's IP.
-- **One-time setup:** copy `deploy/` to the server and run `sudo bash deploy/setup-server.sh`. Put the OpenAI
-  key in `/etc/tuxos/tuxos.env`, add the Caddy site block and mounts, then add the GitHub secrets
+- **One-time setup:** copy `deploy/` to the server and run `sudo bash deploy/setup-server.sh`. Leave
+  `OPENAI_API_KEY` empty in `/etc/tuxos/tuxos.env` so learners use their own keys, add the Caddy site block and mounts, then add the GitHub secrets
   `DEPLOY_HOST`, `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS` to a `production` environment.
-- **Backup:** `sudo sqlite3 /var/lib/tuxos/tuxos.db ".backup /root/tuxos-backup.db"`.
+- **Backup:** `sudo sqlite3 /var/lib/tuxos/tuxos.db ".backup /root/tuxos-backup.db"`, and keep
+  `/var/lib/tuxos/key-secret` with it, separately: without it, saved API keys can't be read and learners must
+  enter them again.
 - **Manual rollback:** `ln -sfn /opt/tuxos/releases/<commit> /opt/tuxos/current`, then
   `sudo systemctl restart tuxos-api`. Logs: `journalctl -u tuxos-api`.
 
@@ -135,6 +147,8 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
 - Vasi's agent flow was tested with a scripted model and in a real browser. The quality of his answers against
   the real model has not been reviewed systematically, and he has no memory between conversations.
 - Accounts have no password reset.
+- The key flow was tested against a stand-in for OpenAI, not with a real key. A learner's key is checked when
+  it is saved; if it later runs out of credits, the AI calls report that.
 - Each state-changing action copies the whole state, which is fine at learner-sized filesystems.
 
 ## Credits

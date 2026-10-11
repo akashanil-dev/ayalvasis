@@ -4,6 +4,44 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
+## 2026-10-11T22:50:00+05:30 — Learners bring their own OpenAI API key; AI turns off cleanly without one
+
+- Changed:
+  - `apps/api/src/ai-keys.ts` (new): `/api/ai/key` (GET, PUT, DELETE) and `/api/ai/test`. A key is checked with
+    OpenAI by listing models, then saved per account sealed with AES-256-GCM. The secret comes from
+    `TUXOS_KEY_SECRET` or a `key-secret` file created beside the database (mode 600).
+    `apps/api/src/accounts.ts` has an `ai_keys` table.
+  - `apps/api/src/server.ts`: every tutor and trainer call uses the guest's `x-openai-key` header, else the
+    account's saved key, else the server's `OPENAI_API_KEY` (now optional). `/api/health` reports `serverKey`.
+    The missing-key and rejected-key messages point to Settings → AI.
+  - `apps/web/src/ai-key.ts` (new) and `main.tsx`: the browser's key store. It saves a signed-in learner's key to
+    the account, and keeps a guest's in this browser. `packages/system` exposes it as `system.ai()` and sends
+    the guest header with learning requests; the tutor transport does the same.
+  - `modules/settings`: an **AI** section to add, replace or remove the key, with clear errors.
+  - `apps/web/src/tutor/TutorPanel.tsx`: without a key, Vasi explains how to add one, with an Open Settings
+    button. The chat input and the "stuck" nudge are off, and nothing is sent.
+  - `packages/lessons/src/ai.ts`: without AI, an AI course uses its reviewed built-in lessons, now checked by
+    each step's own rules (`ran`, `cwd`, `exists`...) with a ✓/✗ verdict in the terminal. Learn Linux included,
+    which previously showed an error. Once a key is added, Learn Linux offers the survey and an AI lab. If the
+    key is removed before a lab exists, the course falls back to the built-in lessons.
+    `packages/course-view` adds a lesson picker for the built-in course and a "Built-in course · Add AI key"
+    link.
+  - `.env.example`, `deploy/setup-server.sh`, README.
+- Why: running AI on the project's own credits doesn't scale; learners can use their own key, and the rest of
+  TuxOS stays useful without one.
+- Validation: `npm run check` passed (313 tests), with new tests for sealing and opening keys, the secret file,
+  the key routes, the browser key store (guest and account), Vasi without a key, and Learn Linux built-in to
+  AI and back. A real browser run with no server key confirmed:
+  - the built-in lesson accepts `whoami`,
+  - Vasi shows the add-a-key message,
+  - Settings rejects a fake key with OpenAI's real reply.
+
+  Against a stand-in for OpenAI, the API saved an account key encrypted (no plaintext in the database), used it
+  for an account's trainer call, used the header key for a guest, refused calls once the key was deleted, and
+  never logged a key.
+- Limitations: not tested with a real OpenAI key. Production still has the old server `OPENAI_API_KEY` until it
+  is removed from `/etc/tuxos/tuxos.env`. Losing `key-secret` means learners re-enter their keys.
+
 ## 2026-10-11T20:31:00+05:30 — Turn the hackathon repository into a regular project repository
 
 - Removed the event template files: `AGENTS.md`, `RULES.md`, `AI_USAGE.md`, `SUBMISSION.md` and the pull

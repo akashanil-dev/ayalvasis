@@ -41,6 +41,27 @@ export interface TerminalOptions {
   learningModule?: string;
 }
 
+/** Whether AI features can run: the learner's own OpenAI key, or one the server provides for everyone. */
+export interface AiStatus {
+  enabled: boolean;
+  /** Where the key comes from: saved in the account, kept in this browser (guests), or the server's. */
+  source: 'account' | 'browser' | 'server' | null;
+  /** The start and end of the learner's own key, to recognise it. */
+  hint?: string;
+  /** Guests can't save a key in an account; it stays in their browser. */
+  signedIn: boolean;
+}
+
+/** The learner's own OpenAI API key. Saving checks the key first and rejects with the reason if it fails. */
+export interface AiKeyStore {
+  status(): AiStatus;
+  onChange(listener: (status: AiStatus) => void): () => void;
+  save(key: string): Promise<AiStatus>;
+  remove(): Promise<AiStatus>;
+  /** Headers that carry a guest's key with an AI request (empty when the server has the key). */
+  headers(): Record<string, string>;
+}
+
 export interface SystemClient {
   boot(username: string): Promise<void>;
   hasSave(): Promise<string | null>;
@@ -60,6 +81,8 @@ export interface SystemClient {
   createTerminal(options?: TerminalOptions): Promise<TerminalSession>;
   /** The AI tutor's own, permission-limited access to the system. */
   tutor(): TutorAccess;
+  /** The learner's AI key, when this system has a key store (the browser app does; tests may not). */
+  ai(): AiKeyStore | null;
   reset(): Promise<void>;
 }
 
@@ -104,6 +127,7 @@ export function createLocalSystem(options: {
   storage: KeyValueStorage;
   modules: ModuleEntry[];
   learning?: LearningBackend;
+  ai?: AiKeyStore;
 }): SystemClient {
   let running: Running | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -140,7 +164,7 @@ export function createLocalSystem(options: {
     const host = createModuleHost({
       kernel,
       shell: createShell(kernel, { registry }),
-      learning: options.learning ?? browserLearningBackend(),
+      learning: options.learning ?? browserLearningBackend(options.ai),
     });
     for (const entry of options.modules) host.add(entry.manifest, entry.load);
     const unsubscribe = kernel.subscribe((event) => {
@@ -234,6 +258,7 @@ export function createLocalSystem(options: {
         recentEvents: (limit) => kernel.events().slice(-limit),
       };
     },
+    ai: () => options.ai ?? null,
     async reset() {
       if (timer) clearTimeout(timer);
       timer = undefined;
@@ -248,15 +273,16 @@ export function createLocalSystem(options: {
 
 const LEARNING_TIMEOUT_MS = 100_000;
 
-/** The browser sends learning requests to the local API; the secret stays on that server. */
-function browserLearningBackend(): LearningBackend {
+/** The browser sends learning requests to the API, which makes the AI call with the learner's key. */
+function browserLearningBackend(ai: AiKeyStore | undefined): LearningBackend {
   return {
+    available: () => ai?.status().enabled ?? true,
     async request(path, body) {
       let response: Response;
       try {
         response = await fetch(`/api/learning${path}`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...ai?.headers() },
           body: JSON.stringify(body),
           // The server gives the AI 90 seconds; never wait forever if the connection hangs.
           signal: AbortSignal.timeout(LEARNING_TIMEOUT_MS),

@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
+import { createLocalSystem, type AiKeyStore, type AiStatus, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import type { ChatMessage, CompletionRequest, Transport } from '@tuxos/tutor';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Desktop } from '../screens/Desktop';
@@ -52,6 +52,23 @@ afterEach(() => {
 });
 
 describe('tutor panel', () => {
+  it('without an AI key, explains how to add one and sends nothing', async () => {
+    const off: AiStatus = { enabled: false, source: null, signedIn: false };
+    const ai: AiKeyStore = {
+      status: () => off, onChange: () => () => undefined, headers: () => ({}),
+      save: async () => off, remove: async () => off,
+    };
+    const system = createLocalSystem({ storage: memory(), ai, modules: [] });
+    await system.boot('ada');
+    const transport = scripted({ role: 'assistant', content: 'should not be asked' });
+    render(<Desktop system={system} tutor={transport} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
+    expect(screen.getByText(/I need an OpenAI API key/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open Settings' })).toBeTruthy();
+    expect((screen.getByLabelText('Ask Vasi') as HTMLInputElement).disabled).toBe(true);
+    expect(transport.requests).toHaveLength(0);
+  });
+
   it('answers a question, showing what the tutor did on the way', async () => {
     const system = await boot();
     const transport = scripted(

@@ -1,6 +1,6 @@
 import { DESKTOPS, WALLPAPERS, desktopById } from '@tuxos/appearance';
-import type { AppViewProps } from '@tuxos/system';
-import { useEffect, useState } from 'react';
+import type { AiKeyStore, AiStatus, AppViewProps } from '@tuxos/system';
+import { useEffect, useState, type FormEvent } from 'react';
 import './settings.css';
 
 /** Settings: pick any desktop environment or wallpaper at any time, and see what this system is. */
@@ -53,6 +53,8 @@ export default function SettingsView({ system }: AppViewProps) {
       >{wallpaper.name}</button>)}
     </div>
 
+    {system.ai() && <AiKeySection store={system.ai()!} />}
+
     <h3>About this system</h3>
     <div className="about-system">
       <dl className="about-specs">
@@ -65,4 +67,68 @@ export default function SettingsView({ system }: AppViewProps) {
       <p className="about-blurb">TuxOS runs entirely in your browser. Nothing on your real computer is changed.</p>
     </div>
   </div>;
+}
+
+/** The learner's own OpenAI API key, which turns on Vasi and the AI trainers. */
+function AiKeySection({ store }: { store: AiKeyStore }) {
+  const [status, setStatus] = useState<AiStatus>(() => store.status());
+  const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
+  useEffect(() => store.onChange(setStatus), [store]);
+
+  const run = async (work: () => Promise<AiStatus>, done: string) => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      setStatus(await work());
+      setDraft('');
+      setMessage({ error: false, text: done });
+    } catch (error) {
+      setMessage({ error: true, text: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const save = (event: FormEvent) => {
+    event.preventDefault();
+    if (draft.trim()) void run(() => store.save(draft), 'Key checked and saved. Vasi and the AI trainers are on.');
+  };
+  const own = status.source === 'account' || status.source === 'browser';
+
+  return <>
+    <h3>AI</h3>
+    <p className="settings-intro">
+      Vasi and the AI trainers run on OpenAI, using your own API key, so you only pay for what you use. Without a
+      key everything else still works, and Learn Linux uses its built-in lessons.
+    </p>
+    <div className="ai-key">
+      <p className={`ai-key-state ${status.enabled ? 'on' : 'off'}`} role="status">
+        {own ? <>AI is on with your key <code>{status.hint}</code>{status.source === 'browser' ? ', kept in this browser.' : ', saved with your account.'}</>
+          : status.source === 'server' ? 'AI is on: this server provides it. You can still use your own key.'
+            : 'AI is off: add an OpenAI API key to turn it on.'}
+      </p>
+      <form onSubmit={save}>
+        <input
+          type="password"
+          aria-label="OpenAI API key"
+          placeholder={own ? 'Paste a new key to replace it' : 'sk-…'}
+          autoComplete="off"
+          spellCheck={false}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          disabled={busy}
+        />
+        <button type="submit" disabled={busy || !draft.trim()}>{busy ? 'Checking…' : own ? 'Replace key' : 'Save key'}</button>
+        {own && <button type="button" disabled={busy} onClick={() => void run(() => store.remove(), 'Key removed.')}>Remove key</button>}
+      </form>
+      {message && <p className={`ai-key-message ${message.error ? 'error' : ''}`} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
+      <p className="ai-key-help">
+        Create a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">platform.openai.com/api-keys</a>.
+        {status.signedIn
+          ? ' It is stored encrypted with your account and only used for your own requests; TuxOS never shows it again.'
+          : ' As a guest, it is kept only in this browser and sent with your own AI requests. Sign in to keep it with an account.'}
+      </p>
+    </div>
+  </>;
 }

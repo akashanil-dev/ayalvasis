@@ -30,6 +30,8 @@ export interface LessonStatus {
   lastExplain: string | null;
   /** Set while the course waits for the learner to rate their experience before it designs their syllabus. */
   survey?: { questions: SurveyQuestion[]; /** Retaking it: the current lab stays until new answers are sent. */ retake?: boolean };
+  /** Set on an AI course that is running its reviewed built-in lessons; `aiOff` when that's for want of a key. */
+  builtIn?: { aiOff: boolean };
 }
 
 /** One 1-to-5 star question about the learner's experience; `low` and `high` describe 1 and 5 stars. */

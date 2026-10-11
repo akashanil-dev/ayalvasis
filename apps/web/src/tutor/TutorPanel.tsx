@@ -1,4 +1,4 @@
-import type { SystemClient } from '@tuxos/system';
+import type { AiStatus, SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
 import { PointerOverlay } from './PointerOverlay';
@@ -22,6 +22,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   const log = useRef<HTMLOListElement>(null);
   const [user, setUser] = useState('');
   const [intro, setIntro] = useState(false);
+  const aiOn = useAiEnabled(system);
 
   // The first time a learner meets Vasi, he introduces himself once the desktop has settled.
   useEffect(() => {
@@ -82,7 +83,12 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
         <button aria-label="Close tutor" onClick={() => setOpen(false)}>×</button>
       </header>
       <ol className="tutor-log" ref={log}>
-        {!tutor.entries.length && <li className="tutor-hello">
+        {!aiOn && <li className="tutor-hello tutor-no-key">
+          Hi! I&apos;m Vasi. To chat and use the computer with you, I need an OpenAI API key: add yours in Settings
+          (it&apos;s used only for your own questions). Everything else in TuxOS works without one.
+          <button type="button" onClick={() => { setOpen(false); void system.openApp('settings'); }}>Open Settings</button>
+        </li>}
+        {aiOn && !tutor.entries.length && <li className="tutor-hello">
           Hi! I&apos;m Vasi, your Linux teacher. Ask me anything, or ask me to show you how something works.
           I can use this computer too, but you&apos;ll do the learning.
         </li>}
@@ -91,20 +97,21 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
       </ol>
       <form onSubmit={(event) => {
         event.preventDefault();
-        if (!draft.trim() || tutor.busy) return;
+        if (!aiOn || !draft.trim() || tutor.busy) return;
         ask(draft);
         setDraft('');
       }}>
         <input
           aria-label="Ask Vasi"
-          placeholder={tutor.busy ? 'Vasi is answering…' : 'Ask about a command, an error, a lesson…'}
+          placeholder={!aiOn ? 'Add an API key in Settings to ask Vasi' : tutor.busy ? 'Vasi is answering…' : 'Ask about a command, an error, a lesson…'}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          disabled={!aiOn}
         />
-        <button type="submit" disabled={tutor.busy || !draft.trim()}>Ask</button>
+        <button type="submit" disabled={!aiOn || tutor.busy || !draft.trim()}>Ask</button>
       </form>
     </section>}
-    {nudge && !open && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
+    {nudge && !open && aiOn && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
       {nudge.text} <span>Ask Vasi</span>
     </button>}
     <div
@@ -127,6 +134,17 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
       </button>
     </div>
   </>;
+}
+
+/** Whether Vasi can talk: AI needs a key. Systems without a key store (tests, other hosts) assume it can. */
+function useAiEnabled(system: SystemClient): boolean {
+  const store = system.ai();
+  const [status, setStatus] = useState<AiStatus | null>(() => store?.status() ?? null);
+  useEffect(() => {
+    setStatus(store?.status() ?? null);
+    return store?.onChange(setStatus);
+  }, [store]);
+  return status?.enabled ?? true;
 }
 
 /** Vasi's own pointer: it glides to what he is about to click, and ripples when he clicks. */

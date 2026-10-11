@@ -24,8 +24,8 @@ type Screen = 'grub' | 'boot' | 'greeter' | 'desktop' | 'off';
 /** Accounts, when the API offers them: the client, and where the system's saves should go. */
 export interface AccountsWiring {
   client: AccountsClient;
-  /** Point the system's storage at this browser (guests) or at the signed-in account. */
-  use(target: 'local' | 'account'): void;
+  /** Point the system's storage (and AI key) at this browser (guests) or at the signed-in account. */
+  use(target: 'local' | 'account'): void | Promise<void>;
   /** This browser's guest save, read directly, to move it into a new account. */
   localSave(): Promise<string | null>;
 }
@@ -90,7 +90,7 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
         await storage.set(SAVE_KEY, local);
       }
     }
-    accounts?.use(mode === 'guest' ? 'local' : 'account');
+    await accounts?.use(mode === 'guest' ? 'local' : 'account');
     const who = `${mode === 'guest' ? 'guest' : 'account'}:${username}`;
     // Unlocking the running session keeps everything as it was; anyone else gets a fresh boot.
     if (booted !== who) await system.boot(username);

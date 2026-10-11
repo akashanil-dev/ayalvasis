@@ -457,3 +457,20 @@
 .linux-survey header .linux-survey-warning { margin-top: 10px; padding: 8px 12px; border-left: 3px solid var(--warn, #d29922); border-radius: var(--radius-small); background: color-mix(in srgb, var(--warn, #d29922) 12%, transparent); color: var(--window-fg); }
 .linux-mission-retake { padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--font-ui); cursor: pointer; }
 .linux-mission-retake:hover { text-decoration: underline; }
+
+/* The built-in Linux lessons, used without an AI key. */
+.linux-builtin { display: flex; height: 100%; flex-direction: column; gap: 14px; overflow-y: auto; padding: clamp(16px, 4vw, 32px); background: var(--window-bg); color: var(--window-fg); font-family: var(--font-ui); }
+.linux-builtin > * { width: 100%; max-width: 640px; margin-inline: auto; }
+.linux-builtin h3 { margin: 0 0 6px; font-size: 20px; }
+.linux-builtin header p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.linux-builtin .linux-builtin-ai { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; padding: 8px 12px; border-left: 3px solid var(--accent); border-radius: var(--radius-small); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--window-fg); }
+.linux-builtin ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.linux-builtin li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--window-sidebar); }
+.linux-builtin li > span { flex: 1; min-width: 0; }
+.linux-builtin li small { color: var(--muted); }
+.linux-builtin li.done > span { color: var(--muted); }
+.linux-builtin li.next { border-color: var(--accent); }
+.linux-builtin button { padding: 5px 12px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--surface-2); color: var(--window-fg); font: 600 12px var(--font-ui); cursor: pointer; }
+.linux-builtin button:hover { border-color: var(--accent); }
+.linux-builtin button.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-fg, #fff); }
+.linux-builtin-done { margin: 0; color: var(--ok, #3fb950); font-size: 13px; }

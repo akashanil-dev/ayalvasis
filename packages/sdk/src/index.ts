@@ -112,6 +112,8 @@ export interface ModuleContext {
 
 export interface LearningBackend {
   request(path: string, body: unknown): Promise<unknown>;
+  /** False when no AI key is set up, so courses use their built-in lessons; unknown (undefined) counts as available. */
+  available?(): boolean;
 }
 
 export interface ModuleDefinition {

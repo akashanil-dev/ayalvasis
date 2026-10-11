@@ -7,6 +7,7 @@
 //   POST /api/auth/verify   {password}            -> checks the signed-in account's password (Vasi's sudo)
 //   GET  /api/save                                -> {data, version}
 //   PUT  /api/save          {data, version}       -> saves if version matches, else 409 (changed elsewhere)
+// It also keeps each account's own OpenAI API key, sealed by ai-keys.ts (the routes are in server.ts).
 // Passwords are kept only as salted scrypt hashes; sessions are random tokens in an HttpOnly cookie, and
 // only a hash of each token is stored.
 
@@ -83,6 +84,12 @@ export class Accounts {
         user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         data TEXT NOT NULL,
         version INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS ai_keys (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        sealed TEXT NOT NULL,
+        hint TEXT NOT NULL,
         updated_at INTEGER NOT NULL
       );
     `);
@@ -173,6 +180,28 @@ export class Accounts {
       ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, version = excluded.version, updated_at = excluded.updated_at`)
       .run(userId, data, next, this.now());
     return { status: 200, body: { version: next } };
+  }
+
+  /** The signed-in account, if the cookie belongs to a live session. */
+  user(cookieHeader: string | undefined): { id: number; username: string } | undefined {
+    const user = this.sessionUser(cookieHeader);
+    return user && { id: user.id, username: user.username };
+  }
+
+  /** The account's sealed OpenAI key and its hint, if it saved one. */
+  aiKey(userId: number): { sealed: string; hint: string } | undefined {
+    return this.db.prepare('SELECT sealed, hint FROM ai_keys WHERE user_id = ?').get(userId) as
+      { sealed: string; hint: string } | undefined;
+  }
+
+  setAiKey(userId: number, sealed: string, hint: string): void {
+    this.db.prepare(`INSERT INTO ai_keys (user_id, sealed, hint, updated_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET sealed = excluded.sealed, hint = excluded.hint, updated_at = excluded.updated_at`)
+      .run(userId, sealed, hint, this.now());
+  }
+
+  removeAiKey(userId: number): void {
+    this.db.prepare('DELETE FROM ai_keys WHERE user_id = ?').run(userId);
   }
 
   private signIn(userId: number, username: string, status: number): AccountReply {

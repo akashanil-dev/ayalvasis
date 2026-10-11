@@ -218,6 +218,71 @@ describe('Learn Linux course', () => {
     expect((await status(second)).active?.step.id).toBe('pwd');
   });
 
+  it('teaches the built-in course with rule-based checks when there is no AI key, then offers the AI lab once a key is added', async () => {
+    let hasKey = false;
+    const plans: unknown[] = [];
+    const fixture = aiLearning();
+    const system = createLocalSystem({
+      storage: memory(),
+      learning: {
+        available: () => hasKey,
+        request: async (path, body) => {
+          if (!hasKey) throw new Error('no key: nothing may reach the API');
+          if (path === '/plan') plans.push(body);
+          return fixture.request(path, body);
+        },
+      },
+      modules: [
+        { manifest: learnLinux.manifest, load: async () => learnLinux },
+        { manifest: terminal.manifest, load: async () => terminal },
+      ],
+    });
+    await system.boot('ada');
+    const builtIn = await status(system);
+    expect(builtIn.survey).toBeUndefined();
+    expect(builtIn.builtIn).toEqual({ aiOff: true });
+    expect(builtIn.course.title).toBe(course.title);
+    expect(builtIn.active?.step.id).toBe('whoami');
+
+    const shell = await system.createTerminal({ learningModule: 'learn-linux' });
+    expect((await shell.run('ls')).feedback).toMatchObject({ correct: false });
+    expect((await shell.run('/hint')).stdout).toContain(course.lessons[0]!.steps[0]!.hints[0]!);
+    // Checked by the lesson's rule, not by matching text: any successful whoami passes.
+    expect((await shell.run('whoami   ')).feedback).toMatchObject({ correct: true });
+    expect((await shell.run('pwd')).feedback).toMatchObject({ correct: true });
+    expect((await shell.run('ls')).feedback).toMatchObject({ correct: true });
+    // The learner picks the next lesson, which starts with its own files in place.
+    expect((await status(system)).active).toBeNull();
+    await system.dispatch('learn-linux.start', { lesson: 'moving-around' });
+    expect((await status(system)).active?.step.id).toBe('cd-garden');
+    expect((await system.dispatch('fs.stat', { path: '/home/ada/garden/shed' })).ok).toBe(true);
+    expect(plans).toHaveLength(0);
+
+    hasKey = true;
+    expect((await status(system)).survey?.questions).toHaveLength(survey.length);
+    await rate(system, 4);
+    expect(plans).toHaveLength(1);
+    const ai = await status(system);
+    expect(ai.course.title).toBe('AI Linux Lab');
+    expect(ai.builtIn).toBeUndefined();
+  });
+
+  it('refuses the survey without a key, and falls back to the built-in course if the key is removed before planning', async () => {
+    let hasKey = true;
+    const system = createLocalSystem({
+      storage: memory(),
+      learning: { available: () => hasKey, request: aiLearning().request },
+      modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
+    });
+    await system.boot('ada');
+    expect((await status(system)).survey).toBeDefined();
+    hasKey = false;
+    expect(await system.dispatch('learn-linux.survey', { answers: { terminal: 3 } })).toMatchObject({
+      ok: false, error: { message: expect.stringContaining('Settings') },
+    });
+    expect(await status(system)).toMatchObject({ builtIn: { aiOff: true }, active: { step: { id: 'whoami' } } });
+  });
+
   it('rejects unknown lessons with a clear error', async () => {
     const system = await boot();
     expect(await system.dispatch('learn-linux.start', { lesson: 'nope' })).toMatchObject({

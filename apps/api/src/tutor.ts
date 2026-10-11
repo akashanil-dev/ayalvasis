@@ -21,7 +21,7 @@ const ROLES = new Set(['user', 'assistant', 'tool']);
 
 export async function handleTutor(body: unknown, config: TutorConfig, fetcher: typeof fetch = fetch): Promise<Reply> {
   if (!config.apiKey) {
-    return failure(503, 'The tutor is not set up yet: the server needs an OPENAI_API_KEY (see .env.example).');
+    return failure(503, 'Vasi needs an OpenAI API key. Add yours in Settings → AI.');
   }
   const problem = invalid(body);
   if (problem) return failure(400, problem);
@@ -86,8 +86,8 @@ function upstreamStatus(status: number): number {
 }
 
 function upstreamMessage(status: number, detail: string | undefined): string {
-  if (status === 401) return 'The AI service rejected the server\'s API key.';
-  if (status === 429) return 'The tutor is getting too many requests or is out of credits. Try again in a minute.';
+  if (status === 401) return 'OpenAI did not accept the API key. Check it in Settings → AI.';
+  if (status === 429) return 'The API key is out of credits or rate limited. Try again in a minute, or check it in Settings → AI.';
   if (status === 404) return `The AI model configured on the server was not found${detail ? `: ${detail}` : ''}.`;
   return `The AI service returned an error (HTTP ${status})${detail ? `: ${detail}` : ''}.`;
 }

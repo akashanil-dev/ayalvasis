@@ -11,6 +11,7 @@ import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
 import { httpTransport } from '@tuxos/tutor';
 import { httpAccounts, switchableStorage } from './accounts';
+import { webAiKeys } from './ai-key';
 import { App, type AccountsWiring } from './app';
 import './styles/base.css';
 import './styles/boot.css';
@@ -40,15 +41,21 @@ const browserStorage: KeyValueStorage = {
 const accountsClient = httpAccounts();
 const accountStorage = accountsClient.storage();
 const { storage, use } = switchableStorage(browserStorage);
+// AI runs on the learner's own OpenAI key: saved in their account, or in this browser for guests.
+const ai = webAiKeys();
 const accounts: AccountsWiring = {
   client: accountsClient,
-  use: (target) => use(target === 'account' ? accountStorage : browserStorage),
+  use: (target) => {
+    use(target === 'account' ? accountStorage : browserStorage);
+    return ai.load(target === 'account');
+  },
   localSave: () => browserStorage.get('tuxos.save'),
 };
 
 // Only manifests load up front; each module's code is fetched the first time it is used.
 const system = createLocalSystem({
   storage,
+  ai,
   modules: [
     { manifest: terminalManifest, load: () => import('@tuxos/module-terminal').then((module) => module.terminal) },
     { manifest: filesManifest, load: () => import('@tuxos/module-files').then((module) => module.files) },
@@ -72,5 +79,5 @@ const system = createLocalSystem({
     { manifest: aboutManifest, load: () => import('@tuxos/module-about').then((module) => module.about) },
   ],
 });
-const tutor = httpTransport('/api/tutor');
+const tutor = httpTransport('/api/tutor', (url, init) => fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } }));
 createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

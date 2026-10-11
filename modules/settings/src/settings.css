@@ -203,3 +203,69 @@
 .de-cde .theme-card.active {
   outline: 2px solid #4b6a8c;
 }
+
+.ai-key {
+  display: grid;
+  gap: 8px;
+  max-width: 62ch;
+}
+
+.ai-key p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ai-key-state {
+  padding: 8px 12px;
+  border-left: 3px solid var(--muted);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.ai-key-state.on {
+  border-left-color: var(--ok, #3fb950);
+}
+
+.ai-key form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-key input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--window-fg);
+  font-family: var(--font-mono, monospace);
+}
+
+.ai-key button {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2, var(--surface));
+  color: var(--window-fg);
+  cursor: pointer;
+}
+
+.ai-key button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.ai-key-message.error {
+  color: var(--danger, #f85149);
+}
+
+.ai-key-help {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ai-key-help a {
+  color: var(--accent);
+}

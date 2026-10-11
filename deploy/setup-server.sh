@@ -44,11 +44,12 @@ visudo -cf /etc/sudoers.d/tuxos-deploy
 # Everything is world-readable so Caddy and the tuxos user can read it, but only tuxos-deploy can write.
 install -d -m 755 -o tuxos-deploy -g tuxos-deploy /opt/tuxos /opt/tuxos/releases
 
-# Secrets: created once, never overwritten. Fill in OPENAI_API_KEY afterwards.
+# Settings: created once, never overwritten. Learners bring their own OpenAI keys; OPENAI_API_KEY is optional.
 install -d -m 755 /etc/tuxos
 if [[ ! -f /etc/tuxos/tuxos.env ]]; then
   cat > /etc/tuxos/tuxos.env <<'ENV'
 # TuxOS API settings. Readable only by root; systemd passes them to the service.
+# Optional: a key that provides AI for every learner at your expense. Leave empty so learners use their own.
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4.1-mini
 # The API listens on a Unix socket that only Caddy can reach; no network port is opened.
@@ -60,7 +61,7 @@ TUTOR_REQUESTS_PER_MINUTE=30
 DATABASE_PATH=/var/lib/tuxos/tuxos.db
 ENV
   chmod 600 /etc/tuxos/tuxos.env
-  echo "Created /etc/tuxos/tuxos.env: add your OPENAI_API_KEY there."
+  echo "Created /etc/tuxos/tuxos.env."
 fi
 
 # The socket folder, shared with the Caddy container.

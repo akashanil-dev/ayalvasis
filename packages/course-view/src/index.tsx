@@ -211,6 +211,7 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
       <pre>{`# Starting the AI trainer…\n# ${status.lastExplain}`}<span className="linux-terminal-cursor" /></pre>
     </div>;
   }
+  if (status.builtIn && !task) return <BuiltInLessons system={system} status={status} onStart={(lesson) => void call('start', { lesson })} />;
   if (!status.lessons.length || !task) return <div className="linux-terminal-unavailable">
     <div className="linux-terminal-unavailable-bar">linux-trainer.service</div>
     <pre>{`# AI trainer unavailable\n# No local question is loaded.\n# ${status.lastExplain ?? error ?? 'Check the learning API and retry.'}`}</pre>
@@ -240,8 +241,11 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
         {lesson && <span className="linux-mission-course" title="Tasks completed in this day">
           {lesson.completed}/{lesson.steps} done
         </span>}
-        <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}
-          title="Rate your experience again to get a lab at a different level">Retake survey</button>
+        {status.builtIn
+          ? <button type="button" className="linux-mission-retake" onClick={() => void system.openApp('settings')}
+            title="Add your OpenAI API key for an AI-designed lab at your level">Built-in course · Add AI key</button>
+          : <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}
+            title="Rate your experience again to get a lab at a different level">Retake survey</button>}
       </div>
       {active!.lesson.story && <p className="linux-mission-scenario">{active!.lesson.story}</p>}
       {!lessonRead && task.teach
@@ -269,6 +273,36 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
         </>}
     </header>
     <TerminalSurface system={system} learningModule={courseId} inputId={terminalId} />
+  </div>;
+}
+
+/** The reviewed built-in lessons, used when there is no AI key: the learner picks one to start. */
+function BuiltInLessons({ system, status, onStart }: { system: SystemClient; status: LessonStatus; onStart(lesson: string): void }) {
+  const next = status.lessons.find((lesson) => lesson.completed < lesson.steps);
+  return <div className="linux-builtin">
+    <header>
+      <h3>{status.course.title}</h3>
+      <p>{status.course.summary}</p>
+      {status.builtIn?.aiOff && <p className="linux-builtin-ai">
+        These are the built-in lessons. Add your OpenAI API key in Settings to get an AI trainer that designs a
+        lab for your level and gives personal hints.
+        <button type="button" className="quiet" onClick={() => void system.openApp('settings')}>Open Settings</button>
+      </p>}
+    </header>
+    {status.lastExplain && <p className="linux-builtin-done" role="status">✓ {status.lastExplain}</p>}
+    <ol>
+      {status.lessons.map((lesson) => {
+        const done = lesson.completed >= lesson.steps;
+        return <li key={lesson.id} className={done ? 'done' : lesson === next ? 'next' : ''}>
+          <span>{lesson.title}</span>
+          <small>{lesson.completed}/{lesson.steps}</small>
+          <button type="button" className={lesson === next ? 'primary' : 'quiet'} onClick={() => onStart(lesson.id)}>
+            {done ? 'Redo' : lesson.completed ? 'Continue' : 'Start'}
+          </button>
+        </li>;
+      })}
+    </ol>
+    {!next && <p className="linux-builtin-done">You have finished every built-in lesson. Well done!</p>}
   </div>;
 }
 
@@ -455,7 +489,10 @@ export function useLessonStatus(system: SystemClient, courseId: string) {
 
   useEffect(() => {
     void refresh();
-    return system.onChange(() => void refresh());
+    const stopChanges = system.onChange(() => void refresh());
+    // Adding or removing an AI key changes what the course offers (the survey, or the built-in lessons).
+    const stopAi = system.ai()?.onChange(() => void refresh());
+    return () => { stopChanges(); stopAi?.(); };
   }, [system, refresh]);
 
   // Syllabus generation completes outside the kernel event stream, so poll only while the
