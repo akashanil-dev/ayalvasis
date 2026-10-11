@@ -199,8 +199,10 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
   if (!status) return <div className="linux-terminal-loading">{error || 'Connecting to Linux trainer…'}</div>;
   if (status.survey) return <ExperienceSurvey
     questions={status.survey.questions}
+    retake={status.survey.retake === true}
     error={error}
     onSubmit={(answers) => call('survey', { answers })}
+    onCancel={() => void call('cancelSurvey')}
   />;
   // While the first lab is being designed, say so: it is not an error, and the status polls until it is ready.
   if ((!status.lessons.length || !task) && status.lastExplain?.includes('generating')) {
@@ -238,6 +240,8 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
         {lesson && <span className="linux-mission-course" title="Tasks completed in this day">
           {lesson.completed}/{lesson.steps} done
         </span>}
+        <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}
+          title="Rate your experience again to get a lab at a different level">Retake survey</button>
       </div>
       {active!.lesson.story && <p className="linux-mission-scenario">{active!.lesson.story}</p>}
       {!lessonRead && task.teach
@@ -269,10 +273,12 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
 }
 
 /** A few 1-to-5 star questions before the first lab, so the trainer designs it at the learner's level. */
-function ExperienceSurvey({ questions, error, onSubmit }: {
+function ExperienceSurvey({ questions, retake, error, onSubmit, onCancel }: {
   questions: SurveyQuestion[];
+  retake: boolean;
   error: string;
   onSubmit: (answers: Record<string, number>) => Promise<void>;
+  onCancel: () => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [sending, setSending] = useState(false);
@@ -289,6 +295,8 @@ function ExperienceSurvey({ questions, error, onSubmit }: {
       <h2>How much Linux do you know?</h2>
       <p>Rate yourself from 1 to 5 stars. There are no wrong answers: your trainer uses them to design a lab at your
         level, from your very first command to real server work.</p>
+      {retake && <p className="linux-survey-warning">Sending new answers replaces your current lab and its progress
+        with a new one. Cancel to keep it.</p>}
     </header>
     {questions.map((question) => <fieldset key={question.id} className="linux-survey-question">
       <legend>{question.question}</legend>
@@ -308,7 +316,8 @@ function ExperienceSurvey({ questions, error, onSubmit }: {
     {error && <p className="linux-survey-error" role="alert">{error}</p>}
     <div className="linux-mission-actions">
       <span className="linux-mission-help">{complete ? 'Ready when you are.' : 'Answer every question to continue.'}</span>
-      <button type="submit" className="primary" disabled={!complete || sending}>{sending ? 'Sending…' : 'Design my lab'}</button>
+      {retake && <button type="button" className="quiet" onClick={onCancel}>Cancel</button>}
+      <button type="submit" className="primary" disabled={!complete || sending}>{sending ? 'Sending…' : retake ? 'Design a new lab' : 'Design my lab'}</button>
     </div>
   </form>;
 }

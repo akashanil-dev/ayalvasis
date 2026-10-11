@@ -92,6 +92,31 @@ describe('Learn Linux course', () => {
     expect(ready.course.title).toBe('AI Linux Lab');
   });
 
+  it('lets the learner retake the survey: cancelling keeps the lab, new answers design a new one', async () => {
+    const plans: Record<string, unknown>[] = [];
+    const fixture = aiLearning();
+    const system = await boot(false, { request: async (path, body) => {
+      if (path === '/plan') plans.push(body as Record<string, unknown>);
+      return fixture.request(path, body);
+    } });
+    await (await system.createTerminal({ learningModule: 'learn-linux' })).run('whoami');
+    expect((await status(system)).active?.step.id).toBe('pwd');
+
+    await system.dispatch('learn-linux.retakeSurvey', {});
+    expect((await status(system)).survey).toMatchObject({ retake: true });
+    await system.dispatch('learn-linux.cancelSurvey', {});
+    expect((await status(system)).active?.step.id).toBe('pwd');
+    expect(plans).toHaveLength(1);
+
+    await system.dispatch('learn-linux.retakeSurvey', {});
+    await rate(system, 1);
+    expect(plans).toHaveLength(2);
+    expect(plans[1]!.survey).toEqual(survey.map((question) => ({ question: question.question, rating: 1 })));
+    const fresh = await status(system);
+    expect(fresh.survey).toBeUndefined();
+    expect(fresh.lessons[0]?.completed).toBe(0);
+  });
+
   it('lets the learner log in while the AI is still planning the syllabus', async () => {
     let finish: () => void = () => undefined;
     const slow: LearningBackend = {

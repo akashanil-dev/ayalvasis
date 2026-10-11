@@ -188,7 +188,8 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
     (terminal, files and permissions, text processing, processes and services, scripting and administration).
     An AI Linux certification trainer then generates a seven-day lab of industry scenarios pitched at that level,
     from first commands for a beginner to troubleshooting and scripting for an experienced user, one
-    command per task. The ratings are saved with the learner's files, so the survey is asked once. Each task is taught first (a short "Learn first" lesson with an example), then the
+    command per task. The ratings are saved with the learner's files, so the survey is asked once; **Retake survey** in the lab header
+    asks it again, and new answers replace the lab and its progress (Cancel keeps the current lab). Each task is taught first (a short "Learn first" lesson with an example), then the
     learner tries it in the lab's terminal and the trainer's verdict appears under the command ("✓ Correct!" or
     "✗ Not quite" with a nudge). The trainer never gives the answer away while the learner is still trying:
     corrections and `/hint` only nudge, each hint a step closer. After five wrong attempts on a task it reveals

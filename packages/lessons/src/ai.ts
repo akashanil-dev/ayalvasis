@@ -114,6 +114,7 @@ export class AICourseRunner {
   private planning = false;
   private readonly survey: SurveyQuestion[];
   private surveyAnswers: Record<string, number> | undefined;
+  private retaking = false;
 
   constructor(
     private readonly ctx: ModuleContext,
@@ -183,12 +184,20 @@ export class AICourseRunner {
 
   /** A syllabus is designed only once the learner has told us about their experience. */
   private awaitingSurvey(): boolean {
-    return !this.state && this.survey.length > 0 && !this.surveyAnswers;
+    return this.survey.length > 0 && (this.retaking || (!this.state && !this.surveyAnswers));
   }
+
+  /** Shows the survey again; the current lab is kept until new answers replace it, so cancelling loses nothing. */
+  retakeSurvey(): void {
+    if (!this.survey.length) throw new Error('this course has no survey');
+    this.retaking = true;
+  }
+
+  cancelSurvey(): void { this.retaking = false; }
 
   /** Saves the learner's star ratings, then designs their syllabus in the background. */
   submitSurvey(answers: unknown): void {
-    if (this.state) throw new Error('this course already has a syllabus');
+    if (this.state && !this.retaking) throw new Error('this course already has a syllabus');
     const ratings = answers as Record<string, unknown> | null;
     if (!ratings || typeof ratings !== 'object') throw new Error('answers must be an object of star ratings');
     for (const question of this.survey) {
@@ -198,6 +207,13 @@ export class AICourseRunner {
     this.surveyAnswers = Object.fromEntries(this.survey.map((question) => [question.id, ratings[question.id] as number]));
     this.host.mkdir(expand(STATE_DIR, this.host.home));
     this.host.write(surveyPath(this.ctx.id, this.host.home), `${JSON.stringify(this.surveyAnswers, null, 2)}\n`);
+    if (this.retaking) {
+      // New answers mean a new lab at the new level: drop the old one, including its saved file.
+      this.retaking = false;
+      this.state = undefined;
+      this.fallbackMode = false;
+      this.host.write(progressPath(this.ctx.id, this.host.home), '');
+    }
     void this.bootstrap();
   }
 
@@ -215,7 +231,7 @@ export class AICourseRunner {
   status(): LessonStatus {
     if (this.awaitingSurvey()) return {
       course: { id: this.ctx.id, title: this.course.title, summary: 'Tell the trainer about your experience so it can design a lab at your level.' },
-      lessons: [], active: null, lastExplain: null, survey: { questions: this.survey },
+      lessons: [], active: null, lastExplain: null, survey: { questions: this.survey, ...(this.retaking ? { retake: true } : {}) },
     };
     if (this.aiUnavailable || !this.state) return {
       course: { id: this.ctx.id, title: this.course.title, summary: 'Waiting for the AI trainer to design this terminal lab.' },
@@ -548,6 +564,15 @@ function registerAIActions(ctx: ModuleContext, runner: AICourseRunner): void {
       return runner.status();
     },
   });
+  ctx.registerAction({
+    type: `${ctx.id}.retakeSurvey`, capability: 'lessons:write', mutates: false,
+    description: 'Show the experience survey again; new answers replace the current syllabus and its progress.',
+    run: () => {
+      try { runner.retakeSurvey(); } catch (error) { throw new KernelError('EINVAL', error instanceof Error ? error.message : String(error)); }
+      return runner.status();
+    },
+  });
+  ctx.registerAction({ type: `${ctx.id}.cancelSurvey`, capability: 'lessons:write', mutates: false, description: 'Close a retaken survey and keep the current syllabus.', run: () => { runner.cancelSurvey(); return runner.status(); } });
   ctx.registerAction({ type: `${ctx.id}.quit`, capability: 'lessons:write', mutates: false, description: 'Leave the current AI learning task.', run: () => { runner.quit(); return runner.status(); } });
   ctx.registerAction({ type: `${ctx.id}.reset`, capability: 'lessons:write', mutates: false, description: 'Reset AI learning progress.', run: () => { runner.reset(); return runner.status(); } });
   ctx.registerAction({ type: `${ctx.id}.retry`, capability: 'lessons:write', mutates: false, description: 'Retry AI syllabus generation when the trainer service was unavailable.', run: async () => { await runner.bootstrap(); return runner.status(); } });

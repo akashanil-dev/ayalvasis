@@ -4,6 +4,20 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T09:05:00+05:30 — Retake the Learn Linux experience survey
+
+- Changed: `packages/lessons/src/ai.ts` adds `<course>.retakeSurvey` and `<course>.cancelSurvey` actions. Retaking
+  shows the survey over the current lab; cancelling returns to it unchanged; submitting new answers clears the
+  old syllabus and its saved progress file and designs a new one with the new ratings. The Learn Linux header
+  has a **Retake survey** link, and the retaken survey warns that progress will be replaced and offers Cancel
+  (`packages/course-view/src/index.tsx`, `course.css`). README updated.
+- Why: Learners whose level changed, or who rated themselves wrongly, had no way to get a lab at a different
+  level; learners whose syllabus predates the survey can now take it too.
+- Validation: `npm run check` passed (298 tests), with a new test for cancel keeping progress and new answers
+  replanning with the new ratings. In headless Chromium, with the plan request answered by a fixed syllabus, the
+  link showed in the lab header and opened the survey with its warning.
+- Limitations: retaking discards progress on the old lab by design; the module memory of past attempts is kept.
+
 ## 2026-10-11T08:58:00+05:30 — Learn Linux asks about the learner's experience before designing the syllabus
 
 - Changed:
