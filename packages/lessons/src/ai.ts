@@ -431,7 +431,10 @@ export const learningRuntime = {
 export async function activateAICourse(ctx: ModuleContext, course: Course, profile: TrainerProfile, options?: AICourseOptions): Promise<() => void> {
   const runner = new AICourseRunner(ctx, course, profile, moduleLessonHost(ctx, course.id), options);
   learningRuntime.register(ctx.id, runner);
-  await runner.bootstrap();
+  // Planning a syllabus can take the AI half a minute: do it in the background so logging in never waits for
+  // it. Until it is ready the course reports that the trainer is generating the first lab. bootstrap() never
+  // rejects; failures become the unavailable state or the local fallback.
+  void runner.bootstrap();
   registerAIActions(ctx, runner);
   return () => { learningRuntime.unregister(ctx.id, runner); runner.dispose(); };
 }

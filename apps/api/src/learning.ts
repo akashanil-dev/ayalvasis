@@ -64,14 +64,22 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
       choices?: { message?: { content?: string | null } }[];
       error?: { message?: string };
     } | null;
-    if (!response.ok) return { status: response.status === 429 ? 429 : 502, body: { error: data?.error?.message ?? `AI service returned HTTP ${response.status}` } };
+    if (!response.ok) {
+      const message = data?.error?.message ?? `AI service returned HTTP ${response.status}`;
+      // Cloudflare replaces 502 bodies with its own page, so record why in the server log (journalctl).
+      console.error(`learning ${operation} for ${moduleId} with model ${model} failed: HTTP ${response.status}: ${message}`);
+      return { status: response.status === 429 ? 429 : 502, body: { error: message } };
+    }
     const content = data?.choices?.[0]?.message?.content;
     if (!content) return { status: 502, body: { error: 'AI learning service returned an empty response.' } };
     let result: unknown;
     try { result = JSON.parse(content); } catch { return { status: 502, body: { error: 'AI learning service returned invalid structured data.' } }; }
     if (operation === 'plan') result = normalizePlan(result, moduleId);
     const invalid = validateResult(operation, result, moduleId);
-    if (invalid) return { status: 502, body: { error: invalid } };
+    if (invalid) {
+      console.error(`learning ${operation} for ${moduleId} with model ${model}: invalid result: ${invalid}`);
+      return { status: 502, body: { error: invalid } };
+    }
     if (operation === 'evaluate' && moduleId === 'learn-linux' && result && typeof result === 'object') {
       const evaluation = result as Record<string, unknown>;
       result = { ...evaluation, feedback: conciseFeedback(evaluation.feedback) };
@@ -83,6 +91,7 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     return { status: 200, body: result };
   } catch (error) {
     const timeout = error instanceof Error && error.name === 'TimeoutError';
+    console.error(`learning ${operation} for ${moduleId} with model ${model} failed: ${timeout ? 'timed out' : String(error)}`);
     return { status: 504, body: { error: timeout ? 'AI learning took too long. Try again.' : 'AI learning service could not be reached.' } };
   }
 }

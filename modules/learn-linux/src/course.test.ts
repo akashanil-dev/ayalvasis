@@ -60,6 +60,21 @@ describe('Learn Linux course', () => {
     expect(validateCourse(course)).toEqual([]);
   });
 
+  it('lets the learner log in while the AI is still planning the syllabus', async () => {
+    let finish: () => void = () => undefined;
+    const slow: LearningBackend = {
+      async request(path, body) {
+        if (path === '/plan') await new Promise<void>((resolve) => { finish = resolve; });
+        return aiLearning().request(path, body);
+      },
+    };
+    const system = await boot(false, slow);
+    expect((await status(system)).lastExplain).toContain('generating the first Linux lab');
+    finish();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect((await status(system)).course.title).toBe('AI Linux Lab');
+  });
+
   it('starts an AI-generated task and assesses terminal input', async () => {
     const system = await boot();
     const initial = await status(system);

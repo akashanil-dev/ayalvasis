@@ -243,15 +243,25 @@ export function createLocalSystem(options: {
   return client;
 }
 
+const LEARNING_TIMEOUT_MS = 75_000;
+
 /** The browser sends learning requests to the local API; the secret stays on that server. */
 function browserLearningBackend(): LearningBackend {
   return {
     async request(path, body) {
-      const response = await fetch(`/api/learning${path}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      let response: Response;
+      try {
+        response = await fetch(`/api/learning${path}`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+          // The server gives the AI 60 seconds; never wait forever if the connection hangs.
+          signal: AbortSignal.timeout(LEARNING_TIMEOUT_MS),
+        });
+      } catch (error) {
+        const timedOut = error instanceof Error && error.name === 'TimeoutError';
+        throw new Error(timedOut ? 'The learning service took too long to answer.' : 'The learning service is not reachable.');
+      }
       const data = await response.json().catch(() => ({ error: `learning service returned HTTP ${response.status}` }));
       if (!response.ok) throw new Error((data as { error?: string }).error ?? `learning service returned HTTP ${response.status}`);
       return data;

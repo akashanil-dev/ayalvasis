@@ -4,6 +4,23 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T06:24:10+05:30 — Production fixes: login no longer waits for the AI syllabus
+
+- Changed:
+  - Logging in no longer waits for the AI to plan the Learn Linux and Learn Docker syllabuses (about 30 seconds
+    each in production, and forever if a request hung). Planning now runs in the background; the course shows
+    that the trainer is generating the first lab until it is ready (`packages/lessons/src/ai.ts`).
+  - Browser learning requests time out after 75 seconds with a readable error (`packages/system/src/index.ts`).
+  - The API logs why an AI learning request failed (status, model and message) to the server log, because
+    Cloudflare replaces 502 response bodies with its own page (`apps/api/src/learning.ts`).
+- Why: On tuxos.akashanil.dev, login hung on the spinner: boot awaited two live syllabus requests. Learn Docker's
+  took 28 seconds; Learn Linux's failed within a second with HTTP 502 (its default model, `gpt-5.6-luna`, is
+  rejected by the configured key; cause still being confirmed).
+- Validation: `npm run typecheck` passed; 24 test files and 273 tests passed, including a new test that boots
+  while the syllabus request is still pending and sees the course appear once it finishes. Production
+  diagnosis done with curl against the live site.
+- Limitations: Learn Linux has no AI syllabus in production until its model problem is fixed.
+
 ## 2026-10-11T06:17:37+05:30 — Match Learn Docker colors to KDE Plasma
 
 - Changed: Recolored the Learn Docker workspace surfaces, text, borders, and status accents to KDE Breeze Dark when shown in Plasma. The Docker workspace layout and content are unchanged.
@@ -11,7 +28,6 @@ Record each meaningful project change during the event, newest first. Update thi
 - Files: `packages/course-view/src/course.css` and this changelog.
 - Validation: `git diff --check` passed. No tests were run for this CSS-only change.
 - Limitations: The recolor applies only under KDE Plasma; other desktop environments retain the existing Docker palette. No browser visual review was run.
-
 
 ## 2026-10-11T05:39:20+05:30 — CI/CD and production deployment setup
 

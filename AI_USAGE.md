@@ -4,6 +4,8 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T06:24:10+05:30 | AI coding assistant | Production login hang and Learn Linux failure | Diagnosed the hang against the live site, moved syllabus planning off the login path, added a request timeout and server-side error logging, and a regression test. | Pending | Typecheck passed; 273 tests passed. |
+
 | 2026-10-11T06:17:37+05:30 | Codex | Recolor Learn Docker for KDE Plasma | Added Plasma-scoped Breeze Dark colors to the Docker learning workspace in `packages/course-view/src/course.css`; preserved layout and content. | Human review pending. | `git diff --check` passed; no tests or browser visual review run. |
 
 | 2026-10-11T05:39:20+05:30 | AI coding assistant | CI/CD and deployment | Wrote the GitHub Actions workflow, Caddy site block, systemd unit, server setup and release scripts, and the proxy-aware rate limiting in `apps/api/src/server.ts`. | Pending | Release script and rollback tested locally; rate limiting checked with curl; tests pass on Node 24. Not yet run on the server or in GitHub Actions. |
