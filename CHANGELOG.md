@@ -4,6 +4,16 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T06:29:46+05:30 — Fix Learn Linux's AI syllabus on GPT-5 models
+
+- Changed: the learning API no longer sends `temperature: 0.3` to GPT-5 and o-series models, which accept only the
+  default and answered HTTP 400 (`apps/api/src/learning.ts`). Learn Linux keeps its chosen `gpt-5.6-luna` model.
+- Why: In production every Learn Linux syllabus request failed with "Unsupported value: 'temperature' does not
+  support 0.3 with this model" (found through the new server-side error log), so Learn Linux had no AI course.
+- Validation: `npm run typecheck` passed; 24 test files and 274 tests passed, including a new test that checks the
+  request body for both kinds of model.
+- Limitations: none known; confirm on the live site after deploy.
+
 ## 2026-10-11T06:24:10+05:30 — Production fixes: login no longer waits for the AI syllabus
 
 - Changed:

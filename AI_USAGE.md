@@ -4,6 +4,8 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T06:29:46+05:30 | AI coding assistant | Learn Linux GPT-5 temperature fix | Read the production error, omitted temperature for GPT-5 and o-series models in `apps/api/src/learning.ts`, and added a test. | Pending | Typecheck passed; 274 tests passed. |
+
 | 2026-10-11T06:24:10+05:30 | AI coding assistant | Production login hang and Learn Linux failure | Diagnosed the hang against the live site, moved syllabus planning off the login path, added a request timeout and server-side error logging, and a regression test. | Pending | Typecheck passed; 273 tests passed. |
 
 | 2026-10-11T06:17:37+05:30 | Codex | Recolor Learn Docker for KDE Plasma | Added Plasma-scoped Breeze Dark colors to the Docker learning workspace in `packages/course-view/src/course.css`; preserved layout and content. | Human review pending. | `git diff --check` passed; no tests or browser visual review run. |

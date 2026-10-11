@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handleLearning, invalidLearning } from './learning.ts';
+import { fixedTemperature, handleLearning, invalidLearning } from './learning.ts';
 import type { TutorConfig } from './tutor.ts';
 
 const config: TutorConfig = { apiKey: 'test-key', model: 'test-model', baseUrl: 'https://ai.example/v1', learningModels: { 'learn-linux': 'linux-model' } };
@@ -33,6 +33,19 @@ describe('AI learning backend', () => {
     expect(request.messages[1].content).toContain('tasks[0].recap=true');
     expect(request.messages[1].content).toContain('exactly ONE terminal command');
     expect(request.messages[1].content).toContain('A recap checks one previously learned skill');
+  });
+
+  it('leaves out temperature for models that only accept the default', async () => {
+    const plan = { courseId: 'learn-linux', title: 'Linux', summary: 'Lab', days: [
+      { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'pwd', explain: 'why', recap: false }] },
+    ] };
+    const reasoning = upstream(plan);
+    await handleLearning({ operation: 'plan', module: 'learn-linux' }, { ...config, learningModels: { 'learn-linux': 'gpt-5.6-luna' } }, reasoning.fetcher);
+    expect(JSON.parse(reasoning.calls[0]!.init.body as string)).not.toHaveProperty('temperature');
+    const classic = upstream(plan);
+    await handleLearning({ operation: 'plan', module: 'learn-linux' }, { ...config, learningModels: { 'learn-linux': 'gpt-4.1-mini' } }, classic.fetcher);
+    expect(JSON.parse(classic.calls[0]!.init.body as string).temperature).toBe(0.3);
+    expect([fixedTemperature('gpt-5.6-luna'), fixedTemperature('o4-mini'), fixedTemperature('gpt-4.1-mini')]).toEqual([true, true, false]);
   });
 
   it('does not send cached attempt history into syllabus generation', async () => {

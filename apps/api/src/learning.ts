@@ -56,7 +56,7 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
           { role: 'user', content: prompt },
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.3,
+        ...(fixedTemperature(model) ? {} : { temperature: 0.3 }),
       }),
       signal: AbortSignal.timeout(60_000),
     });
@@ -94,6 +94,14 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     console.error(`learning ${operation} for ${moduleId} with model ${model} failed: ${timeout ? 'timed out' : String(error)}`);
     return { status: 504, body: { error: timeout ? 'AI learning took too long. Try again.' : 'AI learning service could not be reached.' } };
   }
+}
+
+/**
+ * GPT-5 and o-series reasoning models accept only the default temperature and reject any other value
+ * (HTTP 400), so the low temperature that keeps older models' syllabuses steady is left out for them.
+ */
+export function fixedTemperature(model: string): boolean {
+  return /^(gpt-5|o\d)/.test(model);
 }
 
 export function invalidLearning(body: unknown): string | null {
