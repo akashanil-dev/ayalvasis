@@ -29,7 +29,8 @@ export function useLoginForm({ account, savedUser, accountsEnabled, login }: Gre
   };
 
   const needsUsername = mode !== 'account';
-  const needsPassword = mode === 'signin' || mode === 'register';
+  // Unlocking or coming back after a restart still asks for the password, as a real login screen does.
+  const needsPassword = mode !== 'guest';
   const shownName = mode === 'account' ? account! : username;
 
   async function submit() {
@@ -54,7 +55,7 @@ export function useLoginForm({ account, savedUser, accountsEnabled, login }: Gre
   ]);
 
   const hint = error ? '' : {
-    account: `Signed in as ${account}. Your progress is saved to your account.`,
+    account: 'Enter your password to unlock. Your progress is saved to your account.',
     signin: 'Sign in to continue where you left off, on any device.',
     register: savedUser && username === savedUser
       ? `Your progress in this browser moves into the new account.`

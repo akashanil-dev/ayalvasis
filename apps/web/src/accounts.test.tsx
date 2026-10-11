@@ -116,11 +116,16 @@ describe('accounts', () => {
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
   });
 
-  it('continues a signed-in account without asking again, and signs out on log out', async () => {
+  it('asks a still-signed-in account for its password, and signs out on log out', async () => {
     const service = fakeService('grace');
     setup(service);
     expect(await screen.findByText('grace', { selector: '.sddm-name' })).toBeTruthy();
-    expect(screen.queryByLabelText('Password')).toBeNull();
+    // Coming back (after a lock or a restart) needs the password, not just the remembered session.
+    expect(screen.queryByLabelText('Username')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    expect((await screen.findByRole('alert')).textContent).toBe('Wrong password. Try again.');
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } });
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Leave' }, SLOW));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Log Out' }));

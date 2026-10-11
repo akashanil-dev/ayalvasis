@@ -4,6 +4,38 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T07:26:17+05:30 — Learn Linux, Learn Docker and chmod Arcade follow each desktop's theme
+
+- Changed:
+  - Learn Linux's mission header is easier to read and act on: the day and a "New skill"/"Recap" badge, "Task n of m"
+    with progress dots, the scenario in plain text, the task in a highlighted "Your task" card, and Hint and Show
+    answer buttons (they type `/hint` and `/answer` into the lab's terminal). The hard-to-read pixel font is gone, and
+    its Google Fonts download removed.
+  - Learn Docker: a course progress bar, "Day n · Task n of m" with a recap badge, the same "Your task" card, shorter
+    button labels, and the terminal and engine panel now fill the window instead of leaving empty space.
+  - chmod Arcade: a "Your task" banner, score/streak/best/time tiles with a countdown bar, and themed game controls.
+  - All three use the desktop's own colours (Breeze, Adwaita, CDE Motif with bevels, Catppuccin for Hyprland) instead
+    of their own fixed navy and purple palettes; their terminals stay dark, like real terminal apps.
+    (`packages/course-view`, `modules/chmod-arcade`, `modules/terminal` gained an `inputId` for typed commands.)
+- Why: The labs looked out of place in every desktop, and the Linux task was hard to read and act on.
+- Validation: `npm run typecheck` passed; 26 test files and 288 tests passed (a slow launcher check got the same longer
+  wait as its neighbours). Screenshots in Chromium of Learn Linux and Learn Docker in KDE and CDE, and chmod Arcade in
+  KDE, from the dev server with a fixed test syllabus.
+- Limitations: Edson's KDE-only Docker rules (`.de-plasma .docker-*`) are kept but still have no markup to style.
+
+## 2026-10-11T07:13:33+05:30 — Password on unlock, and a realistic Plasma splash
+
+- Changed:
+  - Unlocking the screen, or coming back to a still-signed-in account after a restart, now asks for the account's
+    password, checked by the server; a wrong one shows "Wrong password. Try again." Guests are unchanged.
+  - The KDE Plasma splash looks like Breeze's: the Plasma logo fades in on a dark background, a thin bar fills in
+    uneven steps like ksplash's start-up stages, "Plasma · made by KDE" sits at the bottom, and the splash fades
+    into the desktop while the panel slides up.
+- Why: Anyone at the computer could resume a signed-in account without a password; the old splash didn't look like Plasma.
+- Validation: `npm run typecheck` passed; 26 test files and 288 tests passed (the account test now checks a wrong
+  and a right password when continuing). Splash checked in a screenshot from a production build in Chromium.
+- Limitations: none known.
+
 ## 2026-10-11T06:58:38+05:30 — Accounts, faster desktop icons and a clearer AI course start
 
 - Changed:

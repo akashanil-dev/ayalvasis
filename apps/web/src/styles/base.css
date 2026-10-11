@@ -435,3 +435,16 @@ pre {
     transition: none !important;
   }
 }
+
+/* The desktop fades in as the splash fades out; Plasma's panel slides up into place, as it does when Plasma starts. */
+.desktop-screen {
+  animation: splash-in 450ms ease;
+}
+
+.de-plasma .plasma-panel {
+  animation: plasma-panel-in 500ms 150ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes plasma-panel-in {
+  from { transform: translateY(100%); }
+}

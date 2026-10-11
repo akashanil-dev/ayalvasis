@@ -41,15 +41,12 @@ export function Sddm(props: GreeterProps) {
           type="password"
           aria-label="Password"
           placeholder="Password"
+          autoFocus={form.mode === 'account'}
           disabled={form.busy}
           value={form.password}
           onChange={(event) => form.setPassword(event.target.value)}
         />
         <GoButton busy={form.busy} />
-      </div>}
-      {form.mode === 'account' && <div className="sddm-row">
-        <span className="sddm-field">Signed in</span>
-        <GoButton busy={form.busy} autoFocus />
       </div>}
       <p className={`sddm-msg ${form.error ? 'error' : ''}`} role={form.error ? 'alert' : 'status'}>
         {form.error || form.hint}

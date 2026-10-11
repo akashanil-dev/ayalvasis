@@ -46,8 +46,10 @@ export default function TerminalView(props: AppViewProps) {
 }
 
 /** Reusable real xterm surface for terminal-first learning labs. */
-export function TerminalSurface({ system, windowId, args, learningModule }: {
+export function TerminalSurface({ system, windowId, args, learningModule, inputId = windowId }: {
   system: AppViewProps['system']; windowId?: string; args?: AppViewProps['args']; learningModule?: string;
+  /** The id that TERMINAL_TYPE_EVENT uses to type here; a window's terminal uses its window id. */
+  inputId?: string;
 }) {
   // Vasi's own terminal runs his commands as the tutor, so they never count towards the learner's lessons.
   const owner = args?.owner === 'vasi' ? 'vasi' : 'learner';
@@ -82,7 +84,7 @@ export function TerminalSurface({ system, windowId, args, learningModule }: {
     let typeHere: ((data: string) => void) | undefined;
     const onType = (event: Event) => {
       const detail = (event as CustomEvent<TerminalTypeDetail>).detail;
-      if (detail.windowId !== windowId || !typeHere) return;
+      if (!inputId || detail.windowId !== inputId || !typeHere) return;
       detail.accepted = true;
       typeHere(detail.data);
     };
@@ -126,7 +128,7 @@ export function TerminalSurface({ system, windowId, args, learningModule }: {
       observer?.disconnect();
       term.dispose();
     };
-  }, [system, windowId, owner, learningModule]);
+  }, [system, windowId, owner, learningModule, inputId]);
 
   return <div className="terminal-view">
     {error && <p className="terminal-error" role="alert">Terminal error: {error}</p>}

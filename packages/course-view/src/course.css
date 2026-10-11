@@ -219,99 +219,82 @@
   box-shadow: inset 1px 1px #fff, inset -1px -1px #8a8a8a;
 }
 
-/* Terminal-first AI labs. The same layout works inside every desktop shell. */
-.learning-lab {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  background: #0b1220;
-  color: #e6edf3;
-  font-family: var(--font-sans);
-}
-.lab-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgb(148 163 184 / 18%);
-  background: linear-gradient(110deg, #111d31, #0d1627 62%, #14243a);
-}
-.lab-header h1 { margin: 3px 0 4px; font-size: 21px; }
-.lab-header p { max-width: 66ch; margin: 0; color: #9fb0c5; font-size: 12px; line-height: 1.45; }
-.lab-eyebrow, .lab-section-label { color: #79c0ff; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.lab-progress { display: flex; flex-direction: column; justify-content: center; min-width: 112px; color: #8fa3ba; font-size: 11px; text-align: right; }
-.lab-progress strong { color: #f0f6fc; font-size: 25px; line-height: 1; }
-.lab-layout { display: grid; grid-template-columns: 218px minmax(0, 1fr); min-height: 0; flex: 1; }
-.lab-syllabus { padding: 14px 8px; overflow: auto; border-right: 1px solid rgb(148 163 184 / 18%); background: #0e1828; }
-.lab-syllabus button { display: grid; grid-template-columns: 27px 1fr auto; align-items: center; gap: 6px; width: 100%; padding: 9px 8px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #aab8ca; text-align: left; cursor: pointer; }
-.lab-syllabus button:hover { background: #17263b; }
-.lab-syllabus button.selected { border-color: #2f81c7; background: #16324d; color: #fff; }
-.lab-day { color: #58a6ff; font: 700 11px var(--font-mono); }
-.lab-lesson-title { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.lab-syllabus small { color: #71849b; font: 10px var(--font-mono); }
-.lab-syllabus-note { margin: 18px 8px; color: #647991; font-size: 11px; line-height: 1.45; }
-.lab-main { min-width: 0; padding: 18px; overflow: auto; }
-.lab-task-card { margin-bottom: 14px; padding: 14px 16px; border: 1px solid #26547d; border-radius: 9px; background: linear-gradient(120deg, #122942, #111d30); box-shadow: 0 8px 25px rgb(0 0 0 / 18%); }
-.lab-task-meta { display: flex; gap: 12px; color: #58a6ff; font: 700 10px var(--font-mono); letter-spacing: .08em; }
-.lab-task-card h2 { margin: 6px 0; font-size: 17px; }
-.lab-scenario { margin: 0 0 10px; color: #a9b9ca; font-size: 12px; line-height: 1.5; }
-.lab-task-prompt { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; border-left: 3px solid #58a6ff; background: rgb(0 0 0 / 18%); font-size: 13px; line-height: 1.5; }
-.lab-task-prompt strong { color: #79c0ff; font: 700 11px var(--font-mono); text-transform: uppercase; }
-.lab-task-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
-.lab-task-actions button { padding: 6px 10px; border: 1px solid #315b83; border-radius: 5px; background: #182d45; color: #d7e8fa; font-size: 11px; cursor: pointer; }
-.lab-task-actions button:hover { border-color: #79c0ff; background: #20415f; }
-.lab-task-actions .quiet { margin-left: auto; border-color: transparent; background: transparent; color: #8194aa; }
-.lab-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 215px; gap: 12px; min-height: 300px; }
-.lab-terminal { display: flex; min-height: 300px; flex-direction: column; overflow: hidden; border: 1px solid #263d57; border-radius: 8px; background: #080d14; box-shadow: 0 10px 30px rgb(0 0 0 / 25%); }
-.lab-terminal-bar { display: flex; align-items: center; gap: 7px; padding: 8px 11px; border-bottom: 1px solid #1e3044; background: #101b2a; color: #8da2ba; font: 11px var(--font-mono); }
-.lab-terminal-bar strong { color: #d8e6f5; font-weight: 600; }
-.lab-terminal-bar span:last-child { margin-left: auto; color: #66809b; font-size: 10px; }
+/* Terminal-first AI labs (Learn Docker, chmod Arcade). Panels use the desktop's own colours, so the lab looks native
+   in KDE, GNOME, CDE and Hyprland; terminals stay dark everywhere, as real terminal apps do. */
+.learning-lab { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--window-bg); color: var(--window-fg); font-family: var(--font-ui); }
+.lab-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--window-sidebar); }
+.lab-header h1 { margin: 2px 0 3px; font-size: 19px; }
+.lab-header p { max-width: 66ch; margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.lab-eyebrow, .lab-section-label { color: var(--accent); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.lab-section-label { display: block; margin: 0 6px 8px; }
+.lab-progress { display: flex; flex-direction: column; gap: 6px; min-width: 150px; color: var(--muted); font-size: 12px; text-align: right; }
+.lab-progress strong { color: var(--window-fg); font-size: 18px; }
+.lab-progress-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
+.lab-progress-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--ok)); transition: width .4s; }
+.lab-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; flex: 1; }
+.lab-syllabus { padding: 14px 8px; overflow: auto; border-right: 1px solid var(--line); background: var(--window-sidebar); }
+.lab-syllabus button { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 6px; width: 100%; margin-bottom: 2px; padding: 8px; border: 1px solid transparent; border-radius: var(--radius-small); background: transparent; color: var(--window-fg); text-align: left; cursor: pointer; }
+.lab-syllabus button:hover { background: var(--hover); }
+.lab-syllabus button.selected { border-color: var(--accent); background: var(--accent-soft); }
+.lab-day { color: var(--accent); font: 700 11px var(--font-mono); }
+.lab-lesson-title { overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.lab-syllabus small { color: var(--muted); font: 10.5px var(--font-mono); }
+.lab-syllabus-note { margin: 16px 8px; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+.lab-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; padding: 16px; overflow: auto; }
+.lab-task-card { flex: none; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.lab-task-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; }
+.lab-task-meta > span:first-child { color: var(--accent); font-weight: 700; }
+.lab-recap { padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; font-size: 11px; }
+.lab-task-card h2 { margin: 6px 0; font-size: 16px; }
+.lab-scenario { max-width: 80ch; margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.lab-task-prompt { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-small); background: var(--window-bg); font-size: 14.5px; font-weight: 600; line-height: 1.45; }
+.lab-task-prompt strong { color: var(--accent); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.lab-task-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.lab-task-actions button { padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--surface-2); color: var(--window-fg); font: 600 12px var(--font-ui); cursor: pointer; }
+.lab-task-actions button:hover { border-color: var(--accent); }
+.lab-task-actions .quiet { margin-left: auto; border-color: transparent; background: transparent; color: var(--muted); }
+.lab-workspace { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr) 220px; gap: 12px; min-height: 280px; }
+.lab-terminal { display: flex; min-height: 0; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: #0d1117; }
+.lab-terminal-bar { display: flex; align-items: center; gap: 7px; padding: 7px 11px; border-bottom: 1px solid #30363d; background: #161b22; color: #8b949e; font: 11px var(--font-mono); }
+.lab-terminal-bar strong { color: #e6edf3; font-weight: 600; }
+.lab-terminal-bar span:last-child { margin-left: auto; color: #8b949e; font-size: 10.5px; }
 .terminal-led { width: 7px; height: 7px; border-radius: 50%; background: #3fb950; box-shadow: 0 0 8px #3fb950; }
-.lab-terminal-output { flex: 1; padding: 12px; overflow: auto; color: #d8e6f5; font: 12px/1.55 var(--font-mono); cursor: text; }
-.lab-terminal-welcome { margin-bottom: 10px; color: #7891aa; }
+.lab-terminal-output { flex: 1; padding: 12px; overflow: auto; color: #e6edf3; font: 13px/1.55 var(--font-mono); cursor: text; }
+.lab-terminal-welcome { margin-bottom: 10px; color: #8b949e; }
 .lab-terminal-entry pre { margin: 3px 0 8px; white-space: pre-wrap; }
 .lab-terminal-entry pre.terminal-failure { color: #ff7b72; }
-.lab-prompt { color: #56d364; }
+.lab-prompt { color: #4ade80; }
 .lab-terminal-form { display: flex; gap: 7px; align-items: center; }
 .lab-terminal-form input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #f0f6fc; font: inherit; }
-.lab-visual { padding: 13px; overflow: auto; border: 1px solid #263d57; border-radius: 8px; background: #0e1827; }
-.lab-visual p { color: #8da2ba; font-size: 11px; line-height: 1.45; }
-.docker-daemon { display: flex; align-items: center; gap: 7px; margin: 14px 0; color: #d9e8f7; font: 11px var(--font-mono); }
-.docker-orb { width: 13px; height: 13px; border-radius: 4px; background: #2496ed; box-shadow: 0 0 12px #2496ed; }
-.docker-live { margin-left: auto; color: #56d364; font-size: 9px; }
-.visual-group { display: flex; justify-content: space-between; margin: 13px 0 6px; color: #8195aa; font-size: 11px; }
-.visual-group strong { color: #f0f6fc; font: 700 12px var(--font-mono); }
+.lab-visual { padding: 13px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.lab-visual p { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+.docker-daemon { display: flex; align-items: center; gap: 7px; margin: 14px 0; color: var(--window-fg); font: 11.5px var(--font-mono); }
+.docker-orb { width: 13px; height: 13px; border-radius: 4px; background: #2496ed; box-shadow: 0 0 10px rgb(36 150 237 / 60%); }
+.docker-live { margin-left: auto; color: var(--ok); font-size: 10px; font-weight: 700; }
+.visual-group { display: flex; justify-content: space-between; margin: 13px 0 6px; color: var(--muted); font-size: 12px; }
+.visual-group strong { color: var(--window-fg); font: 700 12px var(--font-mono); }
 .visual-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.visual-chips code, .permission-command { padding: 4px 6px; border-radius: 4px; background: #172b43; color: #8dccff; font: 10px var(--font-mono); }
-.visual-empty { color: #60758b; font-size: 10px !important; }
+.visual-chips code, .permission-command { padding: 3px 6px; border-radius: 4px; background: var(--surface-2); color: var(--accent-strong); font: 10.5px var(--font-mono); }
+.visual-empty { color: var(--muted); font-size: 11px !important; }
 .container-stack { display: flex; flex-direction: column; gap: 6px; }
-.container-card { display: flex; gap: 7px; align-items: center; padding: 7px; border: 1px solid #233b55; border-radius: 5px; background: #132338; }
+.container-card { display: flex; gap: 7px; align-items: center; padding: 7px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--window-bg); }
 .container-card strong, .container-card small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.container-card strong { color: #dcecff; font-size: 11px; }
-.container-card small { max-width: 150px; margin-top: 2px; color: #718aa2; font: 9px var(--font-mono); }
-.container-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #f85149; }
-.container-dot.running { background: #3fb950; box-shadow: 0 0 7px #3fb950; }
+.container-card strong { color: var(--window-fg); font-size: 11.5px; }
+.container-card small { max-width: 150px; margin-top: 2px; color: var(--muted); font: 9.5px var(--font-mono); }
+.container-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--danger); }
+.container-dot.running { background: var(--ok); }
 .permission-grid { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
-.permission-grid > div { display: grid; grid-template-columns: 1fr 24px 35px; gap: 5px; align-items: center; padding-bottom: 6px; border-bottom: 1px solid #20364e; }
-.permission-grid span { color: #9eb1c6; font-size: 11px; }
-.permission-grid strong { color: #facc15; font: 700 15px var(--font-mono); }
-.permission-grid small { color: #8ab2d3; font: 10px var(--font-mono); }
-@media (max-width: 760px) { .lab-layout { grid-template-columns: 1fr; } .lab-syllabus { max-height: 145px; border-right: 0; border-bottom: 1px solid rgb(148 163 184 / 18%); } .lab-syllabus button { display: inline-grid; width: 48%; } .lab-workspace { grid-template-columns: 1fr; } .lab-visual { min-height: 150px; } }
+.permission-grid > div { display: grid; grid-template-columns: 1fr 24px 35px; gap: 5px; align-items: center; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.permission-grid span { color: var(--muted); font-size: 11.5px; }
+.permission-grid strong { color: var(--accent); font: 700 15px var(--font-mono); }
+.permission-grid small { color: var(--muted); font: 10.5px var(--font-mono); }
+/* CDE: bevelled Motif controls; Hyprland: Catppuccin borders. */
+.de-cde .lab-task-card, .de-cde .lab-visual, .de-cde .lab-task-actions button, .de-cde .lab-syllabus button.selected { border: 0; box-shadow: inset 1px 1px #fff, inset -1px -1px #5a5a5a; }
+.de-cde .lab-terminal { border: 0; box-shadow: inset 1px 1px #5a5a5a, inset -1px -1px #fff; }
+.de-hyprland .lab-task-card, .de-hyprland .lab-terminal, .de-hyprland .lab-visual { border-width: 2px; }
+@media (max-width: 760px) { .lab-layout { grid-template-columns: 1fr; } .lab-syllabus { max-height: 145px; border-right: 0; border-bottom: 1px solid var(--line); } .lab-syllabus button { display: inline-grid; width: 48%; } .lab-workspace { grid-template-columns: 1fr; } .lab-visual { min-height: 150px; } }
 
 .linux-terminal-lab, .linux-terminal-unavailable { display: flex; height: 100%; flex-direction: column; overflow: hidden; background: #0d1117; color: #e6edf3; font-family: var(--font-mono); }
-.linux-mission { display: flex; flex: 0 0 auto; align-items: center; gap: 18px; min-height: 112px; padding: 14px clamp(16px, 3vw, 34px); border-bottom: 1px solid #31234a; background: linear-gradient(105deg, #171222 0%, #11131c 72%); }
-.linux-mission-pet { width: 52px; height: 60px; flex: 0 0 52px; filter: drop-shadow(0 0 12px rgb(167 139 250 / 22%)); }
-.linux-mission-copy { min-width: 0; }
-.linux-mission-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; color: #a78bfa; font: 10px/1.4 var(--font-mono); letter-spacing: .13em; }
-.linux-mission-meta > span + span { padding: 2px 7px; border: 1px solid #6241a1; border-radius: 999px; color: #d8c7ff; letter-spacing: .08em; }
-.linux-mission-meta > .is-recap { border-color: #8b5cf6; background: rgb(139 92 246 / 15%); }
-.linux-mission-meta > .is-new { border-color: #51406d; color: #b9a4dd; }
-.linux-mission-scenario, .linux-mission-task, .linux-mission-help { margin: 0; overflow-wrap: anywhere; }
-.linux-mission-scenario { color: #c4b5fd; font: 15px/1.45 "Bitcount Grid Double Ink", "Bitcount Grid Double", var(--font-mono); }
-.linux-mission-task { margin-top: 2px; color: #ede9fe; font: 16px/1.45 "Bitcount Grid Double Ink", "Bitcount Grid Double", var(--font-mono); }
-.linux-mission-help { margin-top: 5px; color: #9185a8; font: 10px/1.4 var(--font-mono); }
-.linux-mission-help span { padding: 0 4px; color: #a78bfa; }
 .linux-terminal-lab > .terminal-view { min-height: 0; flex: 1; }
 .linux-terminal-lab .terminal-view { background: #0d1117; }
 .linux-terminal-unavailable { justify-content: center; padding: 22px; }
@@ -320,7 +303,6 @@
 .linux-terminal-unavailable p { margin: 12px auto; color: #8b949e; font: 12px var(--font-mono); }
 .linux-terminal-unavailable button { align-self: center; margin-top: 12px; padding: 8px 13px; border: 1px solid #30363d; border-radius: 4px; background: #161b22; color: #79c0ff; font: 12px var(--font-mono); cursor: pointer; }
 .linux-terminal-loading { display: grid; height: 100%; place-items: center; background: #0d1117; color: #8b949e; font: 13px var(--font-mono); }
-@media (max-width: 560px) { .linux-mission { gap: 12px; min-height: 0; padding: 12px; } .linux-mission-pet { width: 42px; height: 50px; flex-basis: 42px; } .linux-mission-task { font-size: 14px; } .linux-mission-scenario { font-size: 13px; } }
 /* KDE recolors the Docker learning workspace to Breeze Dark without changing its layout or labels. */
 .de-plasma .docker-desktop { --docker-blue: var(--accent); --docker-ink: var(--window-fg); --docker-muted: var(--muted); background: var(--window-bg); }
 .de-plasma .docker-topbar,
@@ -407,3 +389,30 @@
 .linux-terminal-unavailable[role="status"] pre { color: #8b949e; }
 .linux-terminal-cursor { display: inline-block; width: 8px; height: 14px; margin-left: 4px; vertical-align: -2px; background: #4ade80; animation: linux-terminal-blink 1s steps(1) infinite; }
 @keyframes linux-terminal-blink { 50% { opacity: 0; } }
+
+/* Learn Linux's mission header: where you are, the scenario, then the one task, with help one click away. It uses
+   the desktop's colours; the terminal under it stays dark. */
+.linux-terminal-lab { background: var(--window-bg); }
+.linux-mission { display: flex; flex: 0 0 auto; flex-direction: column; gap: 10px; padding: 14px clamp(14px, 3vw, 26px) 12px; border-bottom: 1px solid var(--line); background: var(--window-sidebar); color: var(--window-fg); font-family: var(--font-ui); }
+.linux-mission-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 12px; }
+.linux-mission-day { color: var(--window-fg); font-weight: 700; font-size: 13px; }
+.linux-mission-kind { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.linux-mission-kind.is-new { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.linux-mission-kind.is-recap { background: var(--accent-soft); color: var(--accent-strong); }
+.linux-mission-count { margin-left: auto; color: var(--muted); }
+.linux-mission-dots { display: flex; gap: 4px; }
+.linux-mission-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.linux-mission-dots i.done { background: var(--ok); box-shadow: none; }
+.linux-mission-dots i.current { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.linux-mission-course { color: var(--muted); }
+.linux-mission-scenario { margin: 0; max-width: 80ch; color: var(--muted); font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.linux-mission-task { padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-small); background: var(--window-bg); }
+.linux-mission-label { display: block; margin-bottom: 3px; color: var(--accent); font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.linux-mission-task p { margin: 0; color: var(--window-fg); font-size: 15px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.linux-mission-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.linux-mission-help { flex: 1; min-width: 200px; color: var(--muted); font-size: 12px; }
+.linux-mission-help kbd { padding: 0 5px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: var(--window-bg); color: var(--window-fg); font: 11px var(--font-mono); }
+.linux-mission-actions button { padding: 5px 12px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--surface-2); color: var(--window-fg); font: 600 12px var(--font-ui); cursor: pointer; }
+.linux-mission-actions button:hover { border-color: var(--accent); }
+.de-cde .linux-mission-task, .de-cde .linux-mission-actions button { border: 0; box-shadow: inset 1px 1px #fff, inset -1px -1px #5a5a5a; }
+@media (max-width: 560px) { .linux-mission { padding: 12px; } .linux-mission-count { margin-left: 0; } .linux-mission-task p { font-size: 14px; } }

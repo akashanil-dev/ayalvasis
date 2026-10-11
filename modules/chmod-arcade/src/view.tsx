@@ -49,16 +49,24 @@ export default function ArcadeView({ system }: AppViewProps) {
 
   return <div className="arcade-view">
     <section className="arcade-task-banner">
-      <div><span className="arcade-kicker">SECURITY OPERATIONS LAB · TERMINAL TASK</span><h1>{learning.status?.active?.step.task ?? 'Protect a deployment artifact'}</h1>
-        <p>{learning.status?.active?.lesson.story ?? 'Use the terminal to inspect and change file permissions. Type ls -l to verify your evidence, or use /hint and /answer when you need coaching.'}</p></div>
-      <strong>LIVE PRACTICE</strong>
+      <div className="arcade-banner-copy">
+        <span className="arcade-kicker">Permissions lab</span>
+        <p className="arcade-story">{learning.status?.active?.lesson.story
+          ?? 'Every file says who may read, write and run it. Practise reading and changing those permissions.'}</p>
+        <div className="arcade-task">
+          <span>Your task</span>
+          <p>{learning.status?.active?.step.task ?? 'Use the terminal to inspect a file with ls -l, then fix its permissions with chmod.'}</p>
+        </div>
+      </div>
+      <span className="arcade-live">Live practice</span>
     </section>
     <div className="arcade-learning-layout"><LabTerminal system={system} variant="chmod" courseId="chmod-arcade" /><div className="arcade-game-panel">
     <header className="arcade-bar">
-      <span>Score <strong>{score}</strong></span>
-      <span>Streak <strong>{streak}</strong></span>
-      <span>Best <strong>{best.value ?? '—'}</strong></span>
-      <span className={left <= 10 ? 'arcade-hurry' : ''}>⏱ <strong>{left}s</strong></span>
+      <span className="arcade-stat"><small>Score</small><strong>{score}</strong></span>
+      <span className="arcade-stat"><small>Streak</small><strong>{streak}</strong></span>
+      <span className="arcade-stat"><small>Best</small><strong>{best.value ?? '—'}</strong></span>
+      <span className={`arcade-stat ${left <= 10 && phase === 'playing' ? 'arcade-hurry' : ''}`}><small>Time</small><strong>{left}s</strong></span>
+      <span className="arcade-timer" aria-hidden="true"><i style={{ width: `${(left / ROUND_SECONDS) * 100}%` }} /></span>
     </header>
     {phase === 'ready' && <Intro onStart={start} />}
     {phase === 'over' && <div className="arcade-center">

@@ -42,21 +42,39 @@ export function PowerOff({ onPowerOn }: { onPowerOn(): void }) {
 }
 
 /** How long each desktop's splash shows before its shell appears. */
-const SPLASH_MS: Record<string, number> = { plasma: 1400, gnome: 600, cde: 1300, hyprland: 1100 };
+const SPLASH_MS: Record<string, number> = { plasma: 2700, gnome: 600, cde: 1300, hyprland: 1100 };
+/** Plasma's splash fades out over its last moments, revealing the desktop. */
+const PLASMA_FADE_MS = 450;
 
 /** What shows while a desktop session starts: each desktop environment's own splash screen. */
 export function SessionSplash({ desktop, onDone }: { desktop: string; onDone(): void }) {
+  const [leaving, setLeaving] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(onDone, SPLASH_MS[desktop] ?? 600);
-    return () => clearTimeout(timer);
+    const total = SPLASH_MS[desktop] ?? 600;
+    const fade = desktop === 'plasma' ? setTimeout(() => setLeaving(true), total - PLASMA_FADE_MS) : undefined;
+    const timer = setTimeout(onDone, total);
+    return () => {
+      clearTimeout(timer);
+      if (fade) clearTimeout(fade);
+    };
   }, [desktop, onDone]);
 
   switch (desktop) {
     case 'plasma':
-      return <main className="splash splash-plasma" role="status" aria-label="Starting KDE Plasma">
-        <span className="plasma-logo" />
-        <strong>Plasma</strong>
+      // Breeze's splash: the Plasma logo fades in, a thin bar fills in steps as the session's parts start,
+      // and "Plasma · made by KDE" sits at the bottom. Then it all fades into the desktop.
+      return <main className={`splash splash-plasma ${leaving ? 'leaving' : ''}`} role="status" aria-label="Starting KDE Plasma">
+        <svg className="plasma-logo" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="27" cy="37" r="17" fill="none" stroke="currentColor" strokeWidth="5" />
+          <circle cx="49" cy="15" r="7" fill="currentColor" />
+          <circle cx="51" cy="40" r="4" fill="currentColor" />
+          <circle cx="23" cy="9" r="3" fill="currentColor" />
+        </svg>
         <span className="splash-progress"><i /></span>
+        <footer className="plasma-credit">
+          <strong>Plasma</strong>
+          <span>made by KDE</span>
+        </footer>
       </main>;
     case 'cde':
       return <main className="splash splash-cde" role="status">

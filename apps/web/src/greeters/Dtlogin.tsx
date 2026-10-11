@@ -15,7 +15,8 @@ export function Dtlogin(props: GreeterProps) {
   const [askPassword, setAskPassword] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [help, setHelp] = useState(false);
-  const onPasswordPrompt = form.needsPassword && askPassword;
+  // An account that is still signed in only needs its password; everyone else gives the user name first.
+  const onPasswordPrompt = form.needsPassword && (askPassword || form.mode === 'account');
 
   const startOver = () => {
     setAskPassword(false);
@@ -37,7 +38,7 @@ export function Dtlogin(props: GreeterProps) {
       onSubmit={(event) => {
         event.preventDefault();
         // The user name comes first; OK then asks for the password, as dtlogin does.
-        if (form.needsPassword && !askPassword) {
+        if (form.needsPassword && !onPasswordPrompt) {
           if (form.username.trim()) setAskPassword(true);
           else void form.submit();
           return;
@@ -53,22 +54,20 @@ export function Dtlogin(props: GreeterProps) {
         </div>
         <div className="dt-main">
           <h1>{form.mode === 'account' ? `Welcome ${form.shownName}` : form.mode === 'register' ? 'Create an account' : 'Welcome to tuxos'}</h1>
-          {form.mode === 'account'
-            ? <p className="dt-label">Press OK to continue.</p>
-            : onPasswordPrompt
-              ? <label className="dt-label">Please enter your password
-                <input type="password" aria-label="Password" autoFocus disabled={form.busy} value={form.password}
-                  onChange={(event) => form.setPassword(event.target.value)} />
-              </label>
-              : <label className="dt-label">Please enter your user name
-                <input aria-label="Username" spellCheck={false} autoFocus disabled={form.busy} value={form.username}
-                  onChange={(event) => form.setUsername(event.target.value)} />
-              </label>}
+          {onPasswordPrompt
+            ? <label className="dt-label">Please enter your password
+              <input type="password" aria-label="Password" autoFocus disabled={form.busy} value={form.password}
+                onChange={(event) => form.setPassword(event.target.value)} />
+            </label>
+            : <label className="dt-label">Please enter your user name
+              <input aria-label="Username" spellCheck={false} autoFocus disabled={form.busy} value={form.username}
+                onChange={(event) => form.setUsername(event.target.value)} />
+            </label>}
           <p className={`dt-msg ${form.error ? 'error' : ''}`} role={form.error ? 'alert' : 'status'}>{form.error || form.hint}</p>
         </div>
       </div>
       <div className="dt-buttons">
-        <button type="submit" disabled={form.busy} aria-label={form.needsPassword && !askPassword ? 'OK' : 'Log in'}>OK</button>
+        <button type="submit" disabled={form.busy} aria-label={form.needsPassword && !onPasswordPrompt ? 'OK' : 'Log in'}>OK</button>
         <button type="button" onClick={startOver}>Start Over</button>
         <button
           type="button"

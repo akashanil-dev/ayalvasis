@@ -4,6 +4,10 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T07:26:17+05:30 | AI coding assistant | Themed, clearer learning labs | Redesigned the Learn Linux header, the Learn Docker lab and chmod Arcade to use the desktop theme tokens, with clearer task cards, progress and help buttons. | Pending | Typecheck passed; 288 tests passed; screenshots checked in KDE and CDE. |
+
+| 2026-10-11T07:13:33+05:30 | AI coding assistant | Unlock password and Plasma splash | Required the account password when continuing a signed-in account, rebuilt the Plasma splash and desktop fade-in, and updated the account test. | Pending | Typecheck passed; 288 tests passed; splash screenshot checked. |
+
 | 2026-10-11T06:58:38+05:30 | AI coding assistant | Accounts, icon preloading, AI course start screen | Built the account service and tests, the account modes on all four login screens, account-backed saving, real-password sudo, icon and wallpaper preloading, the generating state for Learn Linux and the deploy changes. | Pending | Typecheck passed; 288 tests passed; account flow checked with curl and across two Chromium profiles. |
 
 | 2026-10-11T06:33:24+05:30 | AI coding assistant | Learn Linux syllabus timeout | Measured the live 504, lowered reasoning effort for GPT-5 models and widened the API and browser timeouts, with a test update. | Pending | Typecheck passed; 274 tests passed. |

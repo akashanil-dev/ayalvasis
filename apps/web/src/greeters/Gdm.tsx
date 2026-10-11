@@ -24,7 +24,6 @@ export function Gdm(props: GreeterProps) {
     type="submit"
     aria-label="Log in"
     disabled={form.busy}
-    autoFocus={form.mode === 'account'}
   ><Icon name="arrow" /></button>;
 
   return <main className="greeter gdm">
@@ -57,15 +56,13 @@ export function Gdm(props: GreeterProps) {
             type="password"
             aria-label="Password"
             placeholder="Password"
+            autoFocus={form.mode === 'account'}
             disabled={form.busy}
             value={form.password}
             onChange={(event) => form.setPassword(event.target.value)}
           />
           {go}
         </div>
-      </div>}
-      {form.mode === 'account' && <div className="gdm-row">
-        <div className="gdm-entry"><span className="gdm-nopass">Sign in</span>{go}</div>
       </div>}
       <p className={`gdm-msg ${form.error ? 'error' : ''}`} role={form.error ? 'alert' : 'status'}>
         {form.error || form.hint}

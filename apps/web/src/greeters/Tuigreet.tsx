@@ -54,13 +54,13 @@ export function Tuigreet(props: GreeterProps) {
         : <p className="tui-line"><span className="tui-key">Username:</span><span>{form.shownName}</span></p>}
       {form.needsPassword && <label className="tui-line">
         <span className="tui-key">Password:</span>
-        <input type="password" aria-label="Password" disabled={form.busy} value={form.password}
+        <input type="password" aria-label="Password" autoFocus={form.mode === 'account'} disabled={form.busy} value={form.password}
           onChange={(event) => form.setPassword(event.target.value)} />
       </label>}
       <p className={`tui-msg ${form.error ? 'error' : ''}`} role={form.error ? 'alert' : 'status'}>
         {form.busy ? 'Authenticating...' : form.error || `${form.hint} Press Enter to log in.`}
       </p>
-      <button type="submit" className="tui-submit" aria-label="Log in" disabled={form.busy} autoFocus={form.mode === 'account'} />
+      <button type="submit" className="tui-submit" aria-label="Log in" disabled={form.busy} />
     </form>
     <div className="tui-bar">
       {form.others.length > 0 && <button type="button" className="tui-hint" onClick={accounts}><b>F2</b> Accounts</button>}

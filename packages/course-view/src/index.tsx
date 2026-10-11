@@ -95,10 +95,7 @@ export function LearningLabView({ system, courseId, variant }: {
         <h1>{status.course.title}</h1>
         <p>{status.course.summary}</p>
       </div>
-      <div className="lab-progress" aria-label="Course progress">
-        <strong>{status.lessons.reduce((total, item) => total + item.completed, 0)}</strong>
-        <span>/ {status.lessons.reduce((total, item) => total + item.steps, 0)} tasks complete</span>
-      </div>
+      <LabProgress lessons={status.lessons} />
     </header>
     <div className="lab-layout">
       <aside className="lab-syllabus" aria-label="AI-generated syllabus">
@@ -118,13 +115,17 @@ export function LearningLabView({ system, courseId, variant }: {
         {error && <p className="learn-error" role="alert">{error}</p>}
         {active && active.lesson.id === lesson?.id ? <>
           <section className="lab-task-card">
-            <div className="lab-task-meta"><span>DAY {active.lesson.id.replace(/\D/g, '') || '01'}</span><span>LIVE ASSESSMENT</span></div>
+            <div className="lab-task-meta">
+              <span>Day {active.lesson.id.replace(/\D/g, '') || '1'}</span>
+              <span>Task {active.stepIndex + 1} of {active.steps.length}</span>
+              {active.step.recap && <span className="lab-recap">Recap</span>}
+            </div>
             <h2>{active.lesson.title}</h2>
-            <p className="lab-scenario">{active.lesson.story}</p>
-            <div className="lab-task-prompt"><strong>Task</strong><span>{active.step.task}</span></div>
+            {active.lesson.story && <p className="lab-scenario">{active.lesson.story}</p>}
+            <div className="lab-task-prompt"><strong>Your task</strong><span>{active.step.task}</span></div>
             <div className="lab-task-actions">
-              <button onClick={() => void terminal.current?.run('/hint')}>Need a hint?</button>
-              <button onClick={() => void terminal.current?.run('/answer')}>Show detailed answer</button>
+              <button onClick={() => void terminal.current?.run('/hint')}>Hint</button>
+              <button onClick={() => void terminal.current?.run('/answer')}>Show answer</button>
               <button className="quiet" onClick={() => void call('quit')}>Pause lab</button>
             </div>
           </section>
@@ -137,6 +138,16 @@ export function LearningLabView({ system, courseId, variant }: {
           onStart={() => lesson && void call('start', { lesson: lesson.id })} summary={status.course.summary} />}
       </main>
     </div>
+  </div>;
+}
+
+/** Tasks done across the whole course, as a number and a bar. */
+function LabProgress({ lessons }: { lessons: { steps: number; completed: number }[] }) {
+  const done = lessons.reduce((total, item) => total + item.completed, 0);
+  const total = lessons.reduce((sum, item) => sum + item.steps, 0);
+  return <div className="lab-progress" aria-label={`Course progress: ${done} of ${total} tasks`}>
+    <span><strong>{done}</strong> / {total} tasks</span>
+    <span className="lab-progress-bar"><i style={{ width: total ? `${(done / total) * 100}%` : 0 }} /></span>
   </div>;
 }
 
@@ -161,30 +172,40 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
       void call('retry').finally(() => setRetrying(false));
     }}>{retrying ? 'Waiting for AI trainer…' : 'Retry AI trainer'}</button>
   </div>;
+  const lesson = status.lessons.find((each) => each.id === active!.lesson.id);
+  const terminalId = `${courseId}-lab`;
+  // The hint and answer buttons type the same slash commands a learner can type themselves.
+  const type = (command: string) => window.dispatchEvent(new CustomEvent('tuxos:terminal-type', {
+    detail: { windowId: terminalId, data: `${command}\r`, accepted: false },
+  }));
   return <div className="linux-terminal-lab">
     <header className="linux-mission" aria-label="Current Linux mission">
-      <svg className="linux-mission-pet" viewBox="0 0 64 72" role="img" aria-label="Linux penguin trainer">
-        <ellipse cx="32" cy="39" rx="23" ry="29" fill="#17151f" stroke="#a78bfa" strokeWidth="2" />
-        <ellipse cx="32" cy="44" rx="16" ry="20" fill="#f4f1ff" />
-        <ellipse cx="25" cy="27" rx="3" ry="4" fill="#fff" />
-        <ellipse cx="39" cy="27" rx="3" ry="4" fill="#fff" />
-        <circle cx="25" cy="28" r="1.5" fill="#17151f" />
-        <circle cx="39" cy="28" r="1.5" fill="#17151f" />
-        <path d="m27 34 5-3 5 3-5 4z" fill="#f5a623" />
-        <ellipse cx="20" cy="67" rx="9" ry="3" fill="#f5a623" />
-        <ellipse cx="44" cy="67" rx="9" ry="3" fill="#f5a623" />
-      </svg>
-      <div className="linux-mission-copy">
-        <div className="linux-mission-meta">
-          <span>LINUX MISSION</span>
-          <span className={task.recap ? 'is-recap' : 'is-new'}>{task.recap ? 'RECAP' : 'NEW TASK'}</span>
-        </div>
-        <p className="linux-mission-scenario">{active?.lesson.story}</p>
-        <p className="linux-mission-task">{task.task}</p>
-        <p className="linux-mission-help">Enter to check <span>·</span> /hint <span>·</span> /answer</p>
+      <div className="linux-mission-top">
+        <span className="linux-mission-day">{active!.lesson.title}</span>
+        <span className={`linux-mission-kind ${task.recap ? 'is-recap' : 'is-new'}`}>{task.recap ? 'Recap' : 'New skill'}</span>
+        <span className="linux-mission-count">Task {active!.stepIndex + 1} of {active!.steps.length}</span>
+        <span className="linux-mission-dots" aria-hidden="true">
+          {active!.steps.map((step, index) => <i
+            key={step.id}
+            className={step.done ? 'done' : index === active!.stepIndex ? 'current' : ''}
+          />)}
+        </span>
+        {lesson && <span className="linux-mission-course" title="Tasks completed in this day">
+          {lesson.completed}/{lesson.steps} done
+        </span>}
+      </div>
+      {active!.lesson.story && <p className="linux-mission-scenario">{active!.lesson.story}</p>}
+      <div className="linux-mission-task">
+        <span className="linux-mission-label">Your task</span>
+        <p>{task.task}</p>
+      </div>
+      <div className="linux-mission-actions">
+        <span className="linux-mission-help">Type one command in the terminal below and press <kbd>Enter</kbd> to check it.</span>
+        <button type="button" onClick={() => type('/hint')}>Hint</button>
+        <button type="button" onClick={() => type('/answer')}>Show answer</button>
       </div>
     </header>
-    <TerminalSurface system={system} learningModule={courseId} />
+    <TerminalSurface system={system} learningModule={courseId} inputId={terminalId} />
   </div>;
 }
 

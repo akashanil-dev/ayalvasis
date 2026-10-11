@@ -78,6 +78,8 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
   const login = useCallback(async ({ mode, username, password }: LoginRequest) => {
     if (mode !== 'guest' && !accounts) throw new Error('Accounts are not available here.');
     if (mode === 'signin') await accounts!.client.login(username, password);
+    // Unlocking, or returning to a still-signed-in account after a restart: check the password first.
+    if (mode === 'account' && !(await accounts!.client.verify(password))) throw new Error('Wrong password. Try again.');
     if (mode === 'register') {
       // A guest who signs up with the same name brings their progress into the new account.
       const local = await accounts!.localSave();

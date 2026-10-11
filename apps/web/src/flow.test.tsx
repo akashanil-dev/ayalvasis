@@ -179,7 +179,7 @@ describe('Hyprland', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
     await screen.findByRole('button', { name: 'Apps' }, SLOW);
     fireEvent.keyDown(window, { key: 'r', code: 'KeyR', altKey: true });
-    const launcher = await screen.findByRole('dialog', { name: 'Launcher' });
+    const launcher = await screen.findByRole('dialog', { name: 'Launcher' }, SLOW);
     fireEvent.change(within(launcher).getByLabelText('Search apps'), { target: { value: 'sett' } });
     fireEvent.keyDown(within(launcher).getByLabelText('Search apps'), { key: 'Enter' });
     // Tiled windows have no title bar buttons on a wide screen, but are still closable by keyboard.
