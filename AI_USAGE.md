@@ -4,6 +4,8 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T06:17:37+05:30 | Codex | Recolor Learn Docker for KDE Plasma | Added Plasma-scoped Breeze Dark colors to the Docker learning workspace in `packages/course-view/src/course.css`; preserved layout and content. | Human review pending. | `git diff --check` passed; no tests or browser visual review run. |
+
 | 2026-10-11T05:39:20+05:30 | AI coding assistant | CI/CD and deployment | Wrote the GitHub Actions workflow, Caddy site block, systemd unit, server setup and release scripts, and the proxy-aware rate limiting in `apps/api/src/server.ts`. | Pending | Release script and rollback tested locally; rate limiting checked with curl; tests pass on Node 24. Not yet run on the server or in GitHub Actions. |
 
 | 2026-10-11T05:00:28+05:30 | AI coding assistant | Vasi as a teaching agent | Designed and implemented the teacher persona, agent tools, screen agent with drawn pointer, sudo request dialog, Stop control, terminal typing channel, sudo option fix and tests across `packages/tutor`, `apps/web`, `apps/api`, `modules/terminal` and `packages/shell`. | Pending | `npm run typecheck` passed; 24 test files and 270 tests passed; `npm run build` passed; agent flow checked in headless Chromium against a scripted model stand-in. |

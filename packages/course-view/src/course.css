@@ -321,3 +321,85 @@
 .linux-terminal-unavailable button { align-self: center; margin-top: 12px; padding: 8px 13px; border: 1px solid #30363d; border-radius: 4px; background: #161b22; color: #79c0ff; font: 12px var(--font-mono); cursor: pointer; }
 .linux-terminal-loading { display: grid; height: 100%; place-items: center; background: #0d1117; color: #8b949e; font: 13px var(--font-mono); }
 @media (max-width: 560px) { .linux-mission { gap: 12px; min-height: 0; padding: 12px; } .linux-mission-pet { width: 42px; height: 50px; flex-basis: 42px; } .linux-mission-task { font-size: 14px; } .linux-mission-scenario { font-size: 13px; } }
+/* KDE recolors the Docker learning workspace to Breeze Dark without changing its layout or labels. */
+.de-plasma .docker-desktop { --docker-blue: var(--accent); --docker-ink: var(--window-fg); --docker-muted: var(--muted); background: var(--window-bg); }
+.de-plasma .docker-topbar,
+.de-plasma .docker-nav,
+.de-plasma .docker-metrics > div,
+.de-plasma .docker-list-panel,
+.de-plasma .docker-editor-panel,
+.de-plasma .docker-recent,
+.de-plasma .docker-console { border-color: var(--line); background: var(--window-sidebar); }
+.de-plasma .docker-brand,
+.de-plasma .docker-mission-task,
+.de-plasma .docker-metrics strong,
+.de-plasma .docker-panel-title strong,
+.de-plasma .docker-table-row strong,
+.de-plasma .docker-empty-state strong { color: var(--window-fg); }
+.de-plasma .docker-brand > span:last-child,
+.de-plasma .docker-context,
+.de-plasma .docker-user,
+.de-plasma .docker-nav-label,
+.de-plasma .docker-nav > button small,
+.de-plasma .docker-learning-path button,
+.de-plasma .docker-learning-path button > span:first-child,
+.de-plasma .docker-learning-path button small,
+.de-plasma .docker-ai-card p,
+.de-plasma .docker-ai-card > small,
+.de-plasma .docker-mission-scenario,
+.de-plasma .docker-mission-progress,
+.de-plasma .docker-page-heading > div:first-child > span,
+.de-plasma .docker-engine-status,
+.de-plasma .docker-metrics span,
+.de-plasma .docker-metrics small,
+.de-plasma .docker-panel-title small,
+.de-plasma .docker-table-head,
+.de-plasma .docker-table-row,
+.de-plasma .docker-table-row code,
+.de-plasma .docker-empty-state,
+.de-plasma .docker-file-badge,
+.de-plasma .docker-editor-actions span,
+.de-plasma .docker-footer,
+.de-plasma .docker-desktop-loading { color: var(--muted); }
+.de-plasma .docker-context i,
+.de-plasma .docker-engine-status i { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent); }
+.de-plasma .docker-nav > button { color: var(--window-fg); }
+.de-plasma .docker-nav > button:hover,
+.de-plasma .docker-learning-path button:hover { background: var(--hover); }
+.de-plasma .docker-nav > button.active,
+.de-plasma .docker-learning-path button.current { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+.de-plasma .docker-path-label,
+.de-plasma .docker-panel-title,
+.de-plasma .docker-table-head,
+.de-plasma .docker-table-row { border-color: var(--line); }
+.de-plasma .docker-ai-card { border-color: var(--line); background: var(--surface); }
+.de-plasma .docker-ai-card > span { color: var(--accent-strong); }
+.de-plasma .docker-progress { background: var(--surface-2); }
+.de-plasma .docker-mission { border-color: var(--accent); background: linear-gradient(105deg, var(--surface), var(--window-sidebar) 75%); }
+.de-plasma .docker-mission-avatar,
+.de-plasma .docker-avatar { background: var(--surface-2); color: var(--accent-strong); }
+.de-plasma .docker-mission-meta,
+.de-plasma .docker-mission-progress strong,
+.de-plasma .docker-mission-actions button,
+.de-plasma .docker-start,
+.de-plasma .docker-panel-title button { color: var(--accent-strong); }
+.de-plasma .docker-mission-meta b { background: color-mix(in srgb, var(--accent) 24%, var(--surface)); color: var(--accent-strong); }
+.de-plasma .docker-mission-meta b.new { background: color-mix(in srgb, var(--ok) 20%, var(--surface)); color: var(--ok); }
+.de-plasma .docker-mission-actions button,
+.de-plasma .docker-start { border-color: var(--line); background: var(--surface-2); }
+.de-plasma .docker-mission-progress { border-color: var(--line); }
+.de-plasma .docker-metrics > div,
+.de-plasma .docker-list-panel,
+.de-plasma .docker-editor-panel,
+.de-plasma .docker-recent,
+.de-plasma .docker-console { border: 1px solid var(--line); }
+.de-plasma .docker-table-row strong i { background: var(--muted); }
+.de-plasma .docker-table-row strong i.running { background: var(--ok); }
+.de-plasma .docker-footer span:first-child { color: var(--ok); }
+.de-plasma .docker-table-row strong i.image { background: var(--accent); }
+.de-plasma .docker-empty-state > span { color: var(--accent-strong); }
+.de-plasma .docker-file-badge { border-color: var(--line); background: var(--surface-2); }
+.de-plasma .docker-editor-panel textarea { background: #1b1e20; color: var(--window-fg); }
+.de-plasma .docker-editor-actions button { background: var(--accent); color: var(--accent-fg); }
+.de-plasma .docker-editor-error { border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 12%, var(--window-bg)); color: var(--danger); }
+.de-plasma .docker-desktop-loading { background: var(--window-bg); }

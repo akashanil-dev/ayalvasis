@@ -4,6 +4,15 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T06:17:37+05:30 — Match Learn Docker colors to KDE Plasma
+
+- Changed: Recolored the Learn Docker workspace surfaces, text, borders, and status accents to KDE Breeze Dark when shown in Plasma. The Docker workspace layout and content are unchanged.
+- Why: Keep the Learn Docker window visually consistent with the selected KDE desktop theme.
+- Files: `packages/course-view/src/course.css` and this changelog.
+- Validation: `git diff --check` passed. No tests were run for this CSS-only change.
+- Limitations: The recolor applies only under KDE Plasma; other desktop environments retain the existing Docker palette. No browser visual review was run.
+
+
 ## 2026-10-11T05:39:20+05:30 — CI/CD and production deployment setup
 
 - Changed:
