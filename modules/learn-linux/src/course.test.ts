@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { course, learnLinux, survey } from './index';
 import { terminal } from '../../terminal/src/index';
 import { learnDocker } from '../../learn-docker/src/index';
+import { apt } from '../../apt/src/index';
 
 const memory = (): KeyValueStorage => {
   const values = new Map<string, string>();
@@ -242,7 +243,11 @@ describe('Learn Linux course', () => {
     expect(builtIn.survey).toBeUndefined();
     expect(builtIn.builtIn).toEqual({ aiOff: true });
     expect(builtIn.course.title).toBe(course.title);
-    expect(builtIn.active?.step.id).toBe('whoami');
+    // Nothing is judged until the learner picks a lesson.
+    expect(builtIn.active).toBeNull();
+    expect((await (await system.createTerminal()).run('ls')).feedback).toBeUndefined();
+    await system.dispatch('learn-linux.start', { lesson: 'first-words' });
+    expect((await status(system)).active?.step.id).toBe('whoami');
 
     const shell = await system.createTerminal({ learningModule: 'learn-linux' });
     expect((await shell.run('ls')).feedback).toMatchObject({ correct: false });
@@ -280,8 +285,33 @@ describe('Learn Linux course', () => {
     expect(await system.dispatch('learn-linux.survey', { answers: { terminal: 3 } })).toMatchObject({
       ok: false, error: { message: expect.stringContaining('Settings') },
     });
-    expect(await status(system)).toMatchObject({ builtIn: { aiOff: true }, active: { step: { id: 'whoami' } } });
+    expect(await status(system)).toMatchObject({ builtIn: { aiOff: true }, active: null, lessons: course.lessons.map((lesson) => ({ id: lesson.id })) });
   });
+
+  // Lesson CI for the built-in course (used without an AI key): each lesson's solution must complete it.
+  it.each(course.lessons.filter((lesson) => lesson.solution.every((step) => typeof step === 'string')).map((lesson) => [lesson.id]))(
+    'built-in lesson %s is completed by its own solution',
+    async (id) => {
+      const system = createLocalSystem({
+        storage: memory(),
+        learning: { available: () => false, request: async () => { throw new Error('no AI'); } },
+        modules: [
+          { manifest: learnLinux.manifest, load: async () => learnLinux },
+          { manifest: terminal.manifest, load: async () => terminal },
+          { manifest: apt.manifest, load: async () => apt },
+        ],
+      });
+      await system.boot('ada');
+      await status(system);
+      const lesson = course.lessons.find((each) => each.id === id)!;
+      expect(await system.dispatch('learn-linux.start', { lesson: id })).toMatchObject({ ok: true });
+      const shell = await system.createTerminal({ learningModule: 'learn-linux' });
+      for (const step of lesson.solution) await shell.run(step as string);
+      const done = await status(system);
+      expect(done.active).toBeNull();
+      expect(done.lessons.find((each) => each.id === id)?.completed).toBe(lesson.steps.length);
+    },
+  );
 
   it('rejects unknown lessons with a clear error', async () => {
     const system = await boot();

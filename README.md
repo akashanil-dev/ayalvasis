@@ -15,13 +15,18 @@ Docker, games) is a module that shows up as a desktop icon.
   screen and icon theme. Open windows are saved, so your desktop comes back as you left it.
 - **Terminal.** A bash-like shell in each window, with pipes, redirection, variables, globs, `&&`/`||`, Tab
   completion, history and line editing. Ctrl+Alt+T opens one from anywhere.
+- **Installing software with apt.** `apt`, `apt-get` and `dpkg` behave like Ubuntu's: changing packages needs
+  `sudo`, `apt update` fetches the package lists first, dependencies come along (and `apt autoremove` cleans
+  them up), and installed programs land in `/usr/bin` with dpkg's database in `/var/lib/dpkg`. Packages to try:
+  `tree`, `hello`, `cowsay`, `sl`, `neofetch`, `fortune-mod` and `jq`. A missing program says how to get it
+  (`sudo apt install tree`), as on Ubuntu.
 - **Files and Text Editor.** A point-and-click file manager and an editor over the same filesystem. Both show
   real permission errors.
 - **Learn Linux.** Before the first lab, the learner rates their Linux experience in five star questions. An AI
   trainer then designs a seven-day lab of real-world tasks at that level. Each task is explained first, then
   practised in the terminal, with one command per task. The trainer only nudges: hints and corrections get
   closer step by step, and the full answer is shown only after five wrong attempts, for the learner to type
-  themselves. **Retake survey** designs a new lab. Without an AI key, Learn Linux teaches its six built-in
+  themselves. **Retake survey** designs a new lab. Without an AI key, Learn Linux teaches its seven built-in
   lessons instead, each command checked by the lesson's own rules.
 - **Learn Docker.** A simulated `docker` CLI (`run`, `ps`, `images`, `logs`, `exec`, published ports with
   `curl`...) with an AI-designed lab, or five built-in lessons when no AI is available.
@@ -45,7 +50,7 @@ Linux kernel. It models the parts a learner touches: users, file ownership, perm
 apps/web      React desktop (Vite, xterm.js)
 apps/api      Node API: AI tutor and trainers, accounts, saves
 packages/     kernel, sdk, shell, lessons, module-host, system, tutor, course-view, appearance
-modules/      terminal, files, editor, settings, learn-linux, learn-docker, chmod-arcade, about
+modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker, chmod-arcade, about
 ```
 
 - **Kernel** (`packages/kernel`): holds the system state. The only way to change it is
@@ -60,6 +65,11 @@ modules/      terminal, files, editor, settings, learn-linux, learn-docker, chmo
 - **SDK and module host** (`packages/sdk`, `packages/module-host`): a module declares its apps, commands and
   capabilities in a manifest, and its code loads only when first used. Every module action also becomes a tool
   for Vasi, so new modules extend the tutor without tutor changes.
+- **Package manager** (`modules/apt`): a catalogue of packages (`catalog.ts`) with real versions, sizes and
+  dependencies; dpkg's database lives in the simulated filesystem (`dpkg.ts`), so installs are saved with the
+  learner's system; each package's program is written in TypeScript (`programs.ts`), since there are no real
+  binaries. Package commands are registered from the start but say "not found" until installed, and a command's
+  optional `available()` keeps them out of `help` and Tab completion.
 - **Lessons** (`packages/lessons`): fixed courses are JSON, with each step checked by a small condition over
   what happened and the system state. AI courses run a survey, ask the API for a syllabus and send each command
   to it for assessment. Progress is saved in the learner's home folder (`~/.local/share/tuxos/`).
@@ -142,6 +152,10 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
 - It is a simulation: there are no real processes, background jobs or long-running interactive programs, and
   the shell implements a teaching subset of bash.
 - Group permissions are not modelled, and `ls -l` shows times in UTC.
+- apt only knows the packages in its catalogue, each written for TuxOS; there are no real `.deb` packages or
+  downloads. It can't answer its own "Do you want to continue?" question, so installs that pull in extra
+  packages, and all removals, need `-y`. `docker.io` and the base system are listed as installed but can't be
+  removed.
 - The Docker simulation covers the commands and images listed above. Interactive container shells
   (`-it ... sh`) are not available.
 - Vasi's agent flow was tested with a scripted model and in a real browser. The quality of his answers against

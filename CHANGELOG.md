@@ -4,6 +4,48 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
+## 2026-10-11T23:10:00+05:30 — apt: install software like on Ubuntu
+
+- Changed:
+  - `modules/apt` (new module, started at boot): `apt` (update, upgrade, install, remove, purge, autoremove,
+    search, show, list), `apt-get`, `dpkg` (-l, -L, -s) and `which`, with Ubuntu 24.04's messages:
+    - Without sudo, apt fails on the dpkg lock ("are you root?").
+    - Until `apt update` runs, it can't locate any package.
+    - Dependencies are installed too and marked automatic, so `apt autoremove` can clean them up.
+    - Removing a library also removes the programs that need it.
+    - apt asks before installing extras or removing anything. TuxOS can't answer prompts yet, so it stops
+      there and suggests `-y`.
+
+    dpkg's database lives in the simulated filesystem (`/var/lib/dpkg/status`, `info/*.list`,
+    `/var/lib/apt/extended_states`, `/var/lib/apt/lists`), so installs are saved with the learner's system.
+    Packages: `tree`, `hello`, `cowsay`, `sl`, `neofetch`, `fortune-mod` (with `fortunes-min` and `librecode0`)
+    and `jq` (with `libjq1` and `libonig5`; it supports `. .key .[n] .[] keys length` and `|`).
+    The base system and `docker.io` are listed as installed and can't be removed.
+    Programs that aren't installed print Ubuntu's "Command 'tree' not found, but can be installed with:
+    sudo apt install tree".
+  - `packages/sdk`, `packages/module-host`, `packages/shell`: commands may have `available()`, so `help` and
+    Tab completion leave out programs that aren't installed.
+  - Learn Linux: a seventh built-in lesson, "Installing software with apt". A new lesson CI test replays every
+    built-in lesson's solution with apt loaded.
+  - Vasi's instructions and the trainer's syllabus prompt mention apt and its packages.
+  - The built-in course (no AI key) no longer starts a lesson on its own: the learner picks one. Before this,
+    every terminal judged commands as soon as the desktop started. The wrong-answer line no longer repeats
+    the terminal's own hint text.
+  - README.
+- Why: installing software is one of the first real tasks a Linux user meets, and it teaches sudo along the way.
+- Validation: `npm run check` passed (332 tests), with 13 new apt tests covering:
+  - the root errors, and the lists being empty before update,
+  - install, dependencies, the prompt, -y, remove, autoremove and purge,
+  - search, show, list and dpkg,
+  - packages still installed after a restart,
+  - each program.
+
+  Plus the built-in lesson replays. In a real browser, the Terminal ran `sudo apt update`,
+  `sudo apt install -y tree cowsay`, `tree` and `cowsay`, with no trainer verdicts, and Learn Linux showed its
+  seven built-in lessons.
+- Limitations: only these packages exist and there are no real .deb files. Interactive prompts need -y.
+  `apt upgrade` always finds nothing to upgrade.
+
 ## 2026-10-11T22:50:00+05:30 — Learners bring their own OpenAI API key; AI turns off cleanly without one
 
 - Changed:

@@ -10,6 +10,7 @@
   "dependencies": {
     "@tuxos/appearance": "*",
     "@tuxos/module-about": "*",
+    "@tuxos/module-apt": "*",
     "@tuxos/module-chmod-arcade": "*",
     "@tuxos/module-editor": "*",
     "@tuxos/module-files": "*",

@@ -209,6 +209,8 @@ function commandStub(
   host: ModuleHost, records: Map<string, Record>, name: string, moduleId: string,
 ): ShellCommandDefinition {
   return {
+    // Until the module is active, a command counts as there; then the module's own definition decides.
+    available: () => records.get(moduleId)?.commands.get(name)?.available?.() ?? true,
     name,
     summary: records.get(moduleId)?.manifest.contributes.commands
       ?.find((command) => command.name === name)?.summary ?? name,

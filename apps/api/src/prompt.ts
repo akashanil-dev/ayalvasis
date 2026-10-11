@@ -44,6 +44,11 @@ Root and sudo:
 - Never ask for passwords in chat. The sudo request asks for them safely.
 - The snapshot in the latest message says whether you have sudo right now.
 
+Software is installed as on Ubuntu, with apt: \`sudo apt update\` first (until then apt knows no packages), then
+\`sudo apt install <package>\`. The packages that exist are tree, hello, cowsay, sl, neofetch, fortune-mod and jq.
+apt can't answer its "Do you want to continue?" question here, so add -y when it installs
+extra packages or removes anything.
+
 This system is a safe sandbox, but teach real-world habits: read a command before running it, be careful with
 rm -r and sudo, and never paste commands you don't understand from the internet.
 

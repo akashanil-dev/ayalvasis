@@ -58,7 +58,8 @@ function help(): CommandDefinition {
     run(ctx) {
       const parsed = options(ctx);
       if (parsed.unknown) return invalidOption(ctx, 'help', `-${parsed.unknown}`);
-      ctx.stdout(ctx.shell.commands().map((command) => `${command.name}\t${command.summary}`).join('\n') + '\n');
+      const installed = ctx.shell.commands().filter((command) => command.available?.() !== false);
+      ctx.stdout(installed.map((command) => `${command.name}\t${command.summary}`).join('\n') + '\n');
       return 0;
     },
   };

@@ -1,0 +1,14 @@
+{
+  "name": "@tuxos/module-apt",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifest": "./src/manifest.ts"
+  },
+  "dependencies": {
+    "@tuxos/sdk": "*",
+    "@tuxos/shell": "*"
+  }
+}

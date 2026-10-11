@@ -76,6 +76,8 @@ export interface CommandDefinition<C = any> {
   summary: string;
   usage: string;
   run(ctx: C): Promise<number> | number;
+  /** False while the command isn't installed (e.g. its package is missing): help and completion leave it out. */
+  available?(): boolean;
 }
 
 export type ActivationEvent = 'onStartup' | `onCommand:${string}` | `onApp:${string}`;

@@ -192,10 +192,9 @@ export class AICourseRunner {
   private useBuiltInCourse(): void {
     this.aiUnavailable = false;
     this.unavailableReason = '';
+    // No lesson is active until the learner picks one, so other terminals aren't judged in the meantime.
     this.state = fallbackProgress(this.course, this.profile, this.ctx.id);
     this.fallbackMode = true;
-    this.state.active = { day: 1, task: 0 };
-    this.setUpLesson(1);
     this.remember({ kind: 'plan', summary: 'Using the reviewed built-in course because AI is not available.' });
     learningRuntime.activate(this.ctx.id);
     this.save();
@@ -422,7 +421,7 @@ export class AICourseRunner {
     // Opening an app that isn't the task is not an attempt; only commands count as misses.
     if (!correct && event.action.type !== 'shell.ran') return;
     state.lastResult = correct ? 'correct' : 'wrong';
-    state.lastFeedback = correct ? task.explain || 'Correct!' : 'Not quite. Read the task again, or type /hint for a nudge.';
+    state.lastFeedback = correct ? task.explain || 'Correct!' : 'That command didn\'t complete the task.';
     if (!correct) this.recordFailure(state, task.id);
     this.remember({ kind: 'attempt', taskId: task.id, summary: `${run.line || 'session opened'} — ${state.lastFeedback}`, correct });
     if (correct) {

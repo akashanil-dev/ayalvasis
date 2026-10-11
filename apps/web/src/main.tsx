@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { manifest as aboutManifest } from '@tuxos/module-about/manifest';
+import { manifest as aptManifest } from '@tuxos/module-apt/manifest';
 import { manifest as arcadeManifest } from '@tuxos/module-chmod-arcade/manifest';
 import { manifest as editorManifest } from '@tuxos/module-editor/manifest';
 import { manifest as filesManifest } from '@tuxos/module-files/manifest';
@@ -77,6 +78,7 @@ const system = createLocalSystem({
       load: () => import('@tuxos/module-settings').then((module) => module.settings),
     },
     { manifest: aboutManifest, load: () => import('@tuxos/module-about').then((module) => module.about) },
+    { manifest: aptManifest, load: () => import('@tuxos/module-apt').then((module) => module.apt) },
   ],
 });
 const tutor = httpTransport('/api/tutor', (url, init) => fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } }));

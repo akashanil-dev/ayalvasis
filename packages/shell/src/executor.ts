@@ -60,7 +60,7 @@ export class ShellImpl implements ShellInternals {
     return complete({
       cwd: this.cwd,
       home: this.env.HOME ?? this.cwd,
-      commandNames: () => this.registry.list().map((command) => command.name),
+      commandNames: () => this.registry.list().filter((command) => command.available?.() !== false).map((command) => command.name),
       list: (path) => {
         const result = this.dispatch<Stat[]>('fs.list', { path }, this.kernel.user);
         return result.ok ? result.value : undefined;

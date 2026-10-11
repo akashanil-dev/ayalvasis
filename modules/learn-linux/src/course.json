@@ -234,6 +234,42 @@
         }
       ],
       "solution": ["ls -l", "cat /etc/shadow", "sudo cat /etc/shadow", "chmod 600 diary.txt"]
+    },
+    {
+      "id": "installing-software",
+      "title": "Installing software with apt",
+      "story": "Linux installs programs from package repositories with a package manager. On Ubuntu that is apt. You'll find out why apt needs root, refresh its package lists, and install a program called tree.",
+      "steps": [
+        {
+          "id": "apt-denied",
+          "task": "Try to install the tree program without sudo: apt install tree",
+          "hints": ["Type apt install tree. It's supposed to fail!"],
+          "check": { "ran": { "command": "apt", "stderr": "are you root\\?" } },
+          "explain": "Installing software changes the whole system, so apt only lets root do it."
+        },
+        {
+          "id": "apt-update",
+          "task": "Refresh the list of available packages as root: sudo apt update",
+          "hints": ["apt update downloads the latest list of packages. It needs root too.", "Type sudo apt update"],
+          "check": { "ran": { "command": "apt", "line": "update", "code": 0 } },
+          "explain": "apt update refreshes the package lists. Do it before installing, or apt may not find the package."
+        },
+        {
+          "id": "apt-install",
+          "task": "Install tree as root: sudo apt install tree",
+          "hints": ["Put sudo in front: sudo apt install tree"],
+          "check": { "exists": "/usr/bin/tree" },
+          "explain": "apt downloaded the package, unpacked it, and put the tree program in /usr/bin."
+        },
+        {
+          "id": "use-tree",
+          "task": "Run your new program: tree",
+          "hints": ["Just type tree and press Enter."],
+          "check": { "ran": { "command": "tree", "code": 0 } },
+          "explain": "tree draws your folders as a tree. sudo apt remove uninstalls a package, and apt list --installed shows what you have."
+        }
+      ],
+      "solution": ["apt install tree", "sudo apt update", "sudo apt install tree", "tree"]
     }
   ]
 }
