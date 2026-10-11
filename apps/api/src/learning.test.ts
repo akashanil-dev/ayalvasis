@@ -62,23 +62,43 @@ describe('AI learning backend', () => {
     expect(request.messages[1].content).toContain('Do not include or depend on learner attempt history');
   });
 
-  it('rejects Linux syllabus tasks with chained commands', async () => {
+  it('drops Linux tasks with chained commands but keeps the rest of the syllabus', async () => {
+    const task = { title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], explain: 'why', recap: false };
     const syllabus = { courseId: 'linux', title: 'Linux', summary: 'Lab', days: [
-      { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'Do two things', scenario: 'y', objective: 'z', hints: ['h'], answer: 'whoami && cd ~', explain: 'why', recap: false }] },
+      { day: 1, title: 'Basics', recap: false, tasks: [
+        { ...task, id: 'chain', answer: 'whoami && cd ~' },
+        { ...task, id: 'find', answer: 'find /var/log -name "*.log" -exec ls -l {} \\;' },
+        { ...task, id: 'awk', answer: "awk '{print $1; }' access.log" },
+      ] },
+      { day: 2, title: 'Only bad', recap: true, tasks: [{ ...task, id: 'seq', answer: 'cd /tmp; ls' }] },
     ] };
     const { fetcher } = upstream(syllabus);
     const reply = await handleLearning({ operation: 'plan', module: 'learn-linux' }, config, fetcher);
-    expect(reply).toMatchObject({ status: 502, body: { error: 'AI Linux tasks must have exactly one command per question.' } });
+    const body = reply.body as { days: { day: number; tasks: { id: string }[] }[] };
+    expect(reply.status).toBe(200);
+    expect(body.days.map((day) => day.tasks.map((t) => t.id))).toEqual([['find', 'awk']]);
   });
 
-  it('rejects a syllabus whose later day is marked recap but has no recap task', async () => {
+  it('rejects a syllabus with no usable tasks', async () => {
     const syllabus = { courseId: 'linux', title: 'Linux', summary: 'Lab', days: [
-      { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'pwd', explain: 'why', recap: false }] },
-      { day: 2, title: 'Operations', recap: true, tasks: [{ id: 't2', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'ls', explain: 'why', recap: false }] },
+      { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'whoami && cd ~', explain: 'why', recap: false }] },
     ] };
     const { fetcher } = upstream(syllabus);
     const reply = await handleLearning({ operation: 'plan', module: 'learn-linux' }, config, fetcher);
-    expect(reply).toMatchObject({ status: 502, body: { error: 'Every day after day one must begin with exactly one task marked as a recap.' } });
+    expect(reply.status).toBe(502);
+  });
+
+  it('sets day numbers and recap markers from position instead of rejecting a slip', async () => {
+    const task = { title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'pwd', explain: 'why' };
+    const syllabus = { courseId: 'linux', title: 'Linux', summary: 'Lab', days: [
+      { day: 1, title: 'Basics', recap: true, tasks: [{ ...task, id: 'a', recap: true }] },
+      { day: 3, title: 'Operations', tasks: [{ ...task, id: 'b', recap: false }, { ...task, id: 'c', recap: true }] },
+    ] };
+    const { fetcher } = upstream(syllabus);
+    const reply = await handleLearning({ operation: 'plan', module: 'learn-linux' }, config, fetcher);
+    const body = reply.body as { days: { day: number; recap: boolean; tasks: { recap: boolean }[] }[] };
+    expect(reply.status).toBe(200);
+    expect(body.days.map((day) => [day.day, day.recap, day.tasks.map((t) => t.recap)])).toEqual([[1, false, [false]], [2, true, [true, false]]]);
   });
 
   it('keeps continuity context module-scoped and validates its shape', async () => {

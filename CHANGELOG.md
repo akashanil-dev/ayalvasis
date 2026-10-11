@@ -4,6 +4,21 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T08:13:00+05:30 — Learn Linux syllabus no longer thrown away over one flawed task
+
+- Changed: `apps/api/src/learning.ts` now repairs a generated syllabus instead of rejecting it whole. Tasks that
+  are incomplete or (for Linux) chain several commands are dropped and logged; days left empty are removed; day
+  numbers and recap markers are set from position. The one-command check ignores `;` that is escaped
+  (`find … -exec … \;`) or quoted (`awk '{print $1; }'`). A plan with no usable task is still a 502.
+- Why: Production Learn Linux waited for the model (about a minute in a live test) and then returned HTTP 502,
+  because a single off recap marker or a legitimate `\;` in any of ~25 tasks rejected the whole syllabus, and
+  Learn Linux has no offline fallback.
+- Validation: `npm run check` passed (292 tests), including new tests for dropping chained-command tasks, keeping
+  `\;` and quoted `;` answers, rejecting a plan with no usable tasks, and repairing recap markers. Reproduced the
+  live 502 with curl; the server journal was not read, so which rule fired in production is inferred from the code.
+- Limitations: a first task that is renumbered as the recap may not actually review an earlier skill. Generation
+  still takes up to about a minute. Not yet deployed or rechecked against the live model.
+
 ## 2026-10-11T07:53:16+05:30 — Documentation brought up to date
 
 - Changed:

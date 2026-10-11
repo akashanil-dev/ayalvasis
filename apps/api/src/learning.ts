@@ -77,7 +77,7 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     let result: unknown;
     try { result = JSON.parse(content); } catch { return { status: 502, body: { error: 'AI learning service returned invalid structured data.' } }; }
     if (operation === 'plan') result = normalizePlan(result, moduleId);
-    const invalid = validateResult(operation, result, moduleId);
+    const invalid = validateResult(operation, result);
     if (invalid) {
       console.error(`learning ${operation} for ${moduleId} with model ${model}: invalid result: ${invalid}`);
       return { status: 502, body: { error: invalid } };
@@ -146,24 +146,11 @@ function promptFor(operation: LearningOperation, request: Record<string, unknown
   return `Teach the detailed solution for this terminal task. Include the exact command, explain each important token, expected output/evidence, safety considerations, and a small follow-up check. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
 }
 
-function validateResult(operation: LearningOperation, value: unknown, moduleId?: string): string | null {
+function validateResult(operation: LearningOperation, value: unknown): string | null {
   const object = value as Record<string, unknown> | null;
   if (!object || typeof object !== 'object') return 'AI result must be an object.';
   if (operation === 'plan') {
-    if (typeof object.courseId !== 'string' || typeof object.title !== 'string' || typeof object.summary !== 'string' || !Array.isArray(object.days) || object.days.length < 1) return 'AI syllabus is incomplete: expected courseId, title, summary, and days.';
-    const days = object.days as { day?: unknown; title?: unknown; recap?: unknown; tasks?: unknown }[];
-    if (days.some((day, index) => day.day !== index + 1 || typeof day.title !== 'string' || !Array.isArray(day.tasks) || !day.tasks.length
-      || day.recap !== (index > 0))) return 'AI syllabus must have consecutive days and a day-level recap marker after day one.';
-    for (const [index, day] of days.entries()) {
-      const tasks = day.tasks as Record<string, unknown>[];
-      if (tasks.some((task, taskIndex) => !task || task.recap !== (index > 0 && taskIndex === 0))) {
-        return 'Every day after day one must begin with exactly one task marked as a recap.';
-      }
-    }
-    for (const day of days) for (const task of day.tasks as Record<string, unknown>[]) {
-      if (!task || typeof task.id !== 'string' || typeof task.title !== 'string' || typeof task.scenario !== 'string' || typeof task.task !== 'string' || typeof task.objective !== 'string' || !Array.isArray(task.hints) || !task.hints.every((hint) => typeof hint === 'string') || typeof task.answer !== 'string' || typeof task.explain !== 'string') return 'AI syllabus contains an incomplete task.';
-      if (moduleId === 'learn-linux' && !isSingleLinuxCommand(task.answer)) return 'AI Linux tasks must have exactly one command per question.';
-    }
+    if (typeof object.courseId !== 'string' || typeof object.title !== 'string' || typeof object.summary !== 'string' || !Array.isArray(object.days) || object.days.length < 1) return 'AI syllabus is incomplete: expected courseId, title, summary, and at least one day with usable tasks.';
     return null;
   }
   if (typeof object.text !== 'string' && operation !== 'evaluate') return 'AI teaching response is incomplete.';
@@ -172,13 +159,46 @@ function validateResult(operation: LearningOperation, value: unknown, moduleId?:
 }
 
 function isSingleLinuxCommand(answer: string): boolean {
-  return answer.trim().length > 0 && !/[\r\n;]|&&|\|\|/.test(answer);
+  // `find … -exec cmd {} \;` and quoted text such as awk '{print $1; }' contain a ; that does not chain commands.
+  const unquoted = answer.replace(/\\;/g, '').replace(/'[^']*'|"[^"]*"/g, '');
+  return answer.trim().length > 0 && !/[\r\n;]|&&|\|\|/.test(unquoted);
 }
 
-/** The module ID is the stable local cache key; model-generated display IDs are not authoritative. */
+function taskProblem(task: Record<string, unknown> | null, moduleId: string): string | null {
+  if (!task || typeof task !== 'object' || typeof task.id !== 'string' || typeof task.title !== 'string' || typeof task.scenario !== 'string' || typeof task.task !== 'string' || typeof task.objective !== 'string' || !Array.isArray(task.hints) || !task.hints.every((hint) => typeof hint === 'string') || typeof task.answer !== 'string' || typeof task.explain !== 'string') return 'incomplete task';
+  if (moduleId === 'learn-linux' && !isSingleLinuxCommand(task.answer)) return `more than one command: ${task.answer}`;
+  return null;
+}
+
+/**
+ * Repairs what code can repair, so one flawed task out of a whole week does not throw the syllabus away (the
+ * learner would wait a minute for nothing): bad tasks are dropped, empty days removed, and day numbers and
+ * recap markers set from position. The module ID is the stable local cache key; model-generated IDs are not.
+ */
 function normalizePlan(value: unknown, moduleId: string): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-  return { ...(value as Record<string, unknown>), courseId: moduleId };
+  const plan = value as Record<string, unknown>;
+  if (!Array.isArray(plan.days)) return { ...plan, courseId: moduleId };
+  const dropped: string[] = [];
+  const days = (plan.days as Record<string, unknown>[])
+    .filter((day) => day && typeof day === 'object' && typeof day.title === 'string' && Array.isArray(day.tasks))
+    .map((day) => ({
+      ...day,
+      tasks: (day.tasks as Record<string, unknown>[]).filter((task) => {
+        const problem = taskProblem(task, moduleId);
+        if (problem) dropped.push(problem);
+        return !problem;
+      }),
+    }))
+    .filter((day) => day.tasks.length > 0)
+    .map((day, index) => ({
+      ...day,
+      day: index + 1,
+      recap: index > 0,
+      tasks: day.tasks.map((task, taskIndex) => ({ ...task, recap: index > 0 && taskIndex === 0 })),
+    }));
+  if (dropped.length) console.error(`learning plan for ${moduleId}: dropped ${dropped.length} task(s): ${dropped.join('; ')}`);
+  return { ...plan, courseId: moduleId, days };
 }
 
 const MAX_EVALUATION_FEEDBACK = 110;

@@ -8,6 +8,7 @@ Newest first. Human review stays "Pending" until a team member has reviewed the 
 
 | Date and time with timezone | Tool / model, if known | Task | Assistance and affected files | Human review / corrections | Validation and result |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-11T08:13:00+05:30 | AI coding assistant | Learn Linux syllabus 502 | Reproduced the production 502, traced it to all-or-nothing syllabus validation, and made `apps/api/src/learning.ts` drop bad tasks and set recap markers itself, with tests. | Pending | Typecheck passed; 292 tests passed. Not yet deployed. |
 | 2026-10-11T07:53:16+05:30 | AI coding assistant | Documentation review | Checked README, SUBMISSION.md, CHANGELOG.md and AI_USAGE.md against the code, corrected and completed them, and sorted the logs. | Pending | Claims checked against code; `npm run check` passed. |
 | 2026-10-11T07:48:15+05:30 | AI coding assistant | Teach-first labs and formatted feedback | Added lesson-first steps to the three labs, a teach field to the AI syllabus, and a structured trainer verdict rendered as a coloured block or card, with tests. | Pending | Typecheck passed; 291 tests passed; checked in Chromium. |
 | 2026-10-11T07:40:45+05:30 | AI coding assistant | Vasi's side-view walk | Added a profile drawing and strut for walking, random walk-and-rest timing, and a fast return home when called. | Pending | Typecheck passed; 290 tests passed; checked in Chromium. |
