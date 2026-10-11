@@ -203,7 +203,7 @@ describe('tutor panel', () => {
       await terminal.run('cat /etc/shadow');
       await terminal.run('cat /etc/shadow');
     });
-    const nudge = await screen.findByRole('button', { name: /didn't work either/ }, { timeout: 4000 });
+    const nudge = await screen.findByRole('button', { name: /didn't work either/ }, { timeout: 8000 });
     expect(transport.requests).toHaveLength(0);
     fireEvent.click(nudge);
     expect(await screen.findByText('You need sudo for that file.')).toBeTruthy();

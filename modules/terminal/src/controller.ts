@@ -74,6 +74,7 @@ export class TerminalController {
     this.busy = true;
     const result = await this.session.run(line);
     this.screen.write(toTerminal(result.stdout + result.stderr));
+    if (result.feedback) this.screen.write(formatFeedback(result.feedback, this.screen.cols));
     await this.showPrompt();
   }
 
@@ -90,6 +91,43 @@ export class TerminalController {
       await this.input(typed);
     }
   }
+}
+
+const GREEN = '\x1b[1;32m';
+const RED = '\x1b[1;31m';
+const DIM = '\x1b[2m';
+const RESET = '\x1b[0m';
+
+/**
+ * The trainer's verdict on a command, set apart from its output: a coloured "Correct" or "Not quite" heading,
+ * the feedback wrapped to the terminal's width, and what to do next.
+ */
+export function formatFeedback(feedback: { correct: boolean; text: string }, cols: number): string {
+  const width = Math.max(30, Math.min(cols, 78) - 4);
+  const colour = feedback.correct ? GREEN : RED;
+  const heading = feedback.correct ? '✓ Correct!' : '✗ Not quite';
+  const next = feedback.correct ? 'Your next task is ready above.' : 'Try again, or type /hint for a nudge.';
+  const lines = [
+    '',
+    `${colour}┃${RESET} ${colour}${heading}${RESET}`,
+    ...wrap(feedback.text, width).map((line) => `${colour}┃${RESET} ${line}`),
+    `${colour}┃${RESET} ${DIM}${next}${RESET}`,
+    '',
+  ];
+  return lines.join('\r\n');
+}
+
+function wrap(text: string, width: number): string[] {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.replace(/\s+/g, ' ').trim().split(' ')) {
+    if (line && line.length + word.length + 1 > width) {
+      lines.push(line);
+      line = word;
+    } else line = line ? `${line} ${word}` : word;
+  }
+  if (line) lines.push(line);
+  return lines;
 }
 
 /** xterm needs \r\n to return to the start of the line; programs print plain \n. */

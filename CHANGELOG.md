@@ -4,6 +4,36 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T07:48:15+05:30 — Teach first, then test; clearer trainer feedback
+
+- Changed:
+  - Every task in Learn Linux, Learn Docker and chmod Arcade starts with a "Learn first" lesson (the concept, the
+    command and an example in code), and the task appears when the learner presses "I'm ready — let me try";
+    "Review the lesson" brings it back. Which lessons were read is remembered in the browser.
+  - The AI trainer now writes a `teach` lesson for every task (plan prompt in `apps/api/src/learning.ts`); older
+    syllabuses fall back to each task's explanation.
+  - The trainer's verdict is no longer glued onto the command's output as "[Trainer] …". It travels as its own
+    `feedback` field (`TerminalResult` in `packages/system`), and terminals show it clearly: a coloured, wrapped
+    "✓ Correct!" / "✗ Not quite" block with what to do next in the Linux terminal, and a green or red card in the
+    Docker and Arcade lab terminals.
+- Why: Learners were tested before being taught, and the feedback was hard to read.
+- Validation: `npm run typecheck` passed; 26 test files and 291 tests passed (new: feedback formatting; the course
+  test now checks the verdict field and the lesson text). In Chromium with a test syllabus: the lesson card, then a
+  wrong `ls` showing the "Not quite" block.
+- Limitations: Learn Linux feedback is still cut at 110 characters (the trainer is asked to stay under that). Vasi's
+  first-meeting bubble can cover the lab's "I'm ready" button until it is closed.
+
+## 2026-10-11T07:40:45+05:30 — Vasi walks sideways and rests facing you
+
+- Changed: Vasi has a side view for walking (facing the way he goes, mirrored for left) with a forward-leaning strut
+  and stepping feet, and turns to face the learner when he rests. Walks and rests are random: a random spot along the
+  bottom, then a 3–9 second rest. Clicking him (or anything that needs him) sends him hurrying back to his corner.
+  (`apps/web/src/tutor/Puppet.tsx`, `useStroll.ts`, `styles/tutor.css`)
+- Why: He used to walk facing forward, and took long to come back when called.
+- Validation: `npm run typecheck` passed; 26 test files and 290 tests passed. In Chromium: side view while walking,
+  front view while resting, and a click sent him home (2.4 s from the far left).
+- Limitations: none known.
+
 ## 2026-10-11T07:34:03+05:30 — Vasi in 3D: he walks, and introduces himself
 
 - Changed:

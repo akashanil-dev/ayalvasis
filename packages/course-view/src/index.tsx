@@ -1,7 +1,6 @@
 import type { LessonStatus } from '@tuxos/lessons';
 import { TerminalSurface } from '@tuxos/module-terminal/view';
-import type { RunResult } from '@tuxos/shell';
-import type { SystemClient, TerminalSession } from '@tuxos/system';
+import type { SystemClient, TerminalResult, TerminalSession } from '@tuxos/system';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type FormEvent } from 'react';
 import './course.css';
 
@@ -84,6 +83,7 @@ export function LearningLabView({ system, courseId, variant }: {
   const [selected, setSelected] = useState<string | null>(null);
   const terminal = useRef<LabTerminalHandle>(null);
   const active = status?.active;
+  const teaching = useTaught(courseId, active?.step.id);
   const lesson = status?.lessons.find((item) => item.id === (selected ?? active?.lesson.id))
     ?? status?.lessons.find((item) => item.completed < item.steps) ?? status?.lessons[0];
 
@@ -122,12 +122,23 @@ export function LearningLabView({ system, courseId, variant }: {
             </div>
             <h2>{active.lesson.title}</h2>
             {active.lesson.story && <p className="lab-scenario">{active.lesson.story}</p>}
-            <div className="lab-task-prompt"><strong>Your task</strong><span>{active.step.task}</span></div>
-            <div className="lab-task-actions">
-              <button onClick={() => void terminal.current?.run('/hint')}>Hint</button>
-              <button onClick={() => void terminal.current?.run('/answer')}>Show answer</button>
-              <button className="quiet" onClick={() => void call('quit')}>Pause lab</button>
-            </div>
+            {!teaching.taught && active.step.teach
+              ? <>
+                <div className="lab-lesson"><strong>Learn first</strong><p><LessonText text={active.step.teach} /></p></div>
+                <div className="lab-task-actions">
+                  <button className="primary" onClick={teaching.ready}>I&apos;m ready — let me try</button>
+                  <button className="quiet" onClick={() => void call('quit')}>Pause lab</button>
+                </div>
+              </>
+              : <>
+                <div className="lab-task-prompt"><strong>Your task</strong><span>{active.step.task}</span></div>
+                <div className="lab-task-actions">
+                  <button onClick={() => void terminal.current?.run('/hint')}>Hint</button>
+                  <button onClick={() => void terminal.current?.run('/answer')}>Show answer</button>
+                  {active.step.teach && <button className="link" onClick={teaching.review}>Review the lesson</button>}
+                  <button className="quiet" onClick={() => void call('quit')}>Pause lab</button>
+                </div>
+              </>}
           </section>
           <div className="lab-workspace">
             <LabTerminal ref={terminal} system={system} variant={variant} courseId={courseId} />
@@ -139,6 +150,33 @@ export function LearningLabView({ system, courseId, variant }: {
       </main>
     </div>
   </div>;
+}
+
+/** Lesson text with `code` in backticks shown as code. */
+function LessonText({ text }: { text: string }) {
+  return <>{text.split(/(`[^`]+`)/g).map((part, index) => part.startsWith('`') && part.endsWith('`') && part.length > 2
+    ? <code key={index}>{part.slice(1, -1)}</code>
+    : <span key={index}>{part}</span>)}</>;
+}
+
+/**
+ * Teach first, then test: each task starts with its lesson, and the task appears once the learner says they're
+ * ready. Which lessons they have read is remembered in this browser.
+ */
+function useTaught(courseId: string, stepId: string | undefined) {
+  const key = `tuxos.taught.${courseId}`;
+  const read = (): string[] => {
+    try { return JSON.parse(localStorage.getItem(key) ?? '[]') as string[]; } catch { return []; }
+  };
+  const [taught, setTaught] = useState<string[]>(read);
+  const done = stepId ? taught.includes(stepId) : true;
+  const mark = (value: boolean) => {
+    if (!stepId) return;
+    const next = value ? [...new Set([...taught, stepId])] : taught.filter((id) => id !== stepId);
+    setTaught(next);
+    try { localStorage.setItem(key, JSON.stringify(next.slice(-200))); } catch { /* remembering is optional */ }
+  };
+  return { taught: done, ready: () => mark(true), review: () => mark(false) };
 }
 
 /** Tasks done across the whole course, as a number and a bar. */
@@ -156,6 +194,8 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
   const [retrying, setRetrying] = useState(false);
   const active = status?.active;
   const task = active?.step;
+  const teaching = useTaught(courseId, task?.id);
+  const lessonRead = teaching.taught;
   if (!status) return <div className="linux-terminal-loading">{error || 'Connecting to Linux trainer…'}</div>;
   // While the first lab is being designed, say so: it is not an error, and the status polls until it is ready.
   if ((!status.lessons.length || !task) && status.lastExplain?.includes('generating')) {
@@ -195,15 +235,29 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
         </span>}
       </div>
       {active!.lesson.story && <p className="linux-mission-scenario">{active!.lesson.story}</p>}
-      <div className="linux-mission-task">
-        <span className="linux-mission-label">Your task</span>
-        <p>{task.task}</p>
-      </div>
-      <div className="linux-mission-actions">
-        <span className="linux-mission-help">Type one command in the terminal below and press <kbd>Enter</kbd> to check it.</span>
-        <button type="button" onClick={() => type('/hint')}>Hint</button>
-        <button type="button" onClick={() => type('/answer')}>Show answer</button>
-      </div>
+      {!lessonRead && task.teach
+        ? <>
+          <div className="linux-mission-learn">
+            <span className="linux-mission-label">Learn first</span>
+            <p><LessonText text={task.teach} /></p>
+          </div>
+          <div className="linux-mission-actions">
+            <span className="linux-mission-help">Read this, then try it yourself in the terminal below.</span>
+            <button type="button" className="primary" onClick={teaching.ready}>I&apos;m ready — let me try</button>
+          </div>
+        </>
+        : <>
+          <div className="linux-mission-task">
+            <span className="linux-mission-label">Your task</span>
+            <p>{task.task}</p>
+          </div>
+          <div className="linux-mission-actions">
+            <span className="linux-mission-help">Type one command in the terminal below and press <kbd>Enter</kbd> to check it.</span>
+            {task.teach && <button type="button" className="quiet" onClick={teaching.review}>Review the lesson</button>}
+            <button type="button" onClick={() => type('/hint')}>Hint</button>
+            <button type="button" onClick={() => type('/answer')}>Show answer</button>
+          </div>
+        </>}
     </header>
     <TerminalSurface system={system} learningModule={courseId} inputId={terminalId} />
   </div>;
@@ -215,7 +269,7 @@ export const LabTerminal = forwardRef<LabTerminalHandle, { system: SystemClient;
   const [session, setSession] = useState<TerminalSession>();
   const [prompt, setPrompt] = useState('$');
   const [line, setLine] = useState('');
-  const [entries, setEntries] = useState<{ command?: string; result?: RunResult }[]>([]);
+  const [entries, setEntries] = useState<{ command?: string; result?: TerminalResult }[]>([]);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -257,6 +311,11 @@ export const LabTerminal = forwardRef<LabTerminalHandle, { system: SystemClient;
       {entries.map((entry, index) => <div key={`${entry.command}-${index}`} className="lab-terminal-entry">
         <div><span className="lab-prompt">{prompt}</span> {entry.command}</div>
         {entry.result && <pre className={entry.result.code ? 'terminal-failure' : ''}>{entry.result.stdout}{entry.result.stderr}</pre>}
+        {entry.result?.feedback && <div className={`lab-feedback ${entry.result.feedback.correct ? 'correct' : 'wrong'}`} role="status">
+          <strong>{entry.result.feedback.correct ? '✓ Correct!' : '✗ Not quite'}</strong>
+          <span>{entry.result.feedback.text}</span>
+          <small>{entry.result.feedback.correct ? 'Your next task is ready above.' : 'Try again, or press Hint for a nudge.'}</small>
+        </div>}
       </div>)}
       <form onSubmit={submit} className="lab-terminal-form">
         <span className="lab-prompt">{prompt}</span>

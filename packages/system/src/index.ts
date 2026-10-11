@@ -1,5 +1,5 @@
 import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@tuxos/kernel';
-import { learningRuntime } from '@tuxos/lessons';
+import { learningRuntime, type TrainerFeedback } from '@tuxos/lessons';
 import { createModuleHost, type ModuleHost } from '@tuxos/module-host';
 import type {
   Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest, LearningBackend,
@@ -25,8 +25,11 @@ export interface ModuleEntry {
 }
 
 /** One terminal window's shell: its own cwd, env and history, sharing the system's commands. */
+/** A command's result; in a course's terminal it may carry the trainer's verdict, shown under the output. */
+export type TerminalResult = RunResult & { feedback?: TrainerFeedback };
+
 export interface TerminalSession {
-  run(line: string): Promise<RunResult>;
+  run(line: string): Promise<TerminalResult>;
   cwd(): Promise<string>;
   prompt(): Promise<string>;
   complete(line: string, cursor: number): Promise<Completion>;
@@ -282,9 +285,7 @@ function terminalSession(kernel: Kernel, shell: Shell, learningModule?: string):
       const result = await shell.run(line);
       const runner = learningModule ? learningRuntime.get(learningModule) : learningRuntime.get();
       const assessment = await runner?.waitForAssessment();
-      return assessment
-        ? { ...result, stdout: `${result.stdout}${result.stdout.endsWith('\n') || !result.stdout ? '' : '\n'}[Trainer] ${assessment}\n` }
-        : result;
+      return assessment ? { ...result, feedback: assessment } : result;
     },
     cwd: async () => shell.cwd,
     prompt: async () => bashPrompt(kernel.user, kernel.getState().hostname, shell.cwd, shell.env.HOME ?? ''),

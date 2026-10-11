@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 
 const SIZE = 64;
 const MARGIN = 14;
-/** Walking speed, in pixels per second: an unhurried waddle. */
+/** Walking speed, in pixels per second: an unhurried waddle, and a hurry when he is called back to his corner. */
 const SPEED = 70;
-/** How long Vasi stands still between strolls. */
-const PAUSE_MS = { min: 9_000, max: 20_000 };
-const FIRST_PAUSE_MS = 4_000;
+const HURRY_SPEED = 420;
+/** How long Vasi rests (facing the learner) between walks: a random few seconds each time. */
+const PAUSE_MS = { min: 3_000, max: 9_000 };
+const FIRST_PAUSE_MS = 2_500;
 
 export interface Stroll {
   /** Vasi's left edge, in pixels from the left of the screen. */
@@ -31,9 +32,9 @@ export function useStroll(free: boolean): Stroll {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const walkTo = (target: number, then?: () => void) => {
+    const walkTo = (target: number, then?: () => void, speed = SPEED) => {
       const from = position.current;
-      const durationMs = Math.round((Math.abs(target - from) / SPEED) * 1000);
+      const durationMs = Math.round((Math.abs(target - from) / speed) * 1000);
       if (durationMs < 50) {
         setStroll({ x: target, facing: 'front', walking: false, durationMs: 0 });
         then?.();
@@ -48,15 +49,17 @@ export function useStroll(free: boolean): Stroll {
     };
 
     if (!free || still) {
-      walkTo(home());
+      // Called (clicked, or needed for a chat, a nudge or his work): hurry back to his corner.
+      walkTo(home(), undefined, HURRY_SPEED);
       return () => timers.forEach(clearTimeout);
     }
     const wander = (pause = PAUSE_MS.min + Math.random() * (PAUSE_MS.max - PAUSE_MS.min)) => {
       timers.push(setTimeout(() => {
-        // Mostly explore somewhere along the bottom; sometimes go back to his corner (never "home" from home).
+        // Walk to a random spot along the bottom, at least a little way from where he stands, so every walk shows.
         const width = globalThis.innerWidth;
-        const atHome = Math.abs(position.current - home()) < 40;
-        const target = !atHome && Math.random() < 0.3 ? home() : MARGIN + Math.random() * Math.max(0, width - SIZE - MARGIN * 2);
+        const span = Math.max(0, width - SIZE - MARGIN * 2);
+        let target = MARGIN + Math.random() * span;
+        if (Math.abs(target - position.current) < 120) target = position.current > width / 2 ? MARGIN + Math.random() * span / 2 : MARGIN + span / 2 + Math.random() * span / 2;
         walkTo(Math.round(target), () => wander());
       }, pause));
     };

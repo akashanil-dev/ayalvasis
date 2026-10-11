@@ -93,6 +93,39 @@
   animation: puppet-shadow 0.46s ease-in-out infinite alternate;
 }
 
+/* Side view (walking): a bob and a forward lean, feet stepping one after the other. */
+.vasi-actor.walking .puppet-side .puppet-body {
+  animation: puppet-strut 0.4s ease-in-out infinite alternate;
+}
+
+.vasi-actor.walking .puppet-side .puppet-foot-left {
+  animation: puppet-stride 0.4s ease-in-out infinite alternate;
+}
+
+.vasi-actor.walking .puppet-side .puppet-foot-right {
+  animation: puppet-stride 0.4s ease-in-out infinite alternate-reverse;
+}
+
+.vasi-actor.walking .puppet-side .puppet-wing-left {
+  transform-origin: 70% 5%;
+  animation: puppet-flap 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes puppet-strut {
+  from { transform: rotate(4deg) translateY(0); }
+  to { transform: rotate(7deg) translateY(-3px); }
+}
+
+@keyframes puppet-stride {
+  from { transform: translate(-3px, 0); }
+  to { transform: translate(4px, -3px); }
+}
+
+@keyframes puppet-flap {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(14deg); }
+}
+
 @keyframes puppet-waddle {
   from { transform: rotate(-7deg) translateY(0); }
   50% { transform: rotate(0deg) translateY(-2.5px); }

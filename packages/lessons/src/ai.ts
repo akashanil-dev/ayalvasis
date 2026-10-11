@@ -26,7 +26,15 @@ export interface AITask {
   hints: string[];
   answer: string;
   explain: string;
+  /** Taught before the learner tries: the concept and the command they will need, with an example. */
+  teach?: string;
   recap?: boolean;
+}
+
+/** The trainer's verdict on one attempt, shown under the command in the terminal. */
+export interface TrainerFeedback {
+  correct: boolean;
+  text: string;
 }
 
 export interface AISyllabus {
@@ -86,7 +94,7 @@ export class AICourseRunner {
   private readonly memory: LearningMemory;
   private fallbackMode = false;
   private evaluating = false;
-  private pendingAssessment: Promise<string> | undefined;
+  private pendingAssessment: Promise<TrainerFeedback> | undefined;
   private disposed = false;
   private readonly stop: () => void;
   private readonly requireAI: boolean;
@@ -187,7 +195,11 @@ export class AICourseRunner {
         steps: this.day(state.active.day).tasks.map((task) => ({
           id: task.id, task: `${task.title}: ${task.task}`, done: state.completed.includes(task.id),
         })),
-        step: { id: activeTask.id, task: activeTask.task, hints: activeTask.hints, recap: activeTask.recap },
+        step: {
+          id: activeTask.id, task: activeTask.task, hints: activeTask.hints, recap: activeTask.recap,
+          // Older syllabuses have no lesson text: teach from the explanation instead.
+          teach: activeTask.teach || activeTask.explain || activeTask.objective,
+        },
       } : null,
       lastExplain: state.lastFeedback,
     };
@@ -227,7 +239,7 @@ export class AICourseRunner {
 
   async hint(): Promise<string> { return this.askFor('hint'); }
   async answer(): Promise<string> { return this.askFor('answer'); }
-  async waitForAssessment(): Promise<string | undefined> {
+  async waitForAssessment(): Promise<TrainerFeedback | undefined> {
     const pending = this.pendingAssessment;
     if (!pending) return undefined;
     this.pendingAssessment = undefined;
@@ -295,7 +307,7 @@ export class AICourseRunner {
     this.save();
   }
 
-  private async evaluate(task: AITask, run: ShellRun): Promise<string> {
+  private async evaluate(task: AITask, run: ShellRun): Promise<TrainerFeedback> {
     let result: { correct?: boolean; feedback?: string; next?: string } = {};
     try {
       if (!this.ctx.learning) throw new Error('AI learning service is not configured');
@@ -316,7 +328,7 @@ export class AICourseRunner {
     this.remember({ kind: 'feedback', taskId: task.id, summary: state.lastFeedback, correct: !!result.correct });
     if (result.correct) this.advanceTask(state, task);
     this.save();
-    return `${result.correct ? '✓ Correct' : '✗ Not yet'} — ${state.lastFeedback}`;
+    return { correct: !!result.correct, text: state.lastFeedback };
   }
 
   private advanceTask(state: AIProgress, task: AITask): void {

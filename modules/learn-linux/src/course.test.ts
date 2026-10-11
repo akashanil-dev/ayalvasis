@@ -80,11 +80,15 @@ describe('Learn Linux course', () => {
     const initial = await status(system);
     expect(initial.course.title).toBe('AI Linux Lab');
     expect(initial.active?.step.id).toBe('whoami');
+    // Every task has a lesson to read first (here the syllabus has none, so its explanation is used).
+    expect(initial.active?.step.teach).toBeTruthy();
     const terminal = await system.createTerminal({ learningModule: 'learn-linux' });
+    // The trainer's verdict comes with the result, apart from the command's own output, so terminals can show it clearly.
     const wrong = await terminal.run('who');
-    expect(wrong.stdout).toContain('[Trainer] ✗ Not yet');
-    expect(wrong.stdout.length).toBeLessThan(180);
-    expect((await terminal.run('whoami')).stdout).toContain('[Trainer] ✓ Correct');
+    expect(wrong.feedback).toMatchObject({ correct: false });
+    expect(wrong.feedback!.text.length).toBeLessThan(120);
+    expect(wrong.stdout).not.toContain('Trainer');
+    expect((await terminal.run('whoami')).feedback).toMatchObject({ correct: true });
     expect((await status(system)).active?.step.id).toBe('pwd');
   });
 

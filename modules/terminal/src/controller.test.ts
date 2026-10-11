@@ -102,3 +102,15 @@ describe('helpers', () => {
     expect(titleFor('weird')).toBe('Terminal');
   });
 });
+
+describe('trainer feedback', () => {
+  it('is set apart from the output, coloured, wrapped and followed by what to do next', async () => {
+    const { formatFeedback } = await import('./controller');
+    const wrong = formatFeedback({ correct: false, text: 'pwd prints the folder you are in; ls lists what is inside it, which is a different question.' }, 40);
+    const plain = wrong.replace(/\x1b\[[0-9;]*m/g, '');
+    expect(plain).toContain('┃ ✗ Not quite');
+    expect(plain).toContain('Try again, or type /hint');
+    expect(Math.max(...plain.split('\r\n').map((line) => line.length))).toBeLessThanOrEqual(40);
+    expect(formatFeedback({ correct: true, text: 'Yes.' }, 80)).toContain('\x1b[1;32m');
+  });
+});

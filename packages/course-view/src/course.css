@@ -416,3 +416,26 @@
 .linux-mission-actions button:hover { border-color: var(--accent); }
 .de-cde .linux-mission-task, .de-cde .linux-mission-actions button { border: 0; box-shadow: inset 1px 1px #fff, inset -1px -1px #5a5a5a; }
 @media (max-width: 560px) { .linux-mission { padding: 12px; } .linux-mission-count { margin-left: 0; } .linux-mission-task p { font-size: 14px; } }
+/* The trainer's verdict under a command in the lab terminals: a clear card, green or red. */
+.lab-feedback { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 12px; padding: 8px 12px; border-left: 3px solid; border-radius: 4px; font-family: var(--font-ui); font-size: 13px; line-height: 1.45; }
+.lab-feedback.correct { border-color: #3fb950; background: rgb(63 185 80 / 12%); }
+.lab-feedback.wrong { border-color: #f85149; background: rgb(248 81 73 / 12%); }
+.lab-feedback strong { font-size: 13.5px; }
+.lab-feedback.correct strong { color: #56d364; }
+.lab-feedback.wrong strong { color: #ff7b72; }
+.lab-feedback span { color: #e6edf3; }
+.lab-feedback small { color: #8b949e; font-size: 11.5px; }
+/* "Learn first": the short lesson before each task. */
+.linux-mission-learn,
+.lab-lesson { padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--ok); border-radius: var(--radius-small); background: var(--window-bg); }
+.linux-mission-learn p,
+.lab-lesson p { margin: 0; max-width: 80ch; color: var(--window-fg); font-size: 14px; line-height: 1.6; }
+.linux-mission-learn code,
+.lab-lesson code { padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--accent-strong); font: 13px var(--font-mono); }
+.linux-mission-learn .linux-mission-label,
+.lab-lesson strong { display: block; margin-bottom: 4px; color: var(--ok); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.linux-mission-actions button.primary,
+.lab-task-actions button.primary { border-color: transparent; background: var(--accent); color: var(--accent-fg); }
+.linux-mission-actions button.quiet,
+.lab-task-actions button.link { border-color: transparent; background: transparent; color: var(--accent); }
+.de-cde .linux-mission-learn, .de-cde .lab-lesson { border: 0; box-shadow: inset 1px 1px #fff, inset -1px -1px #8a8a8a; }
