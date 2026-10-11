@@ -55,6 +55,8 @@ export interface WallpaperInfo {
   background: string;
   /** A CSS background value for the small preview in Settings. */
   thumbnail: string;
+  /** The full-size image's address, e.g. for preloading. */
+  url: string;
 }
 
 const WALLPAPER_NAMES: [id: string, name: string][] = [
@@ -70,13 +72,15 @@ const WALLPAPER_NAMES: [id: string, name: string][] = [
 ];
 
 // The images live in apps/web/public/wallpapers, served from the site root.
-const image = (path: string) => `#1b2224 url("/wallpapers/${path}.webp") center / cover no-repeat`;
+const url = (path: string) => `/wallpapers/${path}.webp`;
+const image = (path: string) => `#1b2224 url("${url(path)}") center / cover no-repeat`;
 
 export const WALLPAPERS: WallpaperInfo[] = WALLPAPER_NAMES.map(([id, name]) => ({
   id,
   name,
   background: image(id),
   thumbnail: image(`thumbs/${id}`),
+  url: url(id),
 }));
 
 export const desktopById = (id: string): DesktopInfo => DESKTOPS.find((each) => each.id === id) ?? DESKTOPS[0]!;

@@ -403,3 +403,7 @@
 .de-plasma .docker-editor-actions button { background: var(--accent); color: var(--accent-fg); }
 .de-plasma .docker-editor-error { border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 12%, var(--window-bg)); color: var(--danger); }
 .de-plasma .docker-desktop-loading { background: var(--window-bg); }
+/* While the AI designs the first lab: a calm "starting" screen rather than an error. */
+.linux-terminal-unavailable[role="status"] pre { color: #8b949e; }
+.linux-terminal-cursor { display: inline-block; width: 8px; height: 14px; margin-left: 4px; vertical-align: -2px; background: #4ade80; animation: linux-terminal-blink 1s steps(1) infinite; }
+@keyframes linux-terminal-blink { 50% { opacity: 0; } }

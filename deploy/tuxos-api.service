@@ -9,7 +9,7 @@ Type=simple
 User=tuxos
 Group=tuxos
 WorkingDirectory=/opt/tuxos/current/api
-# Secrets and settings (OPENAI_API_KEY, models, SOCKET, TRUST_PROXY), readable only by root.
+# Secrets and settings (OPENAI_API_KEY, models, SOCKET, TRUST_PROXY, DATABASE_PATH), readable only by root.
 EnvironmentFile=/etc/tuxos/tuxos.env
 ExecStart=/usr/bin/node src/server.ts
 Restart=on-failure
@@ -20,6 +20,9 @@ NoNewPrivileges=true
 ProtectSystem=strict
 # The socket lives in /run/tuxos (made by tmpfiles.d, so it stays put across restarts for Caddy's mount).
 ReadWritePaths=/run/tuxos
+# Accounts and saved progress: the SQLite database in /var/lib/tuxos, owned by the service, kept forever.
+StateDirectory=tuxos
+StateDirectoryMode=0700
 ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true

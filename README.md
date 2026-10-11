@@ -73,6 +73,13 @@ This template has no application code or required technology stack. The document
   - While Vasi works, a bar shows what he is doing with a **Stop** button (or Esc) that hands control back.
   - Every module action becomes a tool automatically (e.g. `learn-linux__start`), so new modules extend
     what the tutor can do without tutor changes.
+- **Accounts** (`apps/api/src/accounts.ts`, `apps/web/src/accounts.ts`): a username and password. Passwords are
+  stored only as salted scrypt hashes in SQLite (Node's built-in `node:sqlite`); sessions are random tokens in an
+  HttpOnly cookie, of which only a hash is stored. A signed-in learner's saved system (the same snapshot guests
+  keep in the browser) is stored per account with a version number, so an older tab can't overwrite newer
+  progress from another device. "Try without an account" keeps everything in the browser as before; a guest who
+  signs up with the same name brings their progress along. Vasi's sudo request checks the account's real
+  password (guests have none, so they only confirm).
 - **Module host** (`packages/module-host`): validates manifests, registers lazy command stubs,
   activates dependency chains, grants declared capabilities, and reports activation state/events.
   It depends on the kernel and shell; adding a module only requires registering its manifest and
@@ -142,9 +149,12 @@ Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.gi
   in `/etc/tuxos/tuxos.env` (root-only), and opens no network port. `TRUST_PROXY=1` makes rate limits use
   Cloudflare's visitor IP.
 - **One-time setup:** copy `deploy/` to the server and run `sudo bash deploy/setup-server.sh` (installs Node 24,
-  the users, folders, env file and service), put the OpenAI key in `/etc/tuxos/tuxos.env`, add the Caddy site
+  the users, folders, env file, service and the accounts database folder `/var/lib/tuxos`; run it again after
+  changes in `deploy/`), put the OpenAI key in `/etc/tuxos/tuxos.env`, add the Caddy site
   block and the two mounts and recreate the Caddy container, then add the GitHub secrets `DEPLOY_HOST`, `DEPLOY_SSH_KEY` and
   `DEPLOY_KNOWN_HOSTS` to a `production` environment.
+- **Accounts database:** `/var/lib/tuxos/tuxos.db` (SQLite, owned by the service). Back it up, e.g.
+  `sudo sqlite3 /var/lib/tuxos/tuxos.db ".backup /root/tuxos-backup.db"`.
 - **Rollback by hand:** `ln -sfn /opt/tuxos/releases/<commit> /opt/tuxos/current` as `tuxos-deploy`, then
   `sudo systemctl restart tuxos-api`. Logs: `journalctl -u tuxos-api`.
 

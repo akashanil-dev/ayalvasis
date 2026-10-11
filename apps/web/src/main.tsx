@@ -10,14 +10,15 @@ import { manifest as settingsManifest } from '@tuxos/module-settings/manifest';
 import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
 import { httpTransport } from '@tuxos/tutor';
-import { App } from './app';
+import { httpAccounts, switchableStorage } from './accounts';
+import { App, type AccountsWiring } from './app';
 import './styles/base.css';
 import './styles/boot.css';
 import './styles/greeters.css';
 import './styles/window.css';
 import './styles/tutor.css';
 
-const storage: KeyValueStorage = {
+const browserStorage: KeyValueStorage = {
   async get(key) { try { return localStorage.getItem(key); } catch { return null; } },
   async set(key, value) {
     try {
@@ -33,6 +34,16 @@ const storage: KeyValueStorage = {
       throw new Error(`reset failed: ${String(error)}`);
     }
   },
+};
+
+// Guests save in this browser; signed-in learners save to their account (apps/api accounts).
+const accountsClient = httpAccounts();
+const accountStorage = accountsClient.storage();
+const { storage, use } = switchableStorage(browserStorage);
+const accounts: AccountsWiring = {
+  client: accountsClient,
+  use: (target) => use(target === 'account' ? accountStorage : browserStorage),
+  localSave: () => browserStorage.get('tuxos.save'),
 };
 
 // Only manifests load up front; each module's code is fetched the first time it is used.
@@ -62,4 +73,4 @@ const system = createLocalSystem({
   ],
 });
 const tutor = httpTransport('/api/tutor');
-createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} /></StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

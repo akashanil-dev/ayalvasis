@@ -24,6 +24,15 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build --workspace @tuxos/web
+      # Production runs the API's TypeScript directly with Node (type stripping), which accepts less syntax than
+      # the test runner does: start it for real and check it answers.
+      - name: Start the API with Node
+        run: |
+          cd apps/api
+          DATABASE_PATH="$RUNNER_TEMP/ci.db" PORT=8790 node src/server.ts &
+          for attempt in $(seq 1 20); do curl -fsS http://127.0.0.1:8790/api/health && exit 0; sleep 0.5; done
+          echo "The API did not start." >&2
+          exit 1
       # The release: the built desktop, the API source (it has no dependencies) and the deploy script.
       - name: Package the release
         run: |

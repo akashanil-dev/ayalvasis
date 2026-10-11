@@ -47,7 +47,7 @@ describe('starting TuxOS', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(screen.getByText(/Linux version 6\.10\.0-tuxos/)).toBeTruthy();
     for (let tick = 0; tick < 40; tick += 1) await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByPlaceholderText('Choose a username')).toBeTruthy();
+    expect(screen.getByLabelText('Username')).toBeTruthy();
   });
 
   it('opens GRUB\'s advanced options and comes back', () => {
@@ -115,7 +115,7 @@ describe('GNOME', () => {
     render(<App system={client} start="greeter" />);
     fireEvent.click(await screen.findByRole('button', { name: /Desktop Session/ }));
     fireEvent.click(screen.getByRole('menuitem', { name: /GNOME/ }));
-    expect(await screen.findByText('Welcome! Choose a username')).toBeTruthy();
+    expect(await screen.findByText('Try without an account')).toBeTruthy();
     await logIn();
     fireEvent.click(await screen.findByRole('button', { name: 'Activities' }, SLOW));
     expect(screen.getByText(/No open windows/)).toBeTruthy();
@@ -134,12 +134,13 @@ describe('GNOME', () => {
     await client.flush();
     localStorage.setItem('tuxos.last-desktop', 'gnome');
     render(<App system={client} start="greeter" />);
-    fireEvent.click(await screen.findByRole('button', { name: /ada/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+    // The guest saved in this browser is filled in already.
+    expect((await screen.findByLabelText('Username') as HTMLInputElement).value).toBe('ada');
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
     await screen.findByRole('button', { name: 'Activities' }, SLOW);
     fireEvent.click(screen.getByRole('button', { name: 'System menu' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Lock' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: /ada/ })).toBeTruthy());
+    await waitFor(() => expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('ada'));
   });
 });
 

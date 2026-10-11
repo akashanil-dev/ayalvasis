@@ -56,9 +56,11 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
           { role: 'user', content: prompt },
         ],
         response_format: { type: 'json_object' },
-        ...(fixedTemperature(model) ? {} : { temperature: 0.3 }),
+        // Reasoning models think before answering; a syllabus needs little of that, and a full seven-day plan
+        // at the default effort takes longer than Cloudflare lets a request run (100 seconds).
+        ...(fixedTemperature(model) ? { reasoning_effort: 'low' } : { temperature: 0.3 }),
       }),
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     });
     const data = await response.json().catch(() => null) as {
       choices?: { message?: { content?: string | null } }[];
@@ -95,6 +97,9 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     return { status: 504, body: { error: timeout ? 'AI learning took too long. Try again.' : 'AI learning service could not be reached.' } };
   }
 }
+
+/** Just under Cloudflare's 100-second limit for a proxied request, so the learner sees our error, not its own. */
+const AI_TIMEOUT_MS = 90_000;
 
 /**
  * GPT-5 and o-series reasoning models accept only the default temperature and reject any other value

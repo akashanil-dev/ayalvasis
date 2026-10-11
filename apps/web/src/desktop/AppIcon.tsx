@@ -10,6 +10,16 @@ export const IconThemeContext = createContext<string | null>(null);
 
 const THEMED = new Set(['terminal', 'files', 'editor', 'settings', 'chmod-arcade', 'learn-docker']);
 const THEMES = new Set(['plasma', 'gnome', 'cde', 'hyprland']);
+const iconUrl = (theme: string, name: string) => `/icons/${theme}/${name}.svg`;
+
+/**
+ * Fetch a desktop's icon theme ahead of time (while the login screen or a splash is showing), so its icons
+ * are already in the browser's cache when the desktop appears instead of popping in one by one.
+ */
+export function preloadIconTheme(theme: string): void {
+  if (!THEMES.has(theme) || typeof Image === 'undefined') return;
+  for (const name of THEMED) new Image().src = iconUrl(theme, name);
+}
 
 const ICONS: Record<string, () => React.JSX.Element> = {
   terminal: () => <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -64,7 +74,7 @@ const ICONS: Record<string, () => React.JSX.Element> = {
 export function AppIcon({ name }: { name: string }) {
   const theme = useContext(IconThemeContext);
   if (theme && THEMES.has(theme) && THEMED.has(name)) {
-    return <span className="app-icon"><img src={`/icons/${theme}/${name}.svg`} alt="" draggable={false} /></span>;
+    return <span className="app-icon"><img src={iconUrl(theme, name)} alt="" draggable={false} /></span>;
   }
   const Icon = ICONS[name];
   return <span className="app-icon">{Icon ? <Icon /> : name}</span>;

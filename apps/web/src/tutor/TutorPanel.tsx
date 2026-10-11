@@ -7,7 +7,12 @@ import { SudoDialog } from './SudoDialog';
 import { useStuckNudge } from './useStuckNudge';
 import { useTutor, type CursorState, type Entry } from './useTutor';
 
-export function TutorPanel({ system, transport }: { system: SystemClient; transport: Transport }) {
+export function TutorPanel({ system, transport, verifySudo = null }: {
+  system: SystemClient;
+  transport: Transport;
+  /** Checks the signed-in account's password; null for guests. */
+  verifySudo?: ((password: string) => Promise<boolean>) | null;
+}) {
   const tutor = useTutor(system, transport);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
@@ -41,7 +46,7 @@ export function TutorPanel({ system, transport }: { system: SystemClient; transp
       <span>{tutor.acting ? 'Vasi is using the computer' : 'Vasi is thinking…'}</span>
       <button onClick={tutor.stop}>Stop <kbd>Esc</kbd></button>
     </div>}
-    {tutor.sudoRequest && <SudoDialog system={system} request={tutor.sudoRequest} />}
+    {tutor.sudoRequest && <SudoDialog system={system} request={tutor.sudoRequest} verify={verifySudo} />}
     {open && <section className="tutor-panel" aria-label="Vasi, your Linux tutor">
       <header>
         <strong>Vasi</strong>

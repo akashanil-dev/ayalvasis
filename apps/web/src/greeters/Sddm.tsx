@@ -5,15 +5,14 @@ import { timeText, useNow } from '../desktops/shared/Clock';
 import { Icon } from '../desktops/shared/Icons';
 import { PopupMenu } from '../desktops/shared/Menu';
 import type { GreeterProps } from './types';
-import { cleanUsername, useLogin } from './useLogin';
+import { useLoginForm } from './useLogin';
 
 /** KDE Plasma's login screen (SDDM with the Breeze theme): big clock, one user, actions along the bottom. */
-export function Sddm({ savedUser, desktop, onDesktop, login, onPower }: GreeterProps) {
+export function Sddm(props: GreeterProps) {
+  const { desktop, onDesktop, onPower } = props;
   const now = useNow();
-  const [other, setOther] = useState(!savedUser);
-  const [name, setName] = useState('');
+  const form = useLoginForm(props);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
-  const { busy, error, submit } = useLogin(login);
 
   return <main className="greeter sddm">
     <div className="sddm-clock">
@@ -22,37 +21,43 @@ export function Sddm({ savedUser, desktop, onDesktop, login, onPower }: GreeterP
         {now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
       </div>
     </div>
-    <form
-      className="sddm-form"
-      autoComplete="off"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submit(other ? name.trim() : savedUser!);
-      }}
-    >
+    <form className="sddm-form" autoComplete="off" onSubmit={(event) => { event.preventDefault(); void form.submit(); }}>
       <div className="sddm-avatar"><Tux /></div>
-      <div className="sddm-name">{other ? (savedUser ? 'Other user' : 'Welcome to TuxOS') : savedUser}</div>
-      <div className="sddm-row">
-        {other
-          ? <input
-            aria-label="Username"
-            placeholder={savedUser ? 'Username' : 'Choose a username'}
-            spellCheck={false}
-            autoFocus
-            disabled={busy}
-            value={name}
-            onChange={(event) => setName(cleanUsername(event.target.value))}
-          />
-          : <span className="sddm-field">No password needed</span>}
-        <button className={`sddm-go ${busy ? 'busy' : ''}`} type="submit" aria-label="Log in" autoFocus={!other}>
-          <Icon name="arrow" />
-        </button>
-      </div>
-      <p className={`sddm-msg ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>
-        {error || (other && !savedUser ? 'New here? Pick any lowercase name.' : '')}
+      <div className="sddm-name">{form.title}</div>
+      {form.needsUsername && <div className="sddm-row">
+        <input
+          aria-label="Username"
+          placeholder="Username"
+          spellCheck={false}
+          autoFocus
+          disabled={form.busy}
+          value={form.username}
+          onChange={(event) => form.setUsername(event.target.value)}
+        />
+        {!form.needsPassword && <GoButton busy={form.busy} />}
+      </div>}
+      {form.needsPassword && <div className="sddm-row">
+        <input
+          type="password"
+          aria-label="Password"
+          placeholder="Password"
+          disabled={form.busy}
+          value={form.password}
+          onChange={(event) => form.setPassword(event.target.value)}
+        />
+        <GoButton busy={form.busy} />
+      </div>}
+      {form.mode === 'account' && <div className="sddm-row">
+        <span className="sddm-field">Signed in</span>
+        <GoButton busy={form.busy} autoFocus />
+      </div>}
+      <p className={`sddm-msg ${form.error ? 'error' : ''}`} role={form.error ? 'alert' : 'status'}>
+        {form.error || form.hint}
       </p>
-      {savedUser && <div className="sddm-links">
-        <button type="button" onClick={() => setOther(!other)}>{other ? `‹ Back to ${savedUser}` : 'Other user…'}</button>
+      {form.others.length > 0 && <div className="sddm-links">
+        {form.others.map((other) => <button key={other.mode} type="button" onClick={() => form.setMode(other.mode)}>
+          {other.label}
+        </button>)}
       </div>}
     </form>
     <div className="sddm-actions">
@@ -83,4 +88,10 @@ export function Sddm({ savedUser, desktop, onDesktop, login, onPower }: GreeterP
       items={DESKTOPS.map((each) => ({ label: `${each.id === desktop ? '● ' : '○ '}${each.name}`, run: () => onDesktop(each.id) }))}
     />}
   </main>;
+}
+
+function GoButton({ busy, autoFocus }: { busy: boolean; autoFocus?: boolean }) {
+  return <button className={`sddm-go ${busy ? 'busy' : ''}`} type="submit" aria-label="Log in" disabled={busy} autoFocus={autoFocus}>
+    <Icon name="arrow" />
+  </button>;
 }

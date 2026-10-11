@@ -56,6 +56,8 @@ SOCKET=/run/tuxos/api.sock
 # Behind Caddy and Cloudflare: rate-limit by the visitor's real IP from Cloudflare's header.
 TRUST_PROXY=1
 TUTOR_REQUESTS_PER_MINUTE=30
+# Accounts and saved progress (SQLite). Back this file up.
+DATABASE_PATH=/var/lib/tuxos/tuxos.db
 ENV
   chmod 600 /etc/tuxos/tuxos.env
   echo "Created /etc/tuxos/tuxos.env: add your OPENAI_API_KEY there."
@@ -70,9 +72,17 @@ if grep -q '^HOST=\|^PORT=' /etc/tuxos/tuxos.env && ! grep -q '^SOCKET=' /etc/tu
   echo "Switched /etc/tuxos/tuxos.env to the Unix socket."
 fi
 
+if ! grep -q '^DATABASE_PATH=' /etc/tuxos/tuxos.env; then
+  # An env file from before accounts existed.
+  printf '\n# Accounts and saved progress (SQLite). Back this file up.\nDATABASE_PATH=/var/lib/tuxos/tuxos.db\n' >> /etc/tuxos/tuxos.env
+  echo "Added DATABASE_PATH to /etc/tuxos/tuxos.env."
+fi
+
 install -m 644 "$here/tuxos-api.service" /etc/systemd/system/tuxos-api.service
 systemctl daemon-reload
 systemctl enable tuxos-api >/dev/null
+# Pick up the new unit and settings if the API is already running.
+if systemctl is-active --quiet tuxos-api; then systemctl restart tuxos-api; fi
 echo "Installed tuxos-api.service (it starts working after the first deploy)."
 
 echo

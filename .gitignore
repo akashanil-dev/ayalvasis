@@ -31,3 +31,6 @@ test-results/
 
 # Local design reference, kept out of the repository.
 /new/
+
+# The API's local SQLite database (accounts and saves) during development.
+apps/api/data/

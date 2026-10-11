@@ -4,6 +4,10 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T06:58:38+05:30 | AI coding assistant | Accounts, icon preloading, AI course start screen | Built the account service and tests, the account modes on all four login screens, account-backed saving, real-password sudo, icon and wallpaper preloading, the generating state for Learn Linux and the deploy changes. | Pending | Typecheck passed; 288 tests passed; account flow checked with curl and across two Chromium profiles. |
+
+| 2026-10-11T06:33:24+05:30 | AI coding assistant | Learn Linux syllabus timeout | Measured the live 504, lowered reasoning effort for GPT-5 models and widened the API and browser timeouts, with a test update. | Pending | Typecheck passed; 274 tests passed. |
+
 | 2026-10-11T06:29:46+05:30 | AI coding assistant | Learn Linux GPT-5 temperature fix | Read the production error, omitted temperature for GPT-5 and o-series models in `apps/api/src/learning.ts`, and added a test. | Pending | Typecheck passed; 274 tests passed. |
 
 | 2026-10-11T06:24:10+05:30 | AI coding assistant | Production login hang and Learn Linux failure | Diagnosed the hang against the live site, moved syllabus planning off the login path, added a request timeout and server-side error logging, and a regression test. | Pending | Typecheck passed; 273 tests passed. |

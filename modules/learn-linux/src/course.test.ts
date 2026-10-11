@@ -69,7 +69,7 @@ describe('Learn Linux course', () => {
       },
     };
     const system = await boot(false, slow);
-    expect((await status(system)).lastExplain).toContain('generating the first Linux lab');
+    expect((await status(system)).lastExplain).toContain('generating your Learn Linux lab');
     finish();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect((await status(system)).course.title).toBe('AI Linux Lab');

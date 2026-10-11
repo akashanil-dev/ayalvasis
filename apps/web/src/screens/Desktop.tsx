@@ -4,7 +4,7 @@ import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SessionSplash } from '../boot/PowerScreens';
-import { AppIcon, IconThemeContext } from '../desktop/AppIcon';
+import { AppIcon, IconThemeContext, preloadIconTheme } from '../desktop/AppIcon';
 import { WindowFrame, type Geometry } from '../desktop/WindowFrame';
 import { environmentFor } from '../desktops/registry';
 import { PopupMenu } from '../desktops/shared/Menu';
@@ -22,10 +22,12 @@ const NARROW = 720;
  * Switching environment (from Settings, or by the tutor) shows that environment's splash, then its shell.
  * Workspaces are part of the desktop, not the saved session, as on a real Linux desktop.
  */
-export function Desktop({ system, tutor, onPower }: {
+export function Desktop({ system, tutor, onPower, verifySudo = null }: {
   system: SystemClient;
   tutor?: Transport;
   onPower?(action: PowerAction): void;
+  /** Checks the account's password for Vasi's sudo request; null for guests, who have no password. */
+  verifySudo?: ((password: string) => Promise<boolean>) | null;
 }) {
   const { apps, session, user, loaded } = useSession(system);
   const environment = environmentFor(session.desktop);
@@ -73,6 +75,8 @@ export function Desktop({ system, tutor, onPower }: {
   }, [workspaceCount]);
 
   useEffect(() => rememberAppearance(session.desktop, session.wallpaper), [session.desktop, session.wallpaper]);
+  // Switching desktop: fetch the new icon theme while its splash screen plays.
+  useEffect(() => preloadIconTheme(session.desktop), [session.desktop]);
 
   // New windows open on the current workspace.
   useEffect(() => {
@@ -225,7 +229,7 @@ export function Desktop({ system, tutor, onPower }: {
         <p>{welcome}</p>
         <button aria-label="Dismiss" onClick={() => setWelcome(null)}>×</button>
       </div>}
-      {tutor && <TutorPanel system={system} transport={tutor} />}
+      {tutor && <TutorPanel system={system} transport={tutor} verifySudo={verifySudo} />}
     </main>
   </IconThemeContext.Provider>;
 }

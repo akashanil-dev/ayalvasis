@@ -146,6 +146,13 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
   const active = status?.active;
   const task = active?.step;
   if (!status) return <div className="linux-terminal-loading">{error || 'Connecting to Linux trainer…'}</div>;
+  // While the first lab is being designed, say so: it is not an error, and the status polls until it is ready.
+  if ((!status.lessons.length || !task) && status.lastExplain?.includes('generating')) {
+    return <div className="linux-terminal-unavailable" role="status">
+      <div className="linux-terminal-unavailable-bar">linux-trainer.service</div>
+      <pre>{`# Starting the AI trainer…\n# ${status.lastExplain}`}<span className="linux-terminal-cursor" /></pre>
+    </div>;
+  }
   if (!status.lessons.length || !task) return <div className="linux-terminal-unavailable">
     <div className="linux-terminal-unavailable-bar">linux-trainer.service</div>
     <pre>{`# AI trainer unavailable\n# No local question is loaded.\n# ${status.lastExplain ?? error ?? 'Check the learning API and retry.'}`}</pre>

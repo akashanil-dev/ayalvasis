@@ -4,6 +4,48 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T06:58:38+05:30 — Accounts, faster desktop icons and a clearer AI course start
+
+- Changed:
+  - Accounts with a username and password (`apps/api/src/accounts.ts`): register, sign in, sign out, "who am I",
+    password check, and saved progress per account in SQLite (`node:sqlite`, no new dependencies). Passwords are
+    salted scrypt hashes; sessions are 30-day random tokens in an HttpOnly, SameSite=Lax, Secure cookie, stored
+    hashed. Saves carry a version so a stale tab or device gets a conflict instead of overwriting newer progress.
+    Sign-in attempts are rate-limited per visitor; account requests must be JSON (blocks cross-site form posts).
+  - All four login screens offer Create account, Sign in, "Continue as <name>" for a signed-in browser, and
+    "Try without an account" (progress stays in the browser, as before). A guest who signs up with the same name
+    brings their progress into the account. Logging out saves, then ends the account's session.
+  - Vasi's sudo dialog checks the signed-in account's real password ("Sorry, try again." otherwise); guests have no
+    password, so they only confirm.
+  - Desktop icons and the wallpaper are fetched while the login screen and desktop splash are showing, instead of
+    popping in after the desktop appears.
+  - Learn Linux shows that the AI trainer is generating the lab (with a cursor) instead of "AI trainer unavailable"
+    while its syllabus is being planned.
+  - Deployment: the API gets `/var/lib/tuxos` (systemd `StateDirectory`) and `DATABASE_PATH`; `setup-server.sh`
+    adds it to existing servers. CI now starts the API with Node itself, since production runs its TypeScript by
+    type stripping, which rejects syntax (constructor parameter properties) that the test runner accepts.
+- Why: Learners asked to keep their progress across devices; login icons appeared late; Learn Linux looked broken
+  while it was still loading.
+- Validation: `npm run typecheck` passed; 26 test files and 288 tests passed (new: 7 account service tests, 6 app
+  account-flow tests, real-password and guest sudo tests). With the real API and dev server: account register,
+  session, save, password check and refusal of a form post checked with curl; in Chromium, an account created in
+  one browser profile saved a file, and a second, fresh profile refused a wrong password, signed in and read the file.
+- Limitations: no password reset (by design). Not yet deployed: the server needs `setup-server.sh` re-run first.
+  Guest progress moves into an account only when the names match.
+
+## 2026-10-11T06:33:24+05:30 — Make Learn Linux's syllabus finish within Cloudflare's limit
+
+- Changed: reasoning models (GPT-5, o-series) are asked for `reasoning_effort: "low"` when the learning API calls them;
+  the API now allows the AI 90 seconds (was 60) and the browser waits up to 100 seconds (was 75)
+  (`apps/api/src/learning.ts`, `packages/system/src/index.ts`).
+- Why: After the temperature fix, Learn Linux's seven-day syllabus on `gpt-5.6-luna` took over 60 seconds in
+  production and timed out (HTTP 504). Cloudflare stops proxied requests at 100 seconds, so a longer timeout alone
+  could not fix it.
+- Validation: `npm run typecheck` passed; 24 test files and 274 tests passed (the model test now also checks
+  `reasoning_effort`). Not yet measured on the live site.
+- Limitations: if the model still needs more than 90 seconds, the plan should be generated in smaller pieces (for
+  example one day at a time) instead.
+
 ## 2026-10-11T06:29:46+05:30 — Fix Learn Linux's AI syllabus on GPT-5 models
 
 - Changed: the learning API no longer sends `temperature: 0.3` to GPT-5 and o-series models, which accept only the

@@ -163,7 +163,8 @@ export class AICourseRunner {
       course: { id: this.ctx.id, title: this.course.title, summary: 'Waiting for the AI trainer to design this terminal lab.' },
       lessons: [], active: null,
       lastExplain: this.unavailableReason ? `AI trainer unavailable: ${this.unavailableReason}`
-        : this.planning ? 'AI trainer is generating the first Linux lab. Keep this window open.' : 'AI trainer is ready to generate the first Linux lab.',
+        : this.planning ? `AI trainer is generating your ${this.course.title} lab. This takes up to a minute; keep this window open.`
+          : `AI trainer is ready to generate your ${this.course.title} lab.`,
     };
     const state = this.requireState();
     const activeTask = this.currentTask();

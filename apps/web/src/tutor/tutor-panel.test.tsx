@@ -91,7 +91,8 @@ describe('tutor panel', () => {
       uses('request_sudo', { reason: 'To show you how /etc/shadow stores passwords.' }),
       { role: 'assistant', content: 'Thanks!' },
     );
-    render(<Desktop system={system} tutor={transport} />);
+    const verifySudo = async (password: string) => password === 'hunter2';
+    render(<Desktop system={system} tutor={transport} verifySudo={verifySudo} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
     fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'show me shadow' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
@@ -100,6 +101,10 @@ describe('tutor panel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Allow' }));
     fireEvent.click(screen.getByRole('button', { name: 'Authenticate' }));
     expect((await screen.findByRole('alert')).textContent).toContain('Type your password');
+    // Only the account's real password works, as with real sudo.
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'guess' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Authenticate' }));
+    expect((await screen.findByRole('alert')).textContent).toBe('Sorry, try again.');
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Authenticate' }));
     expect(await screen.findByText('Thanks!')).toBeTruthy();
@@ -107,6 +112,20 @@ describe('tutor panel', () => {
     expect(system.tutor().can('user:switch')).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: /Revoke/ }));
     expect(system.tutor().can('user:switch')).toBe(false);
+  });
+
+  it('lets a guest allow sudo without a password, since guests have none', async () => {
+    const system = await boot();
+    const transport = scripted(uses('request_sudo', { reason: 'To show you root.' }), { role: 'assistant', content: 'Thanks!' });
+    render(<Desktop system={system} tutor={transport} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'root please' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
+    expect((await screen.findByRole('dialog', { name: 'Authentication required' })).textContent).toContain('You are a guest');
+    fireEvent.click(screen.getByRole('button', { name: 'Allow' }));
+    expect(await screen.findByText('Thanks!')).toBeTruthy();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    expect(system.tutor().can('user:switch')).toBe(true);
   });
 
   it('tells Vasi when the learner denies sudo', async () => {
@@ -164,5 +183,5 @@ describe('tutor panel', () => {
     expect(transport.requests).toHaveLength(0);
     fireEvent.click(nudge);
     expect(await screen.findByText('You need sudo for that file.')).toBeTruthy();
-  });
+  }, 15_000); // Booting the desktop and running two commands can take a few seconds on a busy machine.
 });

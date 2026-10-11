@@ -920,3 +920,10 @@
     margin-left: 0;
   }
 }
+
+/* dtlogin asks one thing at a time; the prompt labels its own field. */
+.dt-main label.dt-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

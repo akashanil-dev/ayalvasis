@@ -41,10 +41,13 @@ describe('AI learning backend', () => {
     ] };
     const reasoning = upstream(plan);
     await handleLearning({ operation: 'plan', module: 'learn-linux' }, { ...config, learningModels: { 'learn-linux': 'gpt-5.6-luna' } }, reasoning.fetcher);
-    expect(JSON.parse(reasoning.calls[0]!.init.body as string)).not.toHaveProperty('temperature');
+    const sent = JSON.parse(reasoning.calls[0]!.init.body as string);
+    expect(sent).not.toHaveProperty('temperature');
+    expect(sent.reasoning_effort).toBe('low');
     const classic = upstream(plan);
     await handleLearning({ operation: 'plan', module: 'learn-linux' }, { ...config, learningModels: { 'learn-linux': 'gpt-4.1-mini' } }, classic.fetcher);
-    expect(JSON.parse(classic.calls[0]!.init.body as string).temperature).toBe(0.3);
+    expect(JSON.parse(classic.calls[0]!.init.body as string)).toMatchObject({ temperature: 0.3 });
+    expect(JSON.parse(classic.calls[0]!.init.body as string)).not.toHaveProperty('reasoning_effort');
     expect([fixedTemperature('gpt-5.6-luna'), fixedTemperature('o4-mini'), fixedTemperature('gpt-4.1-mini')]).toEqual([true, true, false]);
   });
 

@@ -5,23 +5,27 @@ import { gnomeClockText, useNow } from '../desktops/shared/Clock';
 import { Icon } from '../desktops/shared/Icons';
 import { PopupMenu } from '../desktops/shared/Menu';
 import type { GreeterProps } from './types';
-import { cleanUsername, useLogin } from './useLogin';
+import { useLoginForm } from './useLogin';
 
-type Step = 'users' | 'confirm' | 'username';
-
-/** GNOME's login screen (GDM): a user list, then that user's sign-in, with the session gear in the corner. */
-export function Gdm({ savedUser, desktop, onDesktop, login, onPower }: GreeterProps) {
+/** GNOME's login screen (GDM): the user's name or the fields to sign in, with the session gear in the corner. */
+export function Gdm(props: GreeterProps) {
+  const { desktop, onDesktop, onPower } = props;
   const now = useNow();
-  const [step, setStep] = useState<Step>(savedUser ? 'users' : 'username');
-  const [name, setName] = useState('');
+  const form = useLoginForm(props);
   const [menu, setMenu] = useState<{ kind: 'power' | 'session'; x: number; y: number } | null>(null);
-  const { busy, error, submit } = useLogin(login);
 
   const openMenu = (kind: 'power' | 'session') => (event: React.MouseEvent) => {
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (kind === 'power') setMenu({ kind, x: box.right - 200, y: box.bottom + 6 });
     else setMenu({ kind, x: box.right - 220, y: box.top - 30 - DESKTOPS.length * 34 });
   };
+  const go = <button
+    className={`gdm-go ${form.busy ? 'busy' : ''}`}
+    type="submit"
+    aria-label="Log in"
+    disabled={form.busy}
+    autoFocus={form.mode === 'account'}
+  ><Icon name="arrow" /></button>;
 
   return <main className="greeter gdm">
     <header className="gdm-bar">
@@ -30,57 +34,48 @@ export function Gdm({ savedUser, desktop, onDesktop, login, onPower }: GreeterPr
         <Icon name="a11y" /><Icon name="wifi" /><Icon name="volume" /><Icon name="power" />
       </button>
     </header>
-    {step === 'users' && <div className="gdm-main">
-      <button className="gdm-user" onClick={() => setStep('confirm')} autoFocus>
-        <span className="gdm-avatar small"><Tux /></span>
-        <span><strong>{savedUser}</strong><small>Saved in this browser</small></span>
-      </button>
-      <div className="gdm-links">
-        <button className="gdm-link" onClick={() => setStep('username')}>Not listed?</button>
-      </div>
-    </div>}
-    {step !== 'users' && <form
-      className="gdm-main"
-      autoComplete="off"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submit(step === 'username' ? name.trim() : savedUser!);
-      }}
-    >
-      {step === 'confirm' && <span className="gdm-avatar big"><Tux /></span>}
-      <h1 className={step === 'confirm' ? 'gdm-name' : 'gdm-title'}>
-        {step === 'confirm' ? savedUser : savedUser ? 'Username' : 'Welcome! Choose a username'}
-      </h1>
-      <div className="gdm-row">
-        {savedUser && <button type="button" className="gdm-back" aria-label="Back" onClick={() => setStep('users')}>
-          <Icon name="back" />
-        </button>}
+    <form className="gdm-main" autoComplete="off" onSubmit={(event) => { event.preventDefault(); void form.submit(); }}>
+      {form.mode === 'account' && <span className="gdm-avatar big"><Tux /></span>}
+      <h1 className={form.mode === 'account' ? 'gdm-name' : 'gdm-title'}>{form.title}</h1>
+      {form.needsUsername && <div className="gdm-row">
         <div className="gdm-entry">
-          {step === 'username'
-            ? <input
-              aria-label="Username"
-              placeholder="Username"
-              spellCheck={false}
-              autoFocus
-              disabled={busy}
-              value={name}
-              onChange={(event) => setName(cleanUsername(event.target.value))}
-            />
-            : <span className="gdm-nopass">No password needed</span>}
-          <button
-            className={`gdm-go ${busy ? 'busy' : ''}`}
-            type="submit"
-            aria-label={step === 'username' ? 'Next' : 'Sign In'}
-            autoFocus={step === 'confirm'}
-          >
-            <Icon name="arrow" />
-          </button>
+          <input
+            aria-label="Username"
+            placeholder="Username"
+            spellCheck={false}
+            autoFocus
+            disabled={form.busy}
+            value={form.username}
+            onChange={(event) => form.setUsername(event.target.value)}
+          />
+          {!form.needsPassword && go}
         </div>
-      </div>
-      <p className={`gdm-msg ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>
-        {error || (step === 'username' && !savedUser ? 'Pick any lowercase name to create your account.' : '')}
+      </div>}
+      {form.needsPassword && <div className="gdm-row">
+        <div className="gdm-entry">
+          <input
+            type="password"
+            aria-label="Password"
+            placeholder="Password"
+            disabled={form.busy}
+            value={form.password}
+            onChange={(event) => form.setPassword(event.target.value)}
+          />
+          {go}
+        </div>
+      </div>}
+      {form.mode === 'account' && <div className="gdm-row">
+        <div className="gdm-entry"><span className="gdm-nopass">Sign in</span>{go}</div>
+      </div>}
+      <p className={`gdm-msg ${form.error ? 'error' : ''}`} role={form.error ? 'alert' : 'status'}>
+        {form.error || form.hint}
       </p>
-    </form>}
+      {form.others.length > 0 && <div className="gdm-links">
+        {form.others.map((other) => <button key={other.mode} type="button" className="gdm-link" onClick={() => form.setMode(other.mode)}>
+          {other.label}
+        </button>)}
+      </div>}
+    </form>
     <button
       className="gdm-session"
       aria-label="Choose a desktop environment"
