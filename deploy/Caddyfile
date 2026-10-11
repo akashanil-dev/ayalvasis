@@ -1,0 +1,33 @@
+# TuxOS site block. Append it to the Caddyfile your Caddy container uses (on this server:
+# /home/ubuntu/Perlite/Caddyfile). The Caddy container also needs these read-only mounts in its compose file:
+#   - /opt/tuxos:/opt/tuxos:ro       the releases (static files)
+#   - /run/tuxos:/run/tuxos:ro       the API's Unix socket
+# Then: docker compose up -d caddy   (recreates it with the mounts; reloads the config too)
+tuxos.akashanil.dev {
+	encode zstd gzip
+
+	# The tutor and learning API (apps/api) on a Unix socket: no network port is open for it.
+	handle /api/* {
+		reverse_proxy unix//run/tuxos/api.sock
+	}
+
+	# The desktop: static files from the current release. `current` is a symlink that each deploy
+	# switches atomically, so Caddy never needs reloading for a new release.
+	handle {
+		root * /opt/tuxos/current/web
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Vite puts a content hash in asset file names, so they can be cached forever; the page itself can't.
+	@hashed path /assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	@page path / /index.html
+	header @page Cache-Control "no-cache"
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+	}
+}

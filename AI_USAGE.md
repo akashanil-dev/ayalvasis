@@ -4,6 +4,8 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 ## Event build log
 
+| 2026-10-11T05:39:20+05:30 | AI coding assistant | CI/CD and deployment | Wrote the GitHub Actions workflow, Caddy site block, systemd unit, server setup and release scripts, and the proxy-aware rate limiting in `apps/api/src/server.ts`. | Pending | Release script and rollback tested locally; rate limiting checked with curl; tests pass on Node 24. Not yet run on the server or in GitHub Actions. |
+
 | 2026-10-11T05:00:28+05:30 | AI coding assistant | Vasi as a teaching agent | Designed and implemented the teacher persona, agent tools, screen agent with drawn pointer, sudo request dialog, Stop control, terminal typing channel, sudo option fix and tests across `packages/tutor`, `apps/web`, `apps/api`, `modules/terminal` and `packages/shell`. | Pending | `npm run typecheck` passed; 24 test files and 270 tests passed; `npm run build` passed; agent flow checked in headless Chromium against a scripted model stand-in. |
 
 | 2026-10-11T05:29:29+05:30 | Codex | Reduce Linux syllabus planning payload | Removed irrelevant cached history from planning; scope hint/answer context to three short entries for the active task. | Pending | `npm run check` passed (23 test files, 259 tests); `npm run build` and `git diff --check` passed; local API health responded configured. No live model call. |

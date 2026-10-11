@@ -124,6 +124,30 @@ Never paste an API key into source files, commit history, issue trackers, chat, 
 key is exposed, revoke it immediately and create a replacement; changing the model or `.env` value does not
 invalidate the old credential.
 
+### Deployment (CI/CD)
+
+Production is https://tuxos.akashanil.dev, on an Ubuntu 24.04 (aarch64) server behind Cloudflare, served by
+Caddy. Files live in [`deploy/`](deploy) and [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml).
+
+- **CI:** every push and pull request runs `npm ci`, the type check, the tests and the web build on Node 24.
+- **CD:** a passing push to `main` uploads a release (built desktop, API source, `deploy/deploy.sh`) over SSH
+  as the `tuxos-deploy` user. The script installs it in `/opt/tuxos/releases/<commit>`, switches the
+  `/opt/tuxos/current` symlink, restarts the `tuxos-api` systemd service and checks `/api/health`; if that
+  fails it switches back to the previous release. The last five releases are kept. The workflow then checks
+  the live site.
+- **Server layout:** Caddy runs in Docker (compose project `/home/ubuntu/Perlite`, shared with other sites).
+  It serves `/opt/tuxos/current/web` and forwards `/api/*` to the API's Unix socket `/run/tuxos/api.sock`;
+  both folders are mounted read-only into the Caddy container ([`deploy/Caddyfile`](deploy/Caddyfile)). The API
+  runs as the unprivileged `tuxos` user ([`deploy/tuxos-api.service`](deploy/tuxos-api.service)) with secrets
+  in `/etc/tuxos/tuxos.env` (root-only), and opens no network port. `TRUST_PROXY=1` makes rate limits use
+  Cloudflare's visitor IP.
+- **One-time setup:** copy `deploy/` to the server and run `sudo bash deploy/setup-server.sh` (installs Node 24,
+  the users, folders, env file and service), put the OpenAI key in `/etc/tuxos/tuxos.env`, add the Caddy site
+  block and the two mounts and recreate the Caddy container, then add the GitHub secrets `DEPLOY_HOST`, `DEPLOY_SSH_KEY` and
+  `DEPLOY_KNOWN_HOSTS` to a `production` environment.
+- **Rollback by hand:** `ln -sfn /opt/tuxos/releases/<commit> /opt/tuxos/current` as `tuxos-deploy`, then
+  `sudo systemctl restart tuxos-api`. Logs: `journalctl -u tuxos-api`.
+
 ### Current status
 
 - Working features:

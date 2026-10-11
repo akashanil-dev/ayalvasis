@@ -4,6 +4,31 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-11T05:39:20+05:30 — CI/CD and production deployment setup
+
+- Changed:
+  - GitHub Actions workflow (`.github/workflows/ci-cd.yml`): type check, tests and web build on Node 24 for
+    every push and pull request; on `main`, the release is uploaded over SSH and installed on the server, then
+    the live site is checked.
+  - `deploy/`: Caddy site block for tuxos.akashanil.dev, hardened systemd unit for the API, one-time
+    `setup-server.sh` (Node 24, `tuxos` and `tuxos-deploy` users, `/opt/tuxos`, `/etc/tuxos/tuxos.env`, sudo
+    rule limited to restarting the API) and `deploy.sh` (release folders, atomic symlink switch, health check,
+    automatic rollback, keeps five releases).
+  - API: `SOCKET` makes it listen on a Unix socket (production: `/run/tuxos/api.sock`, shared with the Caddy
+    container, so no network port is opened); `HOST` sets a TCP listen address; with `TRUST_PROXY=1` the rate
+    limit uses Cloudflare's `CF-Connecting-IP`, so visitors behind the proxy no longer share one limit.
+  - Caddy on the server runs in Docker, so the site block proxies to the socket and the container needs
+    `/opt/tuxos` and `/run/tuxos` mounted read-only; `/run/tuxos` is created at boot by tmpfiles.d.
+- Why: The team wants automatic, safe deploys to their Oracle server on every push to `main`.
+- Validation: workflow YAML parsed. `deploy.sh` run locally against a scratch root: two releases deployed,
+  then a deliberately broken release failed its health check and was rolled back. Per-visitor rate limiting
+  checked with curl (same IP limited, other IP not). Socket mode checked with curl (health answered, stale socket
+  replaced, socket mode 666). On the server, `setup-server.sh` ran on Ubuntu 24.04 aarch64 (Node 24.21 installed,
+  users, folders, sudo rule and service created). On Node 24.21: type check passed, 24 test files and 270
+  tests passed, the API started and answered `/api/health`.
+- Limitations: not yet run on the real server or in GitHub Actions. The Caddy block was not validated with
+  `caddy validate` locally (no Caddy here); validate it on the server before reloading.
+
 ## 2026-10-11T05:00:28+05:30 — Vasi becomes a teaching agent with full control
 
 - Changed:

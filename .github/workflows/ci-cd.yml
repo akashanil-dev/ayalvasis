@@ -1,0 +1,91 @@
+# CI on every push and pull request; on main, a passing build is deployed to tuxos.akashanil.dev.
+name: CI/CD
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build --workspace @tuxos/web
+      # The release: the built desktop, the API source (it has no dependencies) and the deploy script.
+      - name: Package the release
+        run: |
+          mkdir -p release/web release/api release/deploy
+          cp -a apps/web/dist/. release/web/
+          cp -a apps/api/package.json apps/api/src release/api/
+          find release/api -name '*.test.ts' -delete
+          cp deploy/deploy.sh release/deploy/
+          tar -czf release.tar.gz -C release .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.tar.gz
+          retention-days: 7
+
+  deploy:
+    name: Deploy to production
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://tuxos.akashanil.dev
+    # One deploy at a time; a newer push waits rather than cancelling one halfway.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Upload and install the release
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          RELEASE: ${{ github.sha }}
+        run: |
+          ssh_opts=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes)
+          scp "${ssh_opts[@]}" release.tar.gz "tuxos-deploy@$HOST:/tmp/tuxos-$RELEASE.tar.gz"
+          ssh "${ssh_opts[@]}" "tuxos-deploy@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          set -euo pipefail
+          release="$1"
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work" "/tmp/tuxos-$release.tar.gz"' EXIT
+          tar -xzf "/tmp/tuxos-$release.tar.gz" -C "$work"
+          bash "$work/deploy/deploy.sh" "$release"
+          REMOTE
+      - name: Check the live site
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if curl -fsS https://tuxos.akashanil.dev/api/health && curl -fsS -o /dev/null https://tuxos.akashanil.dev/; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "The site did not answer after the deploy." >&2
+          exit 1

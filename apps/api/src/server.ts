@@ -2,6 +2,7 @@
 //   GET  /api/health  -> { ok, tutor: configured? }
 //   POST /api/tutor   -> one model call for the tutor (see tutor.ts)
 
+import { chmodSync, rmSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { RateLimiter } from './rate-limit.ts';
 import { handleTutor, type TutorConfig } from './tutor.ts';
@@ -21,6 +22,22 @@ const config: TutorConfig = {
 const port = Number(process.env.PORT || 8787);
 const MAX_BODY_BYTES = 512 * 1024;
 const limiter = new RateLimiter(Number(process.env.TUTOR_REQUESTS_PER_MINUTE || 30), 60_000);
+// Behind a reverse proxy (Caddy, then Cloudflare) every request comes from the proxy, so the rate limit
+// would be shared by everyone. Only then trust the proxy's header naming the real visitor.
+const trustProxy = process.env.TRUST_PROXY === '1';
+const host = process.env.HOST || undefined;
+// In production the API listens on a Unix socket that only the web server (Caddy, in Docker) can reach.
+const socket = process.env.SOCKET || undefined;
+
+/** The visitor's address: Cloudflare's or the proxy's header when trusted, else the socket's. */
+function clientAddress(request: IncomingMessage): string {
+  if (trustProxy) {
+    const header = request.headers['cf-connecting-ip'] ?? request.headers['x-forwarded-for'];
+    const first = (Array.isArray(header) ? header[0] : header)?.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return request.socket.remoteAddress ?? 'unknown';
+}
 
 const server = createServer(async (request, response) => {
   try {
@@ -37,7 +54,7 @@ async function route(request: IncomingMessage, response: ServerResponse): Promis
     return send(response, 200, { ok: true, tutor: config.apiKey ? 'configured' : 'missing OPENAI_API_KEY' });
   }
   if (request.method === 'POST' && url.pathname === '/api/tutor') {
-    if (!limiter.allow(request.socket.remoteAddress ?? 'unknown')) {
+    if (!limiter.allow(clientAddress(request))) {
       return send(response, 429, { error: 'Slow down a little: too many questions in a minute.' });
     }
     const body = await readJson(request);
@@ -46,7 +63,7 @@ async function route(request: IncomingMessage, response: ServerResponse): Promis
     return send(response, reply.status, reply.body);
   }
   if (request.method === 'POST' && /^\/api\/learning\/(plan|evaluate|hint|answer)$/.test(url.pathname)) {
-    if (!limiter.allow(request.socket.remoteAddress ?? 'unknown')) {
+    if (!limiter.allow(clientAddress(request))) {
       return send(response, 429, { error: 'Slow down a little: too many learning requests in a minute.' });
     }
     const body = await readJson(request);
@@ -78,7 +95,17 @@ function send(response: ServerResponse, status: number, body: unknown): void {
   response.end(JSON.stringify(body));
 }
 
-server.listen(port, () => {
-  const tutor = config.apiKey ? 'on' : 'off';
-  console.log(`tuxos API on http://localhost:${port} (model ${config.model}, tutor ${tutor})`);
-});
+const tutorState = config.apiKey ? 'on' : 'off';
+if (socket) {
+  // A socket file left behind by a crash would stop the server from starting.
+  rmSync(socket, { force: true });
+  server.listen(socket, () => {
+    // The web server runs as a different user, so it must be allowed to connect.
+    chmodSync(socket, 0o666);
+    console.log(`tuxos API on ${socket} (model ${config.model}, tutor ${tutorState})`);
+  });
+} else {
+  server.listen(port, host, () => {
+    console.log(`tuxos API on http://${host ?? 'localhost'}:${port} (model ${config.model}, tutor ${tutorState})`);
+  });
+}

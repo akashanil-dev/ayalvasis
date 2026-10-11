@@ -1,0 +1,34 @@
+# systemd unit for the TuxOS API. Installed by deploy/setup-server.sh as /etc/systemd/system/tuxos-api.service.
+[Unit]
+Description=TuxOS tutor and learning API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tuxos
+Group=tuxos
+WorkingDirectory=/opt/tuxos/current/api
+# Secrets and settings (OPENAI_API_KEY, models, SOCKET, TRUST_PROXY), readable only by root.
+EnvironmentFile=/etc/tuxos/tuxos.env
+ExecStart=/usr/bin/node src/server.ts
+Restart=on-failure
+RestartSec=3
+
+# The API only needs to read its code and make outgoing HTTPS calls.
+NoNewPrivileges=true
+ProtectSystem=strict
+# The socket lives in /run/tuxos (made by tmpfiles.d, so it stays put across restarts for Caddy's mount).
+ReadWritePaths=/run/tuxos
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
