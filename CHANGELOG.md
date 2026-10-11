@@ -1,8 +1,17 @@
 # Change log
 
-Record each meaningful project change during the event, newest first. Update this file in the same commit as the change. Use a real timestamp with timezone, for example `YYYY-MM-DDTHH:MM:SS+05:30`.
+Notable changes, newest first. Older entries were written while TuxOS was built at
+the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
+have since been removed.
 
-## Event build log
+## 2026-10-11T20:31:00+05:30 — Turn the hackathon repository into a regular project repository
+
+- Removed the event template files: `AGENTS.md`, `RULES.md`, `AI_USAGE.md`, `SUBMISSION.md` and the pull
+  request template that pointed to them.
+- Rewrote `README.md` as a project README: features, architecture, local setup, commands, deployment, known
+  limitations and credits, with the team listed. Event details and template instructions were removed.
+- Why: the event is over and these files served their purpose.
+- Validation: `npm run check` passed; README links checked.
 
 ## 2026-10-11T09:05:00+05:30 — Retake the Learn Linux experience survey
 
