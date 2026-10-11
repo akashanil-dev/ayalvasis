@@ -33,7 +33,98 @@ Record each meaningful project change during the event, newest first. Update thi
   untested. Any password is accepted because TuxOS accounts have none. Clicks and typing outside Vasi's own
   terminal run as the learner, so the persona (not the kernel) keeps him from doing lesson work through the UI.
   `head` and `tail` still accept only `-n N`, not the `-N` shorthand.
+## 2026-10-11T05:29:29+05:30 — Keep cached Linux history out of syllabus planning
 
+- Changed: Stopped attaching the full module memory cache to new syllabus requests. Hints and answers now receive only the last three short memory entries for the active task; Linux assessments continue to receive no prior-attempt history.
+- Why: The browser showed a pending plan request with about 24 KB of request data even though the API health check passed. Old terminal attempts and verbose answers were irrelevant to generating a fresh syllabus and inflated the request.
+- Files: `packages/lessons/src/ai.ts`, `apps/api/src/learning.ts`, `apps/api/src/learning.test.ts`, `modules/learn-linux/src/course.test.ts`, `README.md`, and this changelog.
+- Validation: `npm run check` passed (23 test files, 259 tests); `npm run build` and `git diff --check` passed. Local `/api/health` returned `{"ok":true,"tutor":"configured"}`.
+- Limitations: The health endpoint confirms configuration only, not upstream model availability; no live syllabus call was made.
+
+## 2026-10-11T05:24:23+05:30 — Make Linux missions one command at a time
+
+- Changed: Linux syllabus generation now makes each mission (including recaps) a single-command-line objective. Chained-command answers are rejected by both API and client validation (a pipeline remains valid for a pipe-specific lesson); assessment evaluates only the current command and output, and the runner advances after a correct result. Linux assessment requests no longer send prior-attempt memory. New one-command syllabi use a separate local state file, preserving previous cached plans.
+- Why: The recap bundled `whoami` and `cd` into one confusing question, and previous attempts made each submission feel like another incomplete step in the same long prompt.
+- Files: `apps/api/src/learning.ts`, `apps/api/src/learning.test.ts`, `packages/lessons/src/ai.ts`, `modules/learn-linux/src/course.test.ts`, `README.md`, and this changelog.
+- Validation: `npm run check` passed (23 test files, 257 tests); `npm run build` and `git diff --check` passed.
+- Limitations: Existing cached Linux plans are intentionally left untouched; the next launch generates a new syllabus in the versioned local state file. The API must be restarted to load the updated planning/evaluation rules.
+
+## 2026-10-11T05:20:49+05:30 — Clarify the Linux learning mission header
+
+- Changed: Styled the Linux scenario and task as a compact mission header with a left-side penguin, purple Bitcount Grid Double Ink display text, and an explicit recap/new badge. Linux answers now render as a command plus brief reason, capped at 140 characters in the API and local runner; assessments are capped at 110 characters and cumulative per-task command evidence is remembered. New syllabus tasks are constrained to one terminal submission, and duplicate task titles were removed.
+- Why: The task needs a clear visual hierarchy, and long model output plus repeated whole-task feedback was obscuring what the learner should do next.
+- Files: `apps/web/index.html`, `packages/course-view/src/index.tsx`, `packages/course-view/src/course.css`, `apps/api/src/learning.ts`, `apps/api/src/learning.test.ts`, `packages/lessons/src/ai.ts`, `modules/learn-linux/src/course.test.ts`, `README.md`, and this changelog.
+- Validation: `npm run check` passed (23 test files, 256 tests); `npm run build` and `git diff --check` passed.
+- Limitations: The API server must be restarted before existing sessions use the new answer limit.
+
+## 2026-10-11T05:13:38+05:30 — Keep Linux terminal coaching module-scoped
+
+- Changed: Learning terminals now carry their owning module ID, so `/hint`, `/answer`, and command assessments resolve against that module's trainer rather than a process-wide current trainer. The Linux task header now shows the scenario, task, and explicit `RECAP`/`NEW` status without the extra branding line.
+- Why: A shared global trainer pointer allowed Learn Linux to display its own scenario while `/answer` returned Docker's task solution.
+- Files: `packages/lessons/src/ai.ts`, `packages/lessons/src/runner.ts`, `packages/system/src/index.ts`, `modules/terminal/src/index.ts`, `modules/terminal/src/view.tsx`, `packages/course-view/src/index.tsx`, `modules/chmod-arcade/src/view.tsx`, `modules/learn-linux/src/course.test.ts`, and this changelog.
+- Validation: `npm run check` passed (23 test files, 255 tests); `npm run build` and `git diff --check` passed. Added a cross-module Linux/Docker slash-command regression.
+- Limitations: Existing open terminal windows should be closed and reopened so they receive their module-scoped context.
+
+## 2026-10-11T05:06:11+05:30 — Keep Linux assessment feedback compact
+
+- Changed: Routed Linux learning to `gpt-5.6-luna` by default with `OPENAI_MODEL_LINUX` override; constrained Linux assessments to one short verdict/context sentence and capped returned feedback at 110 characters. `/answer` remains a detailed teaching explanation.
+- Why: Make the Linux trainer's model choice cost-conscious and keep correct/wrong feedback readable in the terminal.
+- Files: `apps/api/src/server.ts`, `apps/api/src/learning.ts`, `apps/api/src/learning.test.ts`, `.env.example`, `README.md`, and this changelog.
+- Validation: `npm run check` passed (23 test files, 254 tests); `npm run build` passed; `git diff --check` passed.
+- Limitations: Existing local `.env` model overrides are not modified automatically; restart the API after updating configuration.
+
+## 2026-10-11T04:55:20+05:30 — Align AI syllabus recap schema and surface planning failures
+
+- Changed: Made the planner prompt specify a task-level recap marker for the first task on every day after day one; API and client validation now enforce exactly that contract. Linux status refreshes while initial generation is pending so a completed failure does not remain displayed as “generating.” Added API regression coverage and updated the syllabus behavior in the README.
+- Why: The observed `/api/learning/plan` response rejected generated plans because the recap requirement was underspecified at the task level; the terminal also kept a stale pending status.
+- Files: `apps/api/src/learning.ts`, `apps/api/src/learning.test.ts`, `packages/lessons/src/ai.ts`, `packages/course-view/src/index.tsx`, `modules/learn-linux/src/course.test.ts`, `packages/tutor/src/tutor.test.ts`, `README.md`, and this changelog.
+- Validation: `npm run check` passed (23 test files, 254 tests); `npm run build` passed; focused tutor-panel rerun passed (5 tests). One initial full-suite run had a timing-sensitive tutor-panel failure; the subsequent full suite passed.
+- Limitations: The live API process must be restarted to load backend prompt/validation changes; a live model response has not yet been verified.
+
+## 2026-10-11T04:46:25+05:30 — Prevent duplicate Linux syllabus generation
+
+- Changed: Made AI syllabus generation single-flight and added a visible busy state to the Linux retry button, preventing retries from starting duplicate model requests while generation is already running.
+- Why: The screenshot showed the runner still in its pending-generation state; repeated retry clicks could create overlapping requests and leave confusing status.
+- Files: `packages/lessons/src/ai.ts` and `packages/course-view/src/index.tsx`.
+- Validation: `npm run check` passed with 23 test files and 252 tests; `npm run build` passed; `git diff --check` passed.
+
+## 2026-10-11T04:44:47+05:30 — Diagnose and retry failed Linux AI planning
+
+- Changed: Linux status now retains and displays the actual AI planning error. Added a Retry AI trainer action, and hardened the API to normalize model-generated course IDs and reject incomplete syllabus/task structures with specific diagnostics.
+- Why: `/api/health` reports key presence only; it does not test model access or syllabus validity. A startup plan failure previously left a generic unavailable screen with no retry path.
+- Files: `packages/lessons/src/ai.ts`, `packages/course-view/src/index.tsx`, `packages/course-view/src/course.css`, `apps/api/src/learning.ts`, and API tests.
+- Validation: `npm run check` passed with 23 test files and 252 tests; `npm run build` passed; `git diff --check` passed.
+- Limitation: The sandbox cannot connect to the user's localhost API, so a live OpenAI plan request could not be exercised here.
+
+## 2026-10-11T04:41:44+05:30 — Start the AI API with the desktop dev server
+
+- Changed: `npm run dev` now supervises both the local API and Vite development server, so AI-generated Linux tasks do not fail merely because the API was started in a separate terminal.
+- Why: The strict Linux lab correctly refuses hardcoded questions, but the previous developer command did not start the required AI service.
+- Files: `scripts/dev.mjs`, `package.json`, and `README.md`.
+- Validation: The script is standard Node process orchestration; existing `npm run check`, build, and diff checks remain the relevant project validation.
+
+## 2026-10-11T04:39:39+05:30 — Strict AI Linux terminal lab
+
+- Changed: Replaced the Linux course dashboard with a real xterm terminal surface and shell-style `#` task comments. Linux now requires a successful AI-generated syllabus and assessment; it no longer loads the hardcoded JSON course as a learner fallback. Terminal startup was enabled so `/hint` and `/answer` are available in the embedded lab.
+- Why: Make Linux practice feel like an actual terminal session and ensure every learner question and next task comes from the configured AI trainer.
+- Files: `modules/terminal/src/view.tsx`, `packages/course-view/src/index.tsx`, `packages/course-view/src/course.css`, `packages/lessons/src/ai.ts`, `modules/learn-linux/src/index.ts`, and tests.
+- Validation: `npm run check` passed with 23 test files and 252 tests; `npm run build` passed; `git diff --check` passed.
+- Limitation: If the learning API is down or the key is unavailable, Linux shows an explicit AI-trainer-unavailable state rather than presenting a local question.
+
+## 2026-10-11T04:30:13+05:30 — AI task wiring for chmod lab
+
+- Changed: Connected chmod Arcade to the AI course runner with a reviewed fallback syllabus, module-specific security trainer persona, and generated task text in the terminal workspace while retaining the permission visualization and game.
+- Why: Make chmod follow the same adaptive, scenario-based learning flow as Linux and Docker.
+- Files: `modules/chmod-arcade/src/course.ts`, `modules/chmod-arcade/src/index.ts`, `modules/chmod-arcade/src/manifest.ts`, `modules/chmod-arcade/src/view.tsx`, and package metadata.
+- Validation: `npm run check` passed with 23 test files and 257 tests; `npm run build` passed; `git diff --check` passed.
+
+## 2026-10-11T04:29:13+05:30 — Terminal-first learning lab frontend
+
+- Changed: Replaced Linux and Docker lesson windows with embedded terminal labs that keep the AI-generated task visible above the shell, execute learner commands on Enter, and expose `/hint` and `/answer` in the same terminal context. Added Docker daemon/images/containers visualization and extended chmod Arcade with a terminal task banner and embedded terminal beside its permission game.
+- Why: Make the learning experience feel like real operational work instead of a lesson page that sends learners elsewhere to practice.
+- Files: `packages/course-view/src/index.tsx`, `packages/course-view/src/course.css`, `modules/learn-linux/src/view.tsx`, `modules/learn-docker/src/view.tsx`, `modules/learn-docker/src/index.ts`, `modules/chmod-arcade/src/view.tsx`, and `modules/chmod-arcade/src/arcade.css`.
+- Validation: `npm run check` passed with 23 test files and 257 tests; `npm run build` passed; `git diff --check` passed.
+- Limitation: The Docker visualization is intentionally a concise engine summary; detailed diagnostics remain in the terminal output.
 ## 2026-10-11T04:14:36+05:30 — Module-local learning memory and model routing
 
 - What changed: Added bounded local memory files per learning module, memory-aware planning/hints/answers/evaluation, and independent environment-configurable model routing for Linux, Docker, Terminal, and chmod-arcade.

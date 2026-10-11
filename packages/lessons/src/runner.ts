@@ -23,7 +23,7 @@ export interface LessonStatus {
     lesson: { id: string; title: string; story: string };
     stepIndex: number;
     steps: { id: string; task: string; done: boolean }[];
-    step: { id: string; task: string; hints: string[] };
+    step: { id: string; task: string; hints: string[]; recap?: boolean };
   } | null;
   /** The explanation of the step that was just completed, if it has one. */
   lastExplain: string | null;

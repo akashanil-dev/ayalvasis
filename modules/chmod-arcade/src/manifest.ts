@@ -4,7 +4,7 @@ export const manifest: ModuleManifest = {
   id: 'chmod-arcade',
   version: '1.0.0',
   title: 'chmod Arcade',
-  capabilities: [],
+  capabilities: ['fs:read', 'fs:write', 'lessons:read', 'lessons:write'],
   activation: ['onApp:chmod-arcade'],
   contributes: {
     apps: [{

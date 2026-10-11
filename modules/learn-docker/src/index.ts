@@ -22,6 +22,14 @@ export const learnDocker: ModuleDefinition = {
   manifest,
   activate(ctx) {
     const engine = new DockerEngine(load(ctx));
+    ctx.registerAction({
+      type: 'learn-docker.snapshot', capability: 'lessons:read', mutates: false,
+      description: 'Read the learner-visible Docker engine summary for the lab visualization.',
+      run: () => ({
+        images: [...engine.state.images],
+        containers: engine.state.containers.map(({ name, image, ports, stopped }) => ({ name, image, ports, stopped })),
+      }),
+    });
     const command = (name: string, run: (args: string[]) => Output) => ctx.registerCommand({
       name,
       summary: manifest.contributes.commands!.find((each) => each.name === name)!.summary,

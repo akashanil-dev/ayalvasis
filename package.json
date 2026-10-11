@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "check": "npm run typecheck && npm test",
-    "dev": "npm run dev --workspace @tuxos/web",
+    "dev": "node scripts/dev.mjs",
     "build": "npm run typecheck && npm run build --workspace @tuxos/web",
     "api": "npm run start --workspace @tuxos/api"
   },

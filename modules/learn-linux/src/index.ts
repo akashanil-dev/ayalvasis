@@ -15,7 +15,7 @@ export const learnLinux: ModuleDefinition = {
     specialty: 'An industry Linux administrator and certification assessor who teaches safe operations, troubleshooting, shell fluency, permissions, networking, and production habits.',
     level: 'beginner to advanced',
     scenarioFocus: 'real incidents, on-call runbooks, server hardening, log investigation, and certification-style practical labs',
-  }),
+  }, { requireAI: true }),
 };
 
 export default learnLinux;

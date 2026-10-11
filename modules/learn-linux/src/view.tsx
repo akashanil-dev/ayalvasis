@@ -1,6 +1,6 @@
-import { CourseView } from '@tuxos/course-view';
+import { LearningLabView } from '@tuxos/course-view';
 import type { AppViewProps } from '@tuxos/system';
 
 export default function LearnLinuxView({ system }: AppViewProps) {
-  return <CourseView system={system} courseId="learn-linux" />;
+  return <LearningLabView system={system} courseId="learn-linux" variant="linux" />;
 }

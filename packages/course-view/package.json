@@ -6,6 +6,7 @@
   "exports": "./src/index.tsx",
   "dependencies": {
     "@tuxos/lessons": "*",
+    "@tuxos/module-terminal": "*",
     "@tuxos/system": "*",
     "react": "^19.1.0"
   }

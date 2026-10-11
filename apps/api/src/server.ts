@@ -12,7 +12,7 @@ const config: TutorConfig = {
   model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
   baseUrl: (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
   learningModels: {
-    'learn-linux': process.env.OPENAI_MODEL_LINUX || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    'learn-linux': process.env.OPENAI_MODEL_LINUX || 'gpt-5.6-luna',
     'learn-docker': process.env.OPENAI_MODEL_DOCKER || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
     terminal: process.env.OPENAI_MODEL_TERMINAL || process.env.OPENAI_MODEL || 'gpt-4.1-mini',
     'chmod-arcade': process.env.OPENAI_MODEL_CHMOD_ARCADE || process.env.OPENAI_MODEL || 'gpt-4.1-mini',

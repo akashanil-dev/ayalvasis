@@ -3,9 +3,11 @@
 
 import { validateCourse, type LessonStatus } from '@tuxos/lessons';
 import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
+import type { LearningBackend } from '@tuxos/sdk';
 import { describe, expect, it } from 'vitest';
-import { files } from '../../files/src/index';
 import { course, learnLinux } from './index';
+import { terminal } from '../../terminal/src/index';
+import { learnDocker } from '../../learn-docker/src/index';
 
 const memory = (): KeyValueStorage => {
   const values = new Map<string, string>();
@@ -16,12 +18,31 @@ const memory = (): KeyValueStorage => {
   };
 };
 
-async function boot(): Promise<SystemClient> {
+/** Tests model the API response; production Linux never uses the reviewed JSON as a learner fallback. */
+const aiLearning = (): LearningBackend => ({
+  async request(path, body) {
+    const request = body as { module?: string; task?: { answer?: string }; command?: { line?: string } };
+    if (path === '/plan') return {
+      courseId: request.module, title: request.module === 'learn-linux' ? 'AI Linux Lab' : 'AI Docker Lab', summary: 'Generated test syllabus', trainer: {},
+      days: course.lessons.map((lesson, day) => ({ day: day + 1, title: lesson.title, recap: day > 0, tasks: lesson.steps.map((step, index) => ({
+        id: step.id, title: `AI task ${index + 1}`, scenario: lesson.story, task: step.task, objective: step.explain ?? lesson.title,
+        hints: step.hints, answer: request.module === 'learn-docker' ? 'docker --version' : day === 0 && index === 0 ? 'whoami' : day === 0 && index === 1 ? 'pwd' : `echo task-${day + 1}-${index + 1}`, explain: step.explain ?? '', recap: day > 0 && index === 0,
+      })) })),
+    };
+    if (path === '/evaluate') return { correct: request.command?.line?.trim() === request.task?.answer?.trim() || request.task?.answer?.startsWith('Open '), feedback: 'AI test assessment' };
+    if (path === '/hint') return { text: 'AI test hint' };
+    return { text: `### Detailed Solution for ${request.module}\n\n**Exact command:**\n\n\`\`\`bash\nwhoami\n\`\`\`\n\n${'Long lesson section. '.repeat(30)}` };
+  },
+});
+
+async function boot(withDocker = false, learning: LearningBackend = aiLearning()): Promise<SystemClient> {
   const system = createLocalSystem({
     storage: memory(),
+    learning,
     modules: [
       { manifest: learnLinux.manifest, load: async () => learnLinux },
-      { manifest: files.manifest, load: async () => files },
+      { manifest: terminal.manifest, load: async () => terminal },
+      ...(withDocker ? [{ manifest: learnDocker.manifest, load: async () => learnDocker }] : []),
     ],
   });
   await system.boot('ada');
@@ -39,48 +60,78 @@ describe('Learn Linux course', () => {
     expect(validateCourse(course)).toEqual([]);
   });
 
-  it.each(course.lessons.map((lesson) => [lesson.id]))('lesson %s is completed by its own solution', async (id) => {
+  it('starts an AI-generated task and assesses terminal input', async () => {
     const system = await boot();
-    const lesson = course.lessons.find((each) => each.id === id)!;
-    expect(await system.dispatch('learn-linux.start', { lesson: id })).toMatchObject({ ok: true });
-    const terminal = await system.createTerminal();
-    for (const step of lesson.solution) {
-      if (typeof step === 'string') await terminal.run(step);
-      else await system.openApp(step.open);
-    }
-    const after = await status(system);
-    expect(after.active).toBeNull();
-    expect(after.lessons.find((each) => each.id === id)).toMatchObject({ completed: lesson.steps.length });
+    const initial = await status(system);
+    expect(initial.course.title).toBe('AI Linux Lab');
+    expect(initial.active?.step.id).toBe('whoami');
+    const terminal = await system.createTerminal({ learningModule: 'learn-linux' });
+    const wrong = await terminal.run('who');
+    expect(wrong.stdout).toContain('[Trainer] ✗ Not yet');
+    expect(wrong.stdout.length).toBeLessThan(180);
+    expect((await terminal.run('whoami')).stdout).toContain('[Trainer] ✓ Correct');
+    expect((await status(system)).active?.step.id).toBe('pwd');
   });
 
-  it('does not count a step done by doing something else', async () => {
-    const system = await boot();
-    await system.dispatch('learn-linux.start', { lesson: 'first-words' });
-    const terminal = await system.createTerminal();
-    await terminal.run('pwd');
-    await terminal.run('who');
-    expect((await status(system)).active?.step.id).toBe('whoami');
+  it('keeps the syllabus request small by excluding cached memory', async () => {
+    let planBody: Record<string, unknown> | undefined;
+    const fixture = aiLearning();
+    const system = await boot(false, { request: async (path, body) => {
+      if (path === '/plan') planBody = body as Record<string, unknown>;
+      return fixture.request(path, body);
+    } });
+    expect(await status(system)).toMatchObject({ course: { title: 'AI Linux Lab' } });
+    expect(planBody).not.toHaveProperty('memory');
   });
 
-  it('keeps progress in a file in the learner home, and resumes it after a restart', async () => {
+  it('reports a rejected AI plan instead of leaving Linux in a pending state or showing local questions', async () => {
+    const system = createLocalSystem({
+      storage: memory(),
+      learning: { request: async () => { throw new Error('Every day after day one must begin with exactly one task marked as a recap.'); } },
+      modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
+    });
+    await system.boot('ada');
+    const current = await status(system);
+    expect(current.lessons).toHaveLength(0);
+    expect(current.lastExplain).toContain('AI trainer unavailable: Every day after day one');
+  });
+
+  it('serves AI hints and detailed answers through terminal commands', async () => {
+    const system = await boot();
+    const terminal = await system.createTerminal({ learningModule: 'learn-linux' });
+    expect((await terminal.run('/hint')).stdout).toContain('AI test hint');
+    const answer = await terminal.run('/answer');
+    expect(answer.stdout).toContain('whoami');
+    expect(answer.stdout.length).toBeLessThanOrEqual(141);
+    expect(answer.stdout).not.toContain('Detailed Solution');
+  });
+
+  it('keeps Linux slash commands on the Linux trainer when Docker is active', async () => {
+    const system = await boot(true);
+    await system.dispatch('learn-docker.start', { lesson: 'day-1' });
+    const linuxTerminal = await system.createTerminal({ learningModule: 'learn-linux' });
+    const answer = await linuxTerminal.run('/answer');
+    expect(answer.stdout).toContain('whoami');
+    expect(answer.stdout).not.toContain('docker --version');
+  });
+
+  it('keeps AI progress in the learner home and resumes it after a restart', async () => {
     const storage = memory();
     const make = () => createLocalSystem({
-      storage, modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
+      storage, learning: aiLearning(), modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
     });
     const first = make();
     await first.boot('ada');
-    await first.dispatch('learn-linux.start', { lesson: 'first-words' });
     await (await first.createTerminal()).run('whoami');
-    const progressFile = '/home/ada/.local/share/tuxos/learn-linux.json';
+    const progressFile = '/home/ada/.local/share/tuxos/ai-learning/learn-linux-v2.json';
     const saved = await first.dispatch<string>('fs.read', { path: progressFile });
-    expect(saved.ok && JSON.parse(saved.value)).toMatchObject({ active: { lesson: 'first-words', step: 1 } });
+    expect(saved.ok && JSON.parse(saved.value)).toMatchObject({ completed: ['whoami'] });
     await first.flush();
 
     const second = make();
     await second.boot('ada');
+    expect((await status(second)).lessons[0]?.completed).toBe(1);
     expect((await status(second)).active?.step.id).toBe('pwd');
-    await (await second.createTerminal()).run('pwd');
-    expect((await status(second)).active?.step.id).toBe('ls');
   });
 
   it('rejects unknown lessons with a clear error', async () => {

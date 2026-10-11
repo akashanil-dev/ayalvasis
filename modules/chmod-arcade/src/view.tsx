@@ -1,3 +1,4 @@
+import { LabTerminal, useLessonStatus } from '@tuxos/course-view';
 import type { AppViewProps, SystemClient } from '@tuxos/system';
 import { useEffect, useRef, useState } from 'react';
 import { explain, nextQuestion, octal, parseOctal, points, ROUND_SECONDS, symbolic, type Question } from './game';
@@ -6,6 +7,7 @@ import './arcade.css';
 type Phase = 'ready' | 'playing' | 'over';
 
 export default function ArcadeView({ system }: AppViewProps) {
+  const learning = useLessonStatus(system, 'chmod-arcade');
   const [phase, setPhase] = useState<Phase>('ready');
   const [question, setQuestion] = useState<Question>(() => nextQuestion(Math.random));
   const [score, setScore] = useState(0);
@@ -46,6 +48,12 @@ export default function ArcadeView({ system }: AppViewProps) {
   }
 
   return <div className="arcade-view">
+    <section className="arcade-task-banner">
+      <div><span className="arcade-kicker">SECURITY OPERATIONS LAB · TERMINAL TASK</span><h1>{learning.status?.active?.step.task ?? 'Protect a deployment artifact'}</h1>
+        <p>{learning.status?.active?.lesson.story ?? 'Use the terminal to inspect and change file permissions. Type ls -l to verify your evidence, or use /hint and /answer when you need coaching.'}</p></div>
+      <strong>LIVE PRACTICE</strong>
+    </section>
+    <div className="arcade-learning-layout"><LabTerminal system={system} variant="chmod" courseId="chmod-arcade" /><div className="arcade-game-panel">
     <header className="arcade-bar">
       <span>Score <strong>{score}</strong></span>
       <span>Streak <strong>{streak}</strong></span>
@@ -65,6 +73,7 @@ export default function ArcadeView({ system }: AppViewProps) {
     {feedback && phase !== 'ready' && <p className={`arcade-feedback ${feedback.good ? 'good' : 'bad'}`} role="status">
       {feedback.text}
     </p>}
+    </div></div>
   </div>;
 }
 

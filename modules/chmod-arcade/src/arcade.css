@@ -6,6 +6,23 @@
   color: #f2efff;
 }
 
+.arcade-task-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(0 0 0 / 18%);
+}
+.arcade-task-banner h1 { margin: 4px 0; font-size: 18px; }
+.arcade-task-banner p { max-width: 72ch; margin: 0; color: rgb(242 239 255 / 72%); font-size: 12px; line-height: 1.45; }
+.arcade-task-banner strong { align-self: start; color: #8ff0a4; font: 700 10px var(--font-mono); letter-spacing: .08em; }
+.arcade-kicker { color: #c6bfff; font: 700 10px var(--font-mono); letter-spacing: .1em; }
+.arcade-task-banner code { padding: 1px 5px; border-radius: 4px; background: rgb(0 0 0 / 32%); font-family: var(--font-mono); }
+.arcade-learning-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); min-height: 0; flex: 1; gap: 12px; padding: 12px; }
+.arcade-learning-layout .lab-terminal { min-height: 380px; border-color: rgb(255 255 255 / 15%); }
+.arcade-game-panel { display: flex; min-width: 0; min-height: 0; flex-direction: column; overflow: auto; border: 1px solid rgb(255 255 255 / 10%); border-radius: 10px; background: rgb(0 0 0 / 14%); }
+
 .arcade-bar {
   display: flex;
   justify-content: space-between;
@@ -129,4 +146,9 @@
 .arcade-feedback.bad {
   background: rgb(192 28 40 / 25%);
   color: #ffd1d1;
+}
+
+@media (max-width: 760px) {
+  .arcade-learning-layout { grid-template-columns: 1fr; }
+  .arcade-learning-layout .lab-terminal { min-height: 300px; }
 }

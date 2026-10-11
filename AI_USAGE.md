@@ -6,6 +6,29 @@ Use Codex during the hackathon and briefly document its actual contribution here
 
 | 2026-10-11T05:00:28+05:30 | AI coding assistant | Vasi as a teaching agent | Designed and implemented the teacher persona, agent tools, screen agent with drawn pointer, sudo request dialog, Stop control, terminal typing channel, sudo option fix and tests across `packages/tutor`, `apps/web`, `apps/api`, `modules/terminal` and `packages/shell`. | Pending | `npm run typecheck` passed; 24 test files and 270 tests passed; `npm run build` passed; agent flow checked in headless Chromium against a scripted model stand-in. |
 
+| 2026-10-11T05:29:29+05:30 | Codex | Reduce Linux syllabus planning payload | Removed irrelevant cached history from planning; scope hint/answer context to three short entries for the active task. | Pending | `npm run check` passed (23 test files, 259 tests); `npm run build` and `git diff --check` passed; local API health responded configured. No live model call. |
+
+| 2026-10-11T05:24:23+05:30 | Codex | One-command Linux learning loop | Tightened AI plan/evaluation prompts, reject chained-command answers, prevent previous attempts from affecting correctness, and version the Linux local plan path to preserve older cached data. | Pending | `npm run check` passed (23 test files, 257 tests); `npm run build` and `git diff --check` passed. |
+
+| 2026-10-11T05:20:49+05:30 | Codex | Clarify Linux mission and terminal coaching | Added a purple Bitcount Grid Double Ink mission header with a small Linux penguin and recap/new indicator; also made answers/assessments concise and cumulative per task. | Pending | `npm run check` passed (23 test files, 256 tests); `npm run build` and `git diff --check` passed. |
+
+| 2026-10-11T05:13:38+05:30 | Codex | Fix Linux/Docker trainer cross-talk | Replaced the singleton current trainer with module-keyed runners, passed the owning module into learning terminals, and added explicit recap/new task labeling to the Linux terminal header. | Pending | `npm run check`: 23 test files and 255 tests passed; `npm run build` and `git diff --check` passed. Cross-module regression confirms Linux `/answer` remains Linux after Docker is active. |
+
+| 2026-10-11T05:06:11+05:30 | Codex | Make Linux assessment compact and cost-conscious | Routed Linux learning to a small model by default, constrained and capped Linux terminal assessment feedback at 110 characters, and preserved detailed `/answer`; updated configuration and usage docs. | Pending | `npm run check`: 23 test files and 254 tests passed; `npm run build` and `git diff --check` passed; no live model call made. |
+
+| 2026-10-11T04:55:20+05:30 | Codex | Fix AI syllabus recap validation failure | Clarified task-level recap output and enforced it in API/client validation; added API and Linux regression tests plus pending-status refresh. | Pending | `npm run check`: 23 files and 254 tests passed; `npm run build` passed; focused tutor-panel rerun passed. Live AI call not yet rechecked. |
+
+| 2026-10-11T04:46:25+05:30 | Codex | Handle pending Linux syllabus state | Deduplicated concurrent syllabus generation and made the retry control show a busy state until the request resolves. | Pending | 23 test files and 252 tests passed; production build and diff check passed. |
+
+| 2026-10-11T04:44:47+05:30 | Codex | Diagnose Linux trainer unavailable state | Added visible plan-error diagnostics and retry, normalized model course IDs, and validated generated syllabus structure. | Pending | `npm run check`: 23 files and 252 tests passed; build and diff check passed. Live localhost API was inaccessible in the sandbox. |
+
+| 2026-10-11T04:41:44+05:30 | Codex | Fix AI learning local startup | Updated `npm run dev` to start both the server-side AI API and Vite, documented the startup contract, and preserved server-only credential handling. | Pending | Existing project checks had passed before this startup-only change. |
+
+| 2026-10-11T04:39:39+05:30 | Codex | Strict AI Linux terminal lab | Replaced the Linux dashboard with a real xterm terminal and `#` task comments, enforced AI-only syllabus/evaluation for Linux, and enabled terminal-native `/hint` and `/answer`. | Pending | `npm run check`: 23 files and 252 tests passed; `npm run build` passed; `git diff --check` passed. |
+
+| 2026-10-11T04:30:13+05:30 | Codex | Connect chmod to adaptive learning | Added chmod's AI course runner, security trainer persona, reviewed fallback syllabus, and dynamic task text alongside its terminal and permission visualization. | Pending | `npm run check`: 23 files and 257 tests passed; `npm run build` passed; `git diff --check` passed. |
+
+| 2026-10-11T04:29:13+05:30 | Codex | Terminal-first learning lab frontend | Added embedded task-first terminal labs for Linux and Docker, Docker engine visualization, and a chmod terminal workspace beside the existing permission visualization. | Pending | `npm run check`: 23 files and 257 tests passed; `npm run build` passed; `git diff --check` passed. |
 | 2026-10-11T04:10:23+05:30 | Codex | AI-designed terminal learning backend | Added server-side syllabus generation/evaluation endpoints, Linux/Docker trainer personas, persistent AI course state, terminal slash commands, structured validation, and deterministic fallback compatibility. | Pending | `npm run check`: 22 files and 250 tests passed; `npm run build` passed. |
 | 2026-10-11T04:14:36+05:30 | Codex | Module-local learning memory and model routing | Added bounded per-module memory cache, memory-aware AI requests, and independent environment-configurable model selection. | Pending | `npm run check`: 22 files and 251 tests passed; `npm run build` passed; `git diff --check` passed. |
 

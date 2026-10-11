@@ -9,6 +9,8 @@
     "./view": "./src/view.tsx"
   },
   "dependencies": {
+    "@tuxos/course-view": "*",
+    "@tuxos/lessons": "*",
     "@tuxos/sdk": "*",
     "@tuxos/system": "*",
     "react": "^19.1.0"

@@ -33,6 +33,11 @@ export interface TerminalSession {
   history(): Promise<string[]>;
 }
 
+export interface TerminalOptions {
+  /** Route learning slash commands and assessments to the course that owns this terminal. */
+  learningModule?: string;
+}
+
 export interface SystemClient {
   boot(username: string): Promise<void>;
   hasSave(): Promise<string | null>;
@@ -49,7 +54,7 @@ export interface SystemClient {
   session(): Promise<SessionState>;
   apps(): Promise<(AppContribution & { moduleId: string })[]>;
   openApp(appId: string, args?: Record<string, string>): Promise<DispatchResult<string>>;
-  createTerminal(): Promise<TerminalSession>;
+  createTerminal(options?: TerminalOptions): Promise<TerminalSession>;
   /** The AI tutor's own, permission-limited access to the system. */
   tutor(): TutorAccess;
   reset(): Promise<void>;
@@ -194,9 +199,11 @@ export function createLocalSystem(options: {
         appId, title: app?.title ?? appId, width: 720, height: 480, ...(args ? { args } : {}),
       });
     },
-    async createTerminal() {
+    async createTerminal(options = {}) {
       const { kernel, registry } = current();
-      return terminalSession(kernel, createShell(kernel, { registry }));
+      const shell = createShell(kernel, { registry });
+      if (options.learningModule) shell.env.TUXOS_LEARNING_MODULE = options.learningModule;
+      return terminalSession(kernel, shell, options.learningModule);
     },
     tutor() {
       const { kernel, registry } = current();
@@ -259,11 +266,12 @@ async function savedSnapshot(storage: KeyValueStorage, username: string): Promis
   return parsed.username === username ? parsed.snapshot : undefined;
 }
 
-function terminalSession(kernel: Kernel, shell: Shell): TerminalSession {
+function terminalSession(kernel: Kernel, shell: Shell, learningModule?: string): TerminalSession {
   return {
     run: async (line) => {
       const result = await shell.run(line);
-      const assessment = await learningRuntime.current?.waitForAssessment();
+      const runner = learningModule ? learningRuntime.get(learningModule) : learningRuntime.get();
+      const assessment = await runner?.waitForAssessment();
       return assessment
         ? { ...result, stdout: `${result.stdout}${result.stdout.endsWith('\n') || !result.stdout ? '' : '\n'}[Trainer] ${assessment}\n` }
         : result;

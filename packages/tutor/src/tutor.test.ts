@@ -1,7 +1,8 @@
 import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { describe, expect, it } from 'vitest';
-import { learnLinux } from '../../../modules/learn-linux/src/index';
+import { course, learnLinux } from '../../../modules/learn-linux/src/index';
 import { terminal } from '../../../modules/terminal/src/index';
+import type { LearningBackend } from '@tuxos/sdk';
 import type { ChatMessage, CompletionRequest, ToolCall, Transport } from './protocol';
 import { httpTransport } from './protocol';
 import { TutorSession, type TutorEvent } from './session';
@@ -19,6 +20,21 @@ const memory = (): KeyValueStorage => {
 };
 
 let callId = 0;
+
+const aiLearning = (): LearningBackend => ({
+  async request(path, body) {
+    const request = body as { task?: { answer?: string }; command?: { line?: string } };
+    if (path === '/plan') return {
+      courseId: course.id, title: 'AI Linux Lab', summary: 'Generated test syllabus', trainer: {},
+      days: course.lessons.map((lesson, day) => ({ day: day + 1, title: lesson.title, recap: day > 0, tasks: lesson.steps.map((step, index) => ({
+        id: step.id, title: `AI task ${index + 1}`, scenario: lesson.story, task: step.task, objective: step.explain ?? lesson.title,
+        hints: step.hints, answer: day === 0 && index === 0 ? 'whoami' : day === 0 && index === 1 ? 'pwd' : `echo task-${day + 1}-${index + 1}`, explain: step.explain ?? '', recap: day > 0 && index === 0,
+      })) })),
+    };
+    if (path === '/evaluate') return { correct: request.command?.line?.trim() === request.task?.answer?.trim() || request.task?.answer?.startsWith('Open '), feedback: 'AI test assessment' };
+    return path === '/hint' ? { text: 'AI test hint' } : { text: 'AI test answer' };
+  },
+});
 const call = (name: string, args: Record<string, unknown> = {}): ToolCall => ({
   id: `call-${++callId}`, type: 'function', function: { name, arguments: JSON.stringify(args) },
 });
@@ -59,7 +75,7 @@ function fakeScreen(system: SystemClient, sudoAnswer: boolean) {
 
 async function setup(transport: Transport, sudoAnswer = false) {
   const system: SystemClient = createLocalSystem({
-    storage: memory(), modules: [
+    storage: memory(), learning: aiLearning(), modules: [
       { manifest: learnLinux.manifest, load: async () => learnLinux },
       { manifest: terminal.manifest, load: async () => terminal },
     ],

@@ -107,16 +107,17 @@ This template has no application code or required technology stack. The document
 1. Prerequisites and versions: Node.js 20 or newer (developed on Node 26.7, npm 11.19).
 2. Dependency installation: `npm install`
 3. Environment setup: for the AI tutor, copy `.env.example` to `.env` and set `OPENAI_API_KEY` (optionally
-   `OPENAI_MODEL`, default `gpt-4.1-mini`). Set `OPENAI_MODEL_LINUX`, `OPENAI_MODEL_DOCKER`, `OPENAI_MODEL_TERMINAL`, and
-   `OPENAI_MODEL_CHMOD_ARCADE` independently when each learning module should use a distinct model. Everything else works without it; the tutor then explains that it
+   `OPENAI_MODEL`, default `gpt-4.1-mini`). Linux uses `gpt-5.6-luna` by default for lower-cost assessment; override it with `OPENAI_MODEL_LINUX`. Set `OPENAI_MODEL_DOCKER`, `OPENAI_MODEL_TERMINAL`, and
+   `OPENAI_MODEL_CHMOD_ARCADE` to route the other learning modules independently; those modules fall back to `OPENAI_MODEL`. Everything else works without an API key; the tutor then explains that it
    isn't set up.
 4. Configure the tutor locally. First create a new OpenAI API key if an old one has ever been exposed. Copy
    `.env.example` to `.env` and set `OPENAI_API_KEY` there. The file is ignored by Git. The key is read only by
    the Node API server; it is never bundled into the browser, exposed as a `VITE_*` variable, or sent to the
    frontend. In production, inject it with the hosting provider's secret manager rather than storing `.env`.
-5. Start the project: `npm run dev` for the desktop, then open the URL printed by Vite (normally
-   `http://localhost:5173`). In a second terminal, `npm run api` starts the tutor's API server on port 8787;
-   the dev server forwards `/api` to it. Check `http://localhost:8787/api/health` before opening Vasi.
+5. Start the project: `npm run dev` starts both the local tutor API and the desktop dev server, then open the URL
+   printed by Vite (normally `http://localhost:5173`). The API reads the server-only key from `.env`, listens on
+   port 8787, and the dev server forwards `/api` to it. Check `http://localhost:8787/api/health` if the AI trainer
+   does not load.
 6. Run checks or tests: `npm run check` (TypeScript type check, then the Vitest suite). `npm test` runs only the tests.
 
 Never paste an API key into source files, commit history, issue trackers, chat, or browser developer tools. If a
@@ -163,8 +164,8 @@ invalidate the old credential.
     back. After two failed commands in a row, a nudge offers
     help; nothing is sent to the AI until the learner asks. Errors (no key, quota, service down) are shown in
     plain words.
-  - **AI-designed learning backend:** `/api/learning/plan` creates a seven-day terminal-first syllabus with
-    recap tasks from day two onward; `/evaluate`, `/hint`, and `/answer` use module-specific trainer personas.
+  - **AI-designed learning backend:** `/api/learning/plan` creates a seven-day terminal-first syllabus whose
+    first task on each day after day one is explicitly marked and written as a recap; each Linux mission asks for one command line only (a pipeline is allowed when it is the lesson), and Enter advances only after that command is correct. Linux assessment feedback is capped at 110 characters and `/answer` returns a concise command plus reason (at most 140 characters). Fresh syllabus planning excludes cached attempt history; hints and answers receive only the last three short memory entries for the active task. Learning terminals stay bound to their own module trainer, and the Linux task header marks recap versus new work. Learning endpoints use module-specific trainer personas. The single-command Linux syllabus is saved separately so older local plans remain untouched.
     The server validates structured responses and never exposes the API key to the browser. Generated progress and a
     bounded, module-specific memory cache are saved in the user's virtual home under
     `~/.local/share/tuxos/ai-learning/`; the API remains stateless. To keep model execution local too, point

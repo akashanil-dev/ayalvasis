@@ -12,6 +12,11 @@ export interface TrainerProfile {
   scenarioFocus: string;
 }
 
+export interface AICourseOptions {
+  /** When true, never expose the reviewed JSON course as a learner question. */
+  requireAI?: boolean;
+}
+
 export interface AITask {
   id: string;
   title: string;
@@ -21,6 +26,7 @@ export interface AITask {
   hints: string[];
   answer: string;
   explain: string;
+  recap?: boolean;
 }
 
 export interface AISyllabus {
@@ -33,6 +39,7 @@ export interface AISyllabus {
 
 interface AIProgress {
   syllabus: AISyllabus;
+  generatedByAI?: boolean;
   completed: string[];
   active: { day: number; task: number } | null;
   lastFeedback: string | null;
@@ -65,6 +72,13 @@ const STATE_DIR = '~/.local/share/tuxos/ai-learning';
 const MEMORY_DIR = '~/.local/share/tuxos/ai-learning/memory';
 const MAX_MEMORY_ENTRIES = 50;
 const MAX_MEMORY_SUMMARY = 1_200;
+const MAX_LINUX_ANSWER = 140;
+
+function progressPath(courseId: string, home: string): string {
+  // Keep any previously generated multi-command Linux syllabus available as local legacy data.
+  const filename = courseId === 'learn-linux' ? 'learn-linux-v2.json' : `${courseId}.json`;
+  return `${expand(STATE_DIR, home)}/${filename}`;
+}
 
 /** A server-designed course that still uses local shell execution as the evidence source. */
 export class AICourseRunner {
@@ -75,44 +89,69 @@ export class AICourseRunner {
   private pendingAssessment: Promise<string> | undefined;
   private disposed = false;
   private readonly stop: () => void;
+  private readonly requireAI: boolean;
+  private aiUnavailable = false;
+  private unavailableReason = '';
+  private bootstrapPromise: Promise<void> | undefined;
+  private planning = false;
 
   constructor(
     private readonly ctx: ModuleContext,
     private readonly course: Course,
     private readonly profile: TrainerProfile,
     private readonly host: LessonHost,
+    options: AICourseOptions = {},
   ) {
+    this.requireAI = options.requireAI === true;
     this.state = this.load();
     this.memory = this.loadMemory();
-    this.fallbackMode = !!this.state && this.state.syllabus.days.length === this.course.lessons.length
+    this.fallbackMode = !!this.state && this.state.generatedByAI !== true && this.state.syllabus.days.length === this.course.lessons.length
       && this.state.syllabus.days.every((day, index) => day.tasks[0]?.id === this.course.lessons[index]?.steps[0]?.id);
-    if (this.state?.active) learningRuntime.current = this;
+    if (this.requireAI && this.fallbackMode) this.state = undefined;
+    if (this.state?.active) learningRuntime.activate(this.ctx.id);
     this.stop = ctx.onEvent((event) => this.observe(event));
   }
 
-  async bootstrap(): Promise<void> {
-    if (this.state) return;
+  bootstrap(): Promise<void> {
+    if (this.state) return Promise.resolve();
+    if (this.bootstrapPromise) return this.bootstrapPromise;
+    this.aiUnavailable = false;
+    this.unavailableReason = '';
+    this.planning = true;
+    this.bootstrapPromise = this.generateSyllabus().finally(() => {
+      this.planning = false;
+      this.bootstrapPromise = undefined;
+    });
+    return this.bootstrapPromise;
+  }
+
+  private async generateSyllabus(): Promise<void> {
     try {
       if (!this.ctx.learning) throw new Error('AI learning service is not configured');
       const result = await this.ctx.learning.request('/plan', {
         module: this.ctx.id,
         trainer: this.profile,
-        memory: this.memory,
         fallback: { title: this.course.title, summary: this.course.summary, lessons: this.course.lessons.map((l) => l.title) },
       }) as AISyllabus;
       validateSyllabus(result, this.ctx.id);
-      this.state = { syllabus: result, completed: [], active: { day: result.days[0]!.day, task: 0 }, lastFeedback: null, lastResult: null };
+      this.state = { syllabus: result, generatedByAI: true, completed: [], active: { day: result.days[0]!.day, task: 0 }, lastFeedback: null, lastResult: null };
       this.remember({ kind: 'plan', summary: `Generated ${result.days.length}-day syllabus: ${result.title}` });
-      learningRuntime.current = this;
+      learningRuntime.activate(this.ctx.id);
       this.save();
     } catch (error) {
+      if (this.requireAI) {
+        this.aiUnavailable = true;
+        this.unavailableReason = error instanceof Error ? error.message : String(error);
+        this.ctx.log(`AI syllabus unavailable; Linux has no local question fallback: ${this.unavailableReason}`);
+        return;
+      }
       // A learner should still have a working course without network access or an API key.
       this.ctx.log(`AI syllabus unavailable; using reviewed fallback: ${error instanceof Error ? error.message : String(error)}`);
       this.state = fallbackProgress(this.course, this.profile, this.ctx.id);
       this.fallbackMode = true;
       this.state.active = { day: 1, task: 0 };
       this.remember({ kind: 'plan', summary: 'Used the reviewed local fallback syllabus because AI planning was unavailable.' });
-      learningRuntime.current = this;
+      learningRuntime.activate(this.ctx.id);
       this.save();
     }
   }
@@ -120,6 +159,12 @@ export class AICourseRunner {
   dispose(): void { this.disposed = true; this.stop(); }
 
   status(): LessonStatus {
+    if (this.aiUnavailable || !this.state) return {
+      course: { id: this.ctx.id, title: this.course.title, summary: 'Waiting for the AI trainer to design this terminal lab.' },
+      lessons: [], active: null,
+      lastExplain: this.unavailableReason ? `AI trainer unavailable: ${this.unavailableReason}`
+        : this.planning ? 'AI trainer is generating the first Linux lab. Keep this window open.' : 'AI trainer is ready to generate the first Linux lab.',
+    };
     const state = this.requireState();
     const activeTask = this.currentTask();
     const days = state.syllabus.days.map((day) => ({
@@ -141,7 +186,7 @@ export class AICourseRunner {
         steps: this.day(state.active.day).tasks.map((task) => ({
           id: task.id, task: `${task.title}: ${task.task}`, done: state.completed.includes(task.id),
         })),
-        step: { id: activeTask.id, task: `${activeTask.title}: ${activeTask.task}`, hints: activeTask.hints },
+        step: { id: activeTask.id, task: activeTask.task, hints: activeTask.hints, recap: activeTask.recap },
       } : null,
       lastExplain: state.lastFeedback,
     };
@@ -151,7 +196,7 @@ export class AICourseRunner {
     const state = this.requireState();
     let day = Number.parseInt(dayId.replace(/^day-/, ''), 10);
     let selected = state.syllabus.days.find((item) => item.day === day);
-    if (!selected && this.fallbackMode) {
+    if (!selected) {
       const lessonIndex = this.course.lessons.findIndex((lesson) => lesson.id === dayId);
       if (lessonIndex >= 0) {
         day = lessonIndex + 1;
@@ -168,7 +213,7 @@ export class AICourseRunner {
     state.active = { day, task: Math.max(task, 0) };
     state.lastFeedback = null;
     state.lastResult = null;
-    learningRuntime.current = this;
+    learningRuntime.activate(this.ctx.id);
     this.save();
   }
 
@@ -201,17 +246,20 @@ export class AICourseRunner {
     const task = this.currentTask();
     if (!task) return 'There is no active task. Start a day with the course action first.';
     if (!this.ctx.learning) {
-      const text = kind === 'hint' ? task.hints[0] ?? 'Read the task carefully and inspect the system.' : task.answer;
+      const text = kind === 'hint' ? task.hints[0] ?? 'Read the task carefully and inspect the system.'
+        : this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
       this.remember({ kind, taskId: task.id, summary: text });
       return text;
     }
     try {
-      const result = await this.ctx.learning.request(`/${kind}`, { module: this.ctx.id, trainer: this.profile, task, memory: this.memory });
-      const text = (result as { text?: string }).text ?? (kind === 'hint' ? task.hints[0] ?? 'Inspect the task and try one small command.' : task.answer);
+      const result = await this.ctx.learning.request(`/${kind}`, { module: this.ctx.id, trainer: this.profile, task, memory: this.taskMemory(task.id) });
+      const responseText = (result as { text?: string }).text ?? (kind === 'hint' ? task.hints[0] ?? 'Inspect the task and try one small command.' : task.answer);
+      const text = this.ctx.id === 'learn-linux' && kind === 'answer' ? conciseLinuxAnswer(responseText, task) : responseText;
       this.remember({ kind, taskId: task.id, summary: text });
       return text;
     } catch {
-      const text = kind === 'hint' ? task.hints[0] ?? 'Break the task into one small command.' : task.answer;
+      const text = kind === 'hint' ? task.hints[0] ?? 'Break the task into one small command.'
+        : this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
       this.remember({ kind, taskId: task.id, summary: text });
       return text;
     }
@@ -251,7 +299,8 @@ export class AICourseRunner {
     try {
       if (!this.ctx.learning) throw new Error('AI learning service is not configured');
       result = await this.ctx.learning.request('/evaluate', {
-        module: this.ctx.id, trainer: this.profile, task, command: run, memory: this.memory,
+        module: this.ctx.id, trainer: this.profile, task, command: run,
+        ...(this.ctx.id === 'learn-linux' ? {} : { memory: this.memory }),
       }) as typeof result;
     } catch {
       // Without the service, fall back to a conservative command-name check and teach rather than auto-pass.
@@ -259,8 +308,10 @@ export class AICourseRunner {
     }
     const state = this.requireState();
     state.lastResult = result.correct ? 'correct' : 'wrong';
-    state.lastFeedback = result.feedback ?? (result.correct ? 'Correct. Explain what you changed before moving on.' : 'Not yet. Read the task and inspect the command output.');
-    this.remember({ kind: 'attempt', taskId: task.id, summary: `${run.line} — ${state.lastFeedback}`, correct: !!result.correct });
+    const feedback = result.feedback ?? (result.correct ? 'Correct.' : 'Not yet. Check the command and output.');
+    state.lastFeedback = this.ctx.id === 'learn-linux' ? compactLine(feedback, 110) : feedback;
+    const evidence = `command=${JSON.stringify(run.line)} exit=${run.code} stdout=${JSON.stringify(run.stdout.slice(0, 300))} stderr=${JSON.stringify(run.stderr.slice(0, 200))}`;
+    this.remember({ kind: 'attempt', taskId: task.id, summary: `${evidence} — ${state.lastFeedback}`, correct: !!result.correct });
     this.remember({ kind: 'feedback', taskId: task.id, summary: state.lastFeedback, correct: !!result.correct });
     if (result.correct) this.advanceTask(state, task);
     this.save();
@@ -290,7 +341,7 @@ export class AICourseRunner {
   private requireState(): AIProgress { if (!this.state) throw new Error('learning syllabus is still loading'); return this.state; }
 
   private load(): AIProgress | undefined {
-    const saved = this.host.read(`${expand(STATE_DIR, this.host.home)}/${this.ctx.id}.json`);
+    const saved = this.host.read(progressPath(this.ctx.id, this.host.home));
     if (!saved?.content) return undefined;
     try { const value = JSON.parse(saved.content) as AIProgress; validateSyllabus(value.syllabus, this.ctx.id); return value; } catch { return undefined; }
   }
@@ -314,10 +365,18 @@ export class AICourseRunner {
     this.host.write(`${expand(MEMORY_DIR, this.host.home)}/${this.ctx.id}.json`, `${JSON.stringify(this.memory, null, 2)}\n`);
   }
 
+  private taskMemory(taskId: string): LearningMemory {
+    return {
+      moduleId: this.ctx.id,
+      entries: this.memory.entries.filter((entry) => entry.taskId === taskId).slice(-3)
+        .map((entry) => ({ ...entry, summary: entry.summary.slice(0, 220) })),
+    };
+  }
+
   private save(): void {
     const state = this.requireState();
     this.host.mkdir(expand(STATE_DIR, this.host.home));
-    this.host.write(`${expand(STATE_DIR, this.host.home)}/${this.ctx.id}.json`, `${JSON.stringify(state, null, 2)}\n`);
+    this.host.write(progressPath(this.ctx.id, this.host.home), `${JSON.stringify(state, null, 2)}\n`);
     if (this.fallbackMode) {
       const completed: Record<string, string[]> = {};
       for (const lesson of this.course.lessons) {
@@ -331,13 +390,50 @@ export class AICourseRunner {
   }
 }
 
-export const learningRuntime: { current?: AICourseRunner } = {};
+function compactLine(value: string, maxLength: number): string {
+  const compact = value.replace(/\s+/g, ' ').trim();
+  if (compact.length <= maxLength) return compact;
+  const prefix = compact.slice(0, maxLength - 1);
+  const boundary = prefix.lastIndexOf(' ');
+  return `${prefix.slice(0, boundary > Math.floor(maxLength / 2) ? boundary : prefix.length).trimEnd()}…`;
+}
 
-export async function activateAICourse(ctx: ModuleContext, course: Course, profile: TrainerProfile): Promise<() => void> {
-  const runner = new AICourseRunner(ctx, course, profile, moduleLessonHost(ctx, course.id));
+function conciseLinuxAnswer(value: string, task: AITask): string {
+  const hasLessonFormatting = /#{1,6}\s|\*\*|```|Safety Considerations:|Follow-up (?:Check|check):|Expected Output:/i.test(value);
+  const proposed = value.replace(/\s+/g, ' ').trim();
+  const answer = proposed.length <= MAX_LINUX_ANSWER && !hasLessonFormatting
+    ? proposed
+    : `${task.answer} — ${task.explain || task.objective}`;
+  return compactLine(answer, MAX_LINUX_ANSWER);
+}
+
+const courseRunners = new Map<string, AICourseRunner>();
+let activeModuleId: string | undefined;
+
+export const learningRuntime = {
+  get(moduleId?: string): AICourseRunner | undefined {
+    return courseRunners.get(moduleId ?? activeModuleId ?? '');
+  },
+  register(moduleId: string, runner: AICourseRunner): void {
+    courseRunners.set(moduleId, runner);
+    if (!activeModuleId || runner.status().active) activeModuleId = moduleId;
+  },
+  activate(moduleId: string): void {
+    if (courseRunners.has(moduleId)) activeModuleId = moduleId;
+  },
+  unregister(moduleId: string, runner: AICourseRunner): void {
+    if (courseRunners.get(moduleId) !== runner) return;
+    courseRunners.delete(moduleId);
+    if (activeModuleId === moduleId) activeModuleId = courseRunners.keys().next().value;
+  },
+};
+
+export async function activateAICourse(ctx: ModuleContext, course: Course, profile: TrainerProfile, options?: AICourseOptions): Promise<() => void> {
+  const runner = new AICourseRunner(ctx, course, profile, moduleLessonHost(ctx, course.id), options);
+  learningRuntime.register(ctx.id, runner);
   await runner.bootstrap();
   registerAIActions(ctx, runner);
-  return () => { if (learningRuntime.current === runner) learningRuntime.current = undefined; runner.dispose(); };
+  return () => { learningRuntime.unregister(ctx.id, runner); runner.dispose(); };
 }
 
 function registerAIActions(ctx: ModuleContext, runner: AICourseRunner): void {
@@ -357,6 +453,7 @@ function registerAIActions(ctx: ModuleContext, runner: AICourseRunner): void {
   });
   ctx.registerAction({ type: `${ctx.id}.quit`, capability: 'lessons:write', mutates: false, description: 'Leave the current AI learning task.', run: () => { runner.quit(); return runner.status(); } });
   ctx.registerAction({ type: `${ctx.id}.reset`, capability: 'lessons:write', mutates: false, description: 'Reset AI learning progress.', run: () => { runner.reset(); return runner.status(); } });
+  ctx.registerAction({ type: `${ctx.id}.retry`, capability: 'lessons:write', mutates: false, description: 'Retry AI syllabus generation when the trainer service was unavailable.', run: async () => { await runner.bootstrap(); return runner.status(); } });
 }
 
 function fallbackProgress(course: Course, trainer: TrainerProfile, courseId: string): AIProgress {
@@ -364,10 +461,10 @@ function fallbackProgress(course: Course, trainer: TrainerProfile, courseId: str
     day: lessonIndex + 1, title: lesson.title, recap: lessonIndex > 0,
     tasks: lesson.steps.map((step, index) => ({
       id: step.id, title: `Task ${index + 1}`, scenario: lesson.story, task: step.task,
-      objective: step.explain ?? lesson.title, hints: step.hints, answer: solutionText(lesson, index), explain: step.explain ?? '',
+      objective: step.explain ?? lesson.title, hints: step.hints, answer: solutionText(lesson, index), explain: step.explain ?? '', recap: lessonIndex > 0 && index === 0,
     })),
   }));
-  return { syllabus: { courseId, title: course.title, summary: course.summary, trainer, days: tasks }, completed: [], active: null, lastFeedback: null, lastResult: null };
+  return { syllabus: { courseId, title: course.title, summary: course.summary, trainer, days: tasks }, generatedByAI: false, completed: [], active: null, lastFeedback: null, lastResult: null };
 }
 
 function solutionText(lesson: Lesson, index: number): string {
@@ -377,9 +474,12 @@ function solutionText(lesson: Lesson, index: number): string {
 
 function validateSyllabus(value: AISyllabus, courseId: string): void {
   if (!value || value.courseId !== courseId || !Array.isArray(value.days) || value.days.length < 1) throw new Error('invalid AI syllabus');
-  for (const day of value.days) {
-    if (!Number.isInteger(day.day) || !day.title || !Array.isArray(day.tasks) || !day.tasks.length || (day.day > 1 && day.recap !== true)) throw new Error('invalid AI syllabus day');
-    for (const task of day.tasks) if (!task.id || !task.task || !task.scenario || !Array.isArray(task.hints) || !task.answer) throw new Error('invalid AI task');
+  for (const [index, day] of value.days.entries()) {
+    if (day.day !== index + 1 || !day.title || !Array.isArray(day.tasks) || !day.tasks.length || day.recap !== (index > 0)) throw new Error('invalid AI syllabus day');
+    for (const [taskIndex, task] of day.tasks.entries()) {
+      if (!task.id || !task.task || !task.scenario || !Array.isArray(task.hints) || !task.answer || task.recap !== (index > 0 && taskIndex === 0)) throw new Error('invalid AI task or missing recap marker');
+      if (courseId === 'learn-linux' && /[\r\n;]|&&|\|\|/.test(task.answer)) throw new Error('AI Linux tasks must have exactly one command per question.');
+    }
   }
 }
 

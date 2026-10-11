@@ -69,8 +69,18 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     if (!content) return { status: 502, body: { error: 'AI learning service returned an empty response.' } };
     let result: unknown;
     try { result = JSON.parse(content); } catch { return { status: 502, body: { error: 'AI learning service returned invalid structured data.' } }; }
-    const invalid = validateResult(operation, result);
-    return invalid ? { status: 502, body: { error: invalid } } : { status: 200, body: result };
+    if (operation === 'plan') result = normalizePlan(result, moduleId);
+    const invalid = validateResult(operation, result, moduleId);
+    if (invalid) return { status: 502, body: { error: invalid } };
+    if (operation === 'evaluate' && moduleId === 'learn-linux' && result && typeof result === 'object') {
+      const evaluation = result as Record<string, unknown>;
+      result = { ...evaluation, feedback: conciseFeedback(evaluation.feedback) };
+    }
+    if (operation === 'answer' && moduleId === 'learn-linux' && result && typeof result === 'object') {
+      const answer = result as Record<string, unknown>;
+      result = { ...answer, text: conciseLinuxAnswer(answer.text) };
+    }
+    return { status: 200, body: result };
   } catch (error) {
     const timeout = error instanceof Error && error.name === 'TimeoutError';
     return { status: 504, body: { error: timeout ? 'AI learning took too long. Try again.' : 'AI learning service could not be reached.' } };
@@ -98,25 +108,73 @@ function trainerPrompt(trainer: TrainerProfile): string {
 function promptFor(operation: LearningOperation, request: Record<string, unknown>): string {
   const memory = JSON.stringify(request.memory ?? { entries: [] });
   if (operation === 'plan') return `Design a seven-day terminal-first syllabus for ${request.module}. `
-    + 'Day 1 must start from beginner level. Each later day must begin with exactly one recap task referencing earlier skills. '
-    + 'Every task must be an industry scenario with a concrete terminal objective, a safe expected answer, three progressive hints, and a teaching explanation. '
-    + 'Do not ask learners to change real machines; this is a sandbox. Return {courseId,title,summary,trainer,days:[{day,title,recap,tasks:[{id,title,scenario,task,objective,hints,answer,explain}]}]}. '
+    + 'Day 1 must start from beginner level. Every day after day 1 must start with exactly one task that explicitly recaps a skill from an earlier day. '
+    + 'Mark that first task with "recap": true; mark all other tasks, including every task on day 1, with "recap": false. '
+    + 'Also set each day-level "recap" to false on day 1 and true on every later day. Do not omit either recap marker. '
+    + 'Every task must be an industry scenario with one clear, measurable terminal objective, a safe expected answer, three progressive hints, and a teaching explanation. For Learn Linux, each task must ask for exactly ONE terminal command line and one observable result; never bundle independent commands, use command chains, or ask for a sequence. A single pipeline is allowed only when pipes are the specific learning objective. A recap checks one previously learned skill with one submission. '
+    + 'Do not ask learners to change real machines; this is a sandbox. Return exactly this shape: {courseId,title,summary,trainer,days:[{day,title,recap,tasks:[{id,title,scenario,task,objective,hints,answer,explain,recap}]}]}. '
+    + 'For example, day 2 begins with tasks[0].recap=true and tasks[1...].recap=false; its first task must actually review earlier skills, not introduce a new topic. '
     + `Use this reviewed fallback only as topic context: ${JSON.stringify(request.fallback ?? {})}. `
-    + `Use only this module's local memory as continuity context: ${memory}`;
+    + 'Do not include or depend on learner attempt history when designing the syllabus; use only the supplied module topic context.';
+  if (operation === 'evaluate' && request.module === 'learn-linux') return `Assess only this Linux task and the current single submitted command plus its observable output. Return {correct,feedback,next}. Ignore all previous commands and module memory; this task must be completed by this one command, not by a sequence. If wrong, give one brief correction; if correct, confirm and let the runner advance to the next task. Feedback must be one short sentence, maximum 110 characters; do not repeat the task or explain the whole lesson. Task: ${JSON.stringify(request.task)} Current attempt: ${JSON.stringify(request.command)}`;
   if (operation === 'evaluate') return `Assess the learner's terminal attempt against this task. Return {correct,feedback,next} where correct is true only when the command and its observable output satisfy the objective. Be specific, encouraging, and teach the underlying concept. Task: ${JSON.stringify(request.task)} Attempt: ${JSON.stringify(request.command)} Local module memory: ${memory}`;
   if (operation === 'hint') return `Give one progressive hint for this terminal task without revealing the full answer. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
+  if (request.module === 'learn-linux') return `Give the direct solution for this Linux terminal task in one short line: the exact single command line, then a brief reason. Maximum 140 characters. No headings, markdown, bullets, code fences, long explanations, safety section, or follow-up. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
   return `Teach the detailed solution for this terminal task. Include the exact command, explain each important token, expected output/evidence, safety considerations, and a small follow-up check. Return {text}. Task: ${JSON.stringify(request.task)} Local module memory: ${memory}`;
 }
 
-function validateResult(operation: LearningOperation, value: unknown): string | null {
+function validateResult(operation: LearningOperation, value: unknown, moduleId?: string): string | null {
   const object = value as Record<string, unknown> | null;
   if (!object || typeof object !== 'object') return 'AI result must be an object.';
   if (operation === 'plan') {
-    if (typeof object.courseId !== 'string' || !Array.isArray(object.days) || object.days.length < 1) return 'AI syllabus is incomplete.';
-    if ((object.days as { day?: unknown; recap?: unknown }[]).some((day) => typeof day.day !== 'number' || (day.day > 1 && day.recap !== true))) return 'AI syllabus must begin each day after day one with a recap task.';
+    if (typeof object.courseId !== 'string' || typeof object.title !== 'string' || typeof object.summary !== 'string' || !Array.isArray(object.days) || object.days.length < 1) return 'AI syllabus is incomplete: expected courseId, title, summary, and days.';
+    const days = object.days as { day?: unknown; title?: unknown; recap?: unknown; tasks?: unknown }[];
+    if (days.some((day, index) => day.day !== index + 1 || typeof day.title !== 'string' || !Array.isArray(day.tasks) || !day.tasks.length
+      || day.recap !== (index > 0))) return 'AI syllabus must have consecutive days and a day-level recap marker after day one.';
+    for (const [index, day] of days.entries()) {
+      const tasks = day.tasks as Record<string, unknown>[];
+      if (tasks.some((task, taskIndex) => !task || task.recap !== (index > 0 && taskIndex === 0))) {
+        return 'Every day after day one must begin with exactly one task marked as a recap.';
+      }
+    }
+    for (const day of days) for (const task of day.tasks as Record<string, unknown>[]) {
+      if (!task || typeof task.id !== 'string' || typeof task.title !== 'string' || typeof task.scenario !== 'string' || typeof task.task !== 'string' || typeof task.objective !== 'string' || !Array.isArray(task.hints) || !task.hints.every((hint) => typeof hint === 'string') || typeof task.answer !== 'string' || typeof task.explain !== 'string') return 'AI syllabus contains an incomplete task.';
+      if (moduleId === 'learn-linux' && !isSingleLinuxCommand(task.answer)) return 'AI Linux tasks must have exactly one command per question.';
+    }
     return null;
   }
   if (typeof object.text !== 'string' && operation !== 'evaluate') return 'AI teaching response is incomplete.';
   if (operation === 'evaluate' && typeof object.correct !== 'boolean') return 'AI evaluation is incomplete.';
   return null;
+}
+
+function isSingleLinuxCommand(answer: string): boolean {
+  return answer.trim().length > 0 && !/[\r\n;]|&&|\|\|/.test(answer);
+}
+
+/** The module ID is the stable local cache key; model-generated display IDs are not authoritative. */
+function normalizePlan(value: unknown, moduleId: string): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  return { ...(value as Record<string, unknown>), courseId: moduleId };
+}
+
+const MAX_EVALUATION_FEEDBACK = 110;
+const MAX_LINUX_ANSWER = 140;
+
+function conciseFeedback(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const compact = value.replace(/\s+/g, ' ').trim();
+  if (compact.length <= MAX_EVALUATION_FEEDBACK) return compact;
+  const prefix = compact.slice(0, MAX_EVALUATION_FEEDBACK - 1);
+  const boundary = prefix.lastIndexOf(' ');
+  return `${prefix.slice(0, boundary > 60 ? boundary : prefix.length).trimEnd()}…`;
+}
+
+function conciseLinuxAnswer(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const compact = value.replace(/\s+/g, ' ').trim();
+  if (compact.length <= MAX_LINUX_ANSWER) return compact;
+  const prefix = compact.slice(0, MAX_LINUX_ANSWER - 1);
+  const boundary = prefix.lastIndexOf(' ');
+  return `${prefix.slice(0, boundary > 80 ? boundary : prefix.length).trimEnd()}…`;
 }

@@ -41,7 +41,14 @@ export interface TerminalTypeDetail {
   accepted: boolean;
 }
 
-export default function TerminalView({ system, windowId, args }: AppViewProps) {
+export default function TerminalView(props: AppViewProps) {
+  return <TerminalSurface system={props.system} windowId={props.windowId} args={props.args} />;
+}
+
+/** Reusable real xterm surface for terminal-first learning labs. */
+export function TerminalSurface({ system, windowId, args, learningModule }: {
+  system: AppViewProps['system']; windowId?: string; args?: AppViewProps['args']; learningModule?: string;
+}) {
   // Vasi's own terminal runs his commands as the tutor, so they never count towards the learner's lessons.
   const owner = args?.owner === 'vasi' ? 'vasi' : 'learner';
   const container = useRef<HTMLDivElement>(null);
@@ -81,10 +88,12 @@ export default function TerminalView({ system, windowId, args }: AppViewProps) {
     };
     window.addEventListener(TERMINAL_TYPE_EVENT, onType);
     const windowActions = {
-      close: () => void system.dispatch('session.close', { id: windowId }),
-      setTitle: (title: string) => void system.dispatch('session.setTitle', {
-        id: windowId, title: owner === 'vasi' ? `Vasi's terminal — ${title}` : title,
-      }),
+      close: () => { if (windowId) void system.dispatch('session.close', { id: windowId }); },
+      setTitle: (title: string) => {
+        if (windowId) void system.dispatch('session.setTitle', {
+          id: windowId, title: owner === 'vasi' ? `Vasi's terminal — ${title}` : title,
+        });
+      },
     };
     const screen = {
       write: (data: string) => term.write(data),
@@ -92,7 +101,9 @@ export default function TerminalView({ system, windowId, args }: AppViewProps) {
       get cols() { return term.cols; },
     };
     void (async () => {
-      const session = owner === 'vasi' ? await system.tutor().createTerminal() : await system.createTerminal();
+      const session = owner === 'vasi'
+        ? await system.tutor().createTerminal()
+        : await system.createTerminal(learningModule ? { learningModule } : undefined);
       if (disposed) return;
       const motd = await system.dispatch<string>('fs.read', { path: '/etc/motd' });
       const controller = new TerminalController(screen, session, windowActions);
@@ -115,7 +126,7 @@ export default function TerminalView({ system, windowId, args }: AppViewProps) {
       observer?.disconnect();
       term.dispose();
     };
-  }, [system, windowId, owner]);
+  }, [system, windowId, owner, learningModule]);
 
   return <div className="terminal-view">
     {error && <p className="terminal-error" role="alert">Terminal error: {error}</p>}

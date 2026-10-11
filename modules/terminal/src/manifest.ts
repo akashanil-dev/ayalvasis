@@ -5,7 +5,7 @@ export const manifest: ModuleManifest = {
   version: '1.0.0',
   title: 'Terminal',
   capabilities: [],
-  activation: ['onApp:terminal', 'onCommand:clear'],
+  activation: ['onStartup', 'onApp:terminal', 'onCommand:clear'],
   contributes: {
     apps: [{
       id: 'terminal',
