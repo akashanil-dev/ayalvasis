@@ -1,0 +1,17 @@
+{
+  "format": "tuxos-plugin",
+  "formatVersion": 1,
+  "manifest": {
+    "id": "hello-desktop",
+    "name": "Hello Desktop",
+    "version": "1.0.0",
+    "description": "A small working example of the TuxOS plugin bridge.",
+    "author": "TuxOS",
+    "entry": "hello.html",
+    "capabilities": [],
+    "contributes": {
+      "apps": [{ "id": "hello-desktop-app", "title": "Hello Desktop", "icon": "🧩", "category": "Utilities", "defaultGeometry": { "width": 480, "height": 360 } }]
+    }
+  },
+  "html": "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Hello Desktop</title><style>body{padding:28px;background:#152034;color:#edf2f7;font:16px system-ui}button{padding:10px 16px;border:0;border-radius:8px;background:#8ed8bc;color:#10251f;font:inherit;cursor:pointer}p{line-height:1.7;color:#c2d0e1}</style></head><body><h1>Hello, TuxOS!</h1><p id='greeting' role='status'>Your first plugin is ready.</p><button id='hello'>Say hello</button><script>document.getElementById('hello').onclick=async()=>{const message=document.getElementById('greeting');try{message.textContent='Hello, '+await tuxos.user()+'! This message came through the plugin bridge.'}catch(error){message.textContent=error.message}};</script></body></html>"
+}

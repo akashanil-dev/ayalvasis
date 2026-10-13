@@ -116,6 +116,24 @@ describe('lazy activation and commands', () => {
 });
 
 describe('dependencies and failures', () => {
+  it('does not reopen a module while its first activation is being uninstalled', async () => {
+    const { host, shell } = setup();
+    let finish!: () => void;
+    const ready = new Promise<void>(resolve => { finish = resolve; });
+    const value = manifest('slow-plugin', { contributes: { apps: [{ id: 'slow-app', title: 'Slow', icon: 'x' }], commands: [{ name: 'slow-launch', summary: 'Slow' }] } });
+    host.add(value, async () => {
+      await ready;
+      return moduleDefinition(value, ctx => { ctx.registerCommand({ name: 'slow-launch', summary: '', usage: '', run: () => 0 }); });
+    });
+    const opening = host.openApp('slow-app');
+    const denied = expect(opening).rejects.toThrow('being removed');
+    const removing = host.uninstall('slow-plugin');
+    finish();
+    await Promise.all([denied, removing]);
+    expect(host.apps()).toEqual([]);
+    expect((await shell.run('slow-launch')).code).toBe(127);
+  });
+
   it('activates dependencies first and shares concurrent activation', async () => {
     const { host } = setup();
     const order: string[] = [];
@@ -297,5 +315,60 @@ describe('module context', () => {
     expect(oneLoads).toBe(1);
     expect(twoLoads).toBe(0);
     expect(two.host.status('hello')).toBe('registered');
+  });
+
+  it('uninstalls a module cleanly, revoking actions, commands and capabilities', async () => {
+    const { host, kernel, shell } = setup();
+    let deactivated = false;
+    const testManifest = manifest('removable', {
+      capabilities: ['fs:write'],
+      contributes: {
+        commands: [{ name: 'removable-cmd', summary: 'test' }],
+        apps: [{ id: 'removable-app', title: 'Removable App', icon: 'app' }],
+      },
+    });
+
+    host.add(testManifest, async () => ({
+      manifest: testManifest,
+      activate: (ctx) => {
+        ctx.registerCommand({
+          name: 'removable-cmd',
+          summary: 'test',
+          usage: 'removable-cmd',
+          run: () => 0,
+        });
+        ctx.registerAction({
+          type: 'removable.action',
+          capability: 'fs:write',
+          description: 'test',
+          mutates: false,
+          run: () => 'ok',
+        });
+        return () => { deactivated = true; };
+      },
+    }));
+
+    await host.activate('removable');
+    expect(host.status('removable')).toBe('active');
+    expect(kernel.can({ kind: 'module', id: 'removable' }, 'fs:write')).toBe(true);
+    expect(host.apps().some((a) => a.id === 'removable-app')).toBe(true);
+
+    await host.uninstall('removable');
+
+    expect(() => host.status('removable')).toThrow("unknown module: removable");
+    expect(deactivated).toBe(true);
+    expect(kernel.can({ kind: 'module', id: 'removable' }, 'fs:write')).toBe(false);
+    expect(host.apps().some((a) => a.id === 'removable-app')).toBe(false);
+    expect(kernel.dispatch({ type: 'removable.action', payload: {} })).toMatchObject({
+      ok: false,
+      error: { code: 'ENOSYS' },
+    });
+    const cmd = shell.commands().find((c) => c.name === 'removable-cmd');
+    expect(cmd).toBeUndefined();
+    expect((await shell.run('removable-cmd')).code).toBe(127);
+    host.add(testManifest, async () => ({ manifest: testManifest, activate: ctx => {
+      ctx.registerCommand({ name: 'removable-cmd', summary: 'reinstalled', usage: '', run: () => 0 });
+    } }));
+    expect((await shell.run('removable-cmd')).code).toBe(0);
   });
 });

@@ -51,6 +51,7 @@ export interface AppContribution {
   description?: string;
   /** Where launchers file it, like a .desktop file's Categories: e.g. "System", "Education", "Games". */
   category?: string;
+  defaultGeometry?: { width: number; height: number };
 }
 
 /** A program a module installs into the shell, e.g. "docker". */
@@ -127,3 +128,54 @@ export interface ModuleDefinition {
 export function defineModule(definition: ModuleDefinition): ModuleDefinition {
   return definition;
 }
+
+/** A user-installable application package/plugin. */
+export interface PluginManifest {
+  readonly id: string;
+  readonly name: string;
+  readonly version: string;
+  readonly description: string;
+  readonly author?: string;
+  readonly capabilities: readonly Capability[];
+  readonly entry?: string;
+  readonly icon?: string;
+  readonly contributes: {
+    readonly apps?: readonly (AppContribution & {
+      readonly defaultGeometry?: {
+        readonly width: number;
+        readonly height: number;
+      };
+    })[];
+    readonly commands?: readonly {
+      readonly name: string;
+      readonly summary: string;
+      readonly usage?: string;
+    }[];
+  };
+}
+
+export interface PluginRPCRequest {
+  readonly jsonrpc: '2.0';
+  readonly id: string;
+  readonly method: 'kernel.dispatch' | 'kernel.subscribe' | 'fs.stat' | 'env.get' | string;
+  readonly params: Record<string, unknown>;
+}
+
+export interface PluginRPCResponse {
+  readonly jsonrpc: '2.0';
+  readonly id: string;
+  readonly ok: boolean;
+  readonly result?: unknown;
+  readonly error?: {
+    readonly code: string;
+    readonly message: string;
+  };
+}
+
+export interface PluginRPCEvent {
+  readonly jsonrpc: '2.0';
+  readonly event: 'kernel.event' | string;
+  readonly data: unknown;
+}
+
+export * from './plugins';

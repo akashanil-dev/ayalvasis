@@ -1,5 +1,5 @@
 import type { Kernel } from '@tuxos/kernel';
-import type { Actor, CommandDefinition as SdkCommandDefinition, DispatchResult } from '@tuxos/sdk';
+import type { Actor, CommandDefinition as SdkCommandDefinition, DispatchResult, PluginManager } from '@tuxos/sdk';
 import type { CommandRegistry } from '../registry';
 
 export interface RunResult {
@@ -13,6 +13,8 @@ export interface Shell {
   env: Record<string, string>;
   run(line: string): Promise<RunResult>;
   register(command: CommandDefinition): void;
+  unregister(name: string): void;
+  readonly plugins?: PluginManager;
   commands(): CommandDefinition[];
   /** Tab completion for the word ending at `cursor`: where it starts, and what it could become. */
   complete(line: string, cursor: number): Completion;
@@ -43,4 +45,4 @@ export interface ShellInternals extends Shell {
   runAsCommand(args: string[], stdin: string, user: string): Promise<RunResult>;
 }
 
-export type ShellOptions = { actor?: Actor; registry?: CommandRegistry };
+export type ShellOptions = { actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };

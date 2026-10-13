@@ -22,6 +22,10 @@ export function preloadIconTheme(theme: string): void {
 }
 
 const ICONS: Record<string, () => React.JSX.Element> = {
+  plugins: () => <svg viewBox="0 0 48 48" aria-hidden="true">
+    <rect x="4" y="4" width="40" height="40" rx="11" fill="#6654c0" />
+    <path d="M13 16h7v-3a4 4 0 0 1 8 0v3h7v7h-3a4 4 0 0 0 0 8h3v6H13v-7h3a4 4 0 0 0 0-8h-3z" fill="#e2dcff" />
+  </svg>,
   terminal: () => <svg viewBox="0 0 48 48" aria-hidden="true">
     <rect x="4" y="7" width="40" height="34" rx="5" fill="#241f31" stroke="#5e5c64" strokeWidth="2" />
     <rect x="4" y="7" width="40" height="7" rx="3" fill="#3d3846" />

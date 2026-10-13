@@ -32,7 +32,12 @@ export function useSession(system: SystemClient) {
     const unsubscribe = system.onChange((event) => {
       if (event.action.type.startsWith('session.')) void refresh();
     });
-    return () => { active = false; unsubscribe(); };
+    let appsTicket = 0;
+    const stopApps = system.onAppsChange?.(() => {
+      const ticket = ++appsTicket;
+      void system.apps().then((list) => { if (active && ticket === appsTicket) setApps(list); });
+    });
+    return () => { active = false; unsubscribe(); stopApps?.(); };
   }, [system]);
 
   return { apps, session, user, loaded };

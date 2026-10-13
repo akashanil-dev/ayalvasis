@@ -14,6 +14,8 @@ import { httpTransport } from '@tuxos/tutor';
 import { httpAccounts, switchableStorage } from './accounts';
 import { webAiKeys } from './ai-key';
 import { App, type AccountsWiring } from './app';
+import { registerView, unregisterView } from './views';
+import { pluginManagerModule } from './plugins/module';
 import './styles/base.css';
 import './styles/boot.css';
 import './styles/greeters.css';
@@ -58,6 +60,7 @@ const system = createLocalSystem({
   storage,
   ai,
   modules: [
+    { manifest: pluginManagerModule.manifest, load: async () => pluginManagerModule },
     { manifest: terminalManifest, load: () => import('@tuxos/module-terminal').then((module) => module.terminal) },
     { manifest: filesManifest, load: () => import('@tuxos/module-files').then((module) => module.files) },
     { manifest: editorManifest, load: () => import('@tuxos/module-editor').then((module) => module.editor) },
@@ -80,6 +83,12 @@ const system = createLocalSystem({
     { manifest: aboutManifest, load: () => import('@tuxos/module-about').then((module) => module.about) },
     { manifest: aptManifest, load: () => import('@tuxos/module-apt').then((module) => module.apt) },
   ],
+  plugins: {
+    onUnregisterAppView: unregisterView,
+    onRegisterAppView: (appId) => {
+      registerView(appId, () => import('./desktop/PluginWindowFrame'));
+    },
+  },
 });
 const tutor = httpTransport('/api/tutor', (url, init) => fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } }));
 createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

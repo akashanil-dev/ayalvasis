@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { afterEach, describe, expect, it } from 'vitest';
 import { Accounts, type AccountReply } from './accounts.ts';
 

@@ -6,6 +6,7 @@ import { builtinCommands, type CommandDefinition } from './commands';
  */
 export interface CommandRegistry {
   register(command: CommandDefinition): void;
+  unregister(name: string): void;
   get(name: string): CommandDefinition | undefined;
   list(): CommandDefinition[];
 }
@@ -18,6 +19,7 @@ export function createCommandRegistry(): CommandRegistry {
       commands.set(command.name, command);
     },
     get: (name) => commands.get(name),
+    unregister: (name) => { commands.delete(name); },
     list: () => [...commands.values()],
   };
   for (const command of builtinCommands()) registry.register(command);

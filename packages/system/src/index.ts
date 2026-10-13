@@ -1,8 +1,10 @@
 import { createKernel, type Kernel, type SessionState, type KernelSnapshot } from '@tuxos/kernel';
 import { learningRuntime, type TrainerFeedback } from '@tuxos/lessons';
 import { createModuleHost, type ModuleHost } from '@tuxos/module-host';
+import { discoverPlugins, type PluginLoaderHooks } from './plugin-loader';
+import { ManagedPlugins } from './plugins';
 import type {
-  Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest, LearningBackend,
+  Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest, LearningBackend, PluginManager,
 } from '@tuxos/sdk';
 import {
   createCommandRegistry,
@@ -65,7 +67,7 @@ export interface AiKeyStore {
 export interface SystemClient {
   boot(username: string): Promise<void>;
   hasSave(): Promise<string | null>;
-  dispatch<R>(type: string, payload: unknown): Promise<DispatchResult<R>>;
+  dispatch<R>(type: string, payload: unknown, options?: { actor?: Actor; user?: string }): Promise<DispatchResult<R>>;
   subscribe(listener: (event: KernelEvent) => void): () => void;
   /** Successful state changes only (file writes, window moves...), from any source. */
   onChange(listener: (event: KernelEvent) => void): () => void;
@@ -77,6 +79,8 @@ export interface SystemClient {
   hostname(): Promise<string>;
   session(): Promise<SessionState>;
   apps(): Promise<(AppContribution & { moduleId: string })[]>;
+  onAppsChange?(listener: () => void): () => void;
+  plugins?(): PluginManager;
   openApp(appId: string, args?: Record<string, string>): Promise<DispatchResult<string>>;
   createTerminal(options?: TerminalOptions): Promise<TerminalSession>;
   /** The AI tutor's own, permission-limited access to the system. */
@@ -84,6 +88,8 @@ export interface SystemClient {
   /** The learner's AI key, when this system has a key store (the browser app does; tests may not). */
   ai(): AiKeyStore | null;
   reset(): Promise<void>;
+  uninstallPlugin?(id: string): Promise<void>;
+  reloadPlugins?(): Promise<void>;
 }
 
 export interface ActionInfo {
@@ -120,6 +126,7 @@ interface Running {
   kernel: Kernel;
   registry: CommandRegistry;
   host: ModuleHost;
+  plugins: ManagedPlugins;
   unsubscribe: () => void;
 }
 
@@ -128,11 +135,13 @@ export function createLocalSystem(options: {
   modules: ModuleEntry[];
   learning?: LearningBackend;
   ai?: AiKeyStore;
+  plugins?: PluginLoaderHooks;
 }): SystemClient {
   let running: Running | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const changeListeners = new Set<(event: KernelEvent) => void>();
   const saveErrorListeners = new Set<(error: Error) => void>();
+  const appListeners = new Set<() => void>();
 
   const current = (): Running => {
     if (!running) throw new Error('system has not booted');
@@ -158,7 +167,13 @@ export function createLocalSystem(options: {
 
   const boot = async (username: string): Promise<void> => {
     const snapshot = await savedSnapshot(options.storage, username);
+    if (timer) clearTimeout(timer);
+    timer = undefined;
     running?.unsubscribe();
+    if (running) {
+      await running.plugins.dispose();
+      await running.host.dispose();
+    }
     const kernel = createKernel(snapshot ? { snapshot } : { username });
     const registry = createCommandRegistry();
     const host = createModuleHost({
@@ -172,7 +187,10 @@ export function createLocalSystem(options: {
       scheduleSave();
       for (const listener of changeListeners) listener(event);
     });
-    running = { kernel, registry, host, unsubscribe };
+    const plugins = new ManagedPlugins(kernel, host, options.plugins ?? {}, () => client.flush());
+    plugins.onChange(() => { for (const listener of appListeners) listener(); });
+    running = { kernel, registry, host, plugins, unsubscribe };
+    await discoverPlugins(client, host, options.plugins);
     await host.start();
   };
 
@@ -183,8 +201,8 @@ export function createLocalSystem(options: {
       if (!saved) return null;
       return (JSON.parse(saved) as { username?: string }).username ?? null;
     },
-    async dispatch<R>(type: string, payload: unknown) {
-      return current().kernel.dispatch<R>({ type, payload });
+    async dispatch<R>(type: string, payload: unknown, options?: { actor?: Actor; user?: string }) {
+      return current().kernel.dispatch<R>({ type, payload }, options);
     },
     subscribe(listener) {
       return current().kernel.subscribe(listener);
@@ -214,21 +232,28 @@ export function createLocalSystem(options: {
     async apps() {
       return current().host.apps();
     },
+    onAppsChange(listener) {
+      appListeners.add(listener);
+      return () => appListeners.delete(listener);
+    },
+    plugins: () => current().plugins,
     async openApp(appId, args) {
-      const { host } = current();
+      const { host, kernel } = current();
       try {
         await host.openApp(appId);
       } catch (error) {
         return { ok: false, error: { code: 'EIO', message: error instanceof Error ? error.message : String(error) } };
       }
       const app = host.apps().find((candidate) => candidate.id === appId);
-      return client.dispatch<string>('session.open', {
-        appId, title: app?.title ?? appId, width: 720, height: 480, ...(args ? { args } : {}),
-      });
+      if (current().host !== host || !app) return { ok: false, error: { code: 'ENOENT', message: 'This app is no longer available in the current session.' } };
+      const geometry = app.defaultGeometry;
+      return kernel.dispatch<string>({ type: 'session.open', payload: {
+        appId, title: app?.title ?? appId, width: geometry?.width ?? 720, height: geometry?.height ?? 480, ...(args ? { args } : {}),
+      } });
     },
     async createTerminal(options = {}) {
       const { kernel, registry } = current();
-      const shell = createShell(kernel, { registry });
+      const shell = createShell(kernel, { registry, plugins: current().plugins });
       if (options.learningModule) shell.env.TUXOS_LEARNING_MODULE = options.learningModule;
       return terminalSession(kernel, shell, options.learningModule);
     },
@@ -263,9 +288,19 @@ export function createLocalSystem(options: {
       if (timer) clearTimeout(timer);
       timer = undefined;
       running?.unsubscribe();
+      if (running) {
+        await running.plugins.dispose();
+        await running.host.dispose();
+      }
       running = undefined;
       changeListeners.clear();
       await options.storage.remove(SAVE_KEY);
+    },
+    async uninstallPlugin(id: string) {
+      await current().plugins.uninstall(id);
+    },
+    async reloadPlugins() {
+      await current().plugins.reload();
     },
   };
   return client;
@@ -338,3 +373,6 @@ export interface AppViewProps {
    */
   setCloseGuard?(guard: (() => boolean) | null): void;
 }
+
+export { PluginRPCGateway } from './plugin-rpc';
+export { discoverPlugins, type PluginLoaderHooks } from './plugin-loader';

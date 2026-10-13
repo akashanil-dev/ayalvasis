@@ -17,6 +17,7 @@ const HISTORY_LIMIT = 500;
 const OUTPUT_LIMIT = 4000;
 
 export class ShellImpl implements ShellInternals {
+  readonly plugins;
   cwd: string;
   env: Record<string, string>;
   private readonly actor?: Actor;
@@ -28,6 +29,7 @@ export class ShellImpl implements ShellInternals {
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
+    this.plugins = options.plugins;
     this.registry = options.registry ?? createCommandRegistry();
     this.cwd = `/home/${kernel.user}`;
     this.env = { HOME: this.cwd, USER: kernel.user, PWD: this.cwd, PATH: '/bin:/usr/bin' };
@@ -36,6 +38,8 @@ export class ShellImpl implements ShellInternals {
   register(command: CommandDefinition): void {
     this.registry.register(command);
   }
+
+  unregister(name: string): void { this.registry.unregister(name); }
 
   commands(): CommandDefinition[] {
     return this.registry.list();

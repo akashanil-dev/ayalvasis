@@ -22,6 +22,12 @@ Docker, games) is a module that shows up as a desktop icon.
   (`sudo apt install tree`), as on Ubuntu.
 - **Files and Text Editor.** A point-and-click file manager and an editor over the same filesystem. Both show
   real permission errors.
+- **Plugins.** Discover and install Quick Notes, Focus Timer and Permission Explorer, or import your own
+  self-contained plugin package through a graphical manager. Review permissions before installation, enable
+  or disable plugins, export packages and remove them. Apps appear immediately in the desktop and launcher.
+  Each plugin runs in a restricted iframe with access only to its approved private storage.
+  See the [Plugin User Manual](docs/plugins.md) for step-by-step creation and installation, updates,
+  permissions, troubleshooting and the package/SDK reference.
 - **Learn Linux.** Before the first lab, the learner rates their Linux experience in five star questions. An AI
   trainer then designs a seven-day lab of real-world tasks at that level. Each task is explained first, then
   practised in the terminal, with one command per task. The trainer only nudges: hints and corrections get
@@ -75,6 +81,10 @@ modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker,
   to it for assessment. Progress is saved in the learner's home folder (`~/.local/share/tuxos/`).
 - **System client** (`packages/system`): the one API the UI uses for boot, saving, sessions, terminals and
   modules.
+- **Plugin manager** (`packages/system/src/plugins.ts`, `apps/web/src/plugins`): one lifecycle for GUI and CLI
+  operations, strict package validation, reviewed permissions, private storage quotas, versioned updates and
+  immediate app-list updates. The bundled catalog works offline; custom packages are imported locally.
+  `PluginWindowFrame` and `PluginRPCGateway` provide the restricted iframe and permission-checked bridge.
 - **AI tutor** (`packages/tutor`, `apps/web/src/tutor`, `apps/api`): the browser keeps the conversation and
   runs the agent's tools (look at the screen, click, type, files, windows, module actions). The API adds Vasi's
   instructions and makes one model call per request with the learner's key, so it is stateless. Everything

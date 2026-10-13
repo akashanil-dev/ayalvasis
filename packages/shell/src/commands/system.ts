@@ -1,9 +1,10 @@
 import type { CommandDefinition } from './types';
 import type { ShellInternals } from './types';
 import { invalidOption, options } from './helpers';
+import { pluginCommand } from './plugin';
 
 export function systemCommands(): CommandDefinition[] {
-  return [whoami(), environment(), exportCommand(), help(), sudo(), truth('true', 0), truth('false', 1)];
+  return [whoami(), environment(), exportCommand(), help(), sudo(), truth('true', 0), truth('false', 1), pluginCommand()];
 }
 
 function whoami(): CommandDefinition {

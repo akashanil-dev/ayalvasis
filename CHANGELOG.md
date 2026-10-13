@@ -4,6 +4,40 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
+## 2026-10-13 — Graphical plugin manager and lifecycle hardening
+
+- Added a themed, responsive Plugins app with a searchable offline catalog, installed-plugin management,
+  file/JSON import, starter template, permission review, enable/disable, reviewed updates, export and removal.
+- Added working Quick Notes, Focus Timer and Permission Explorer packages. Settings links to the manager.
+- Unified GUI and terminal installs around validated, bounded v1 packages. Apps, windows, commands, grants
+  and dynamic views are reconciled immediately. Commands are actually removed, so reinstall works.
+- Separated plugin IDs from app IDs and honored custom HTML entries and default window dimensions.
+- Scoped plugin filesystem calls to private storage with transactional quota checks; denied root, shell,
+  wildcard, permission-changing and plugin-management access. Legacy packages require review before enabling.
+- Hardened iframe policy, bridge handshake, frame/channel binding, event summaries, request limits/timeouts,
+  session cleanup and authority revocation on replace/disable/remove.
+- Added schema, lifecycle, RPC, sandbox and GUI coverage; documented the package contract and security limits
+  in docs/plugins.md with an importable example. The catalog is bundled; public publication/signing is not
+  implemented, and iframe execution is not an OS process/resource isolation boundary.
+- Expanded docs/plugins.md into a complete Plugin User Manual with template and source-file tutorials,
+  installation/update procedures, permission and SDK references, troubleshooting and a release checklist.
+
+## 2026-10-13T01:15:00+05:30 — plugins: dynamic user application architecture
+
+- Changed:
+  - `packages/sdk`: exported `PluginManifest`, `PluginRPCRequest`, `PluginRPCResponse`, and `PluginRPCEvent` contracts.
+  - `packages/module-host`: added `uninstall(id)` for clean atomic lifecycle teardown of dynamic modules, revoking actions, commands, and capabilities.
+  - `packages/system`:
+    - `PluginRPCGateway`: translates asynchronous JSON-RPC 2.0 messages from sandboxed plugins into actor-checked `kernel.dispatch` calls with event subscription streaming.
+    - `discoverPlugins`: scans `~/.local/share/tuxos/plugins` during boot in $O(1)$ time (parsing only static manifests), registering lazy command stubs and desktop apps.
+    - `SystemClient`: added `uninstallPlugin` and `reloadPlugins` APIs.
+  - `apps/web`:
+    - `views.ts`: added `registerView` and `unregisterView` dynamic view registry.
+    - `PluginWindowFrame`: renders third-party plugin applications inside a secure `<iframe sandbox="allow-scripts">` container (strictly omitting `allow-same-origin` to isolate host credentials/keys) with an injected `window.tuxos` client bridge.
+  - `packages/shell`:
+    - Added the `plugin` CLI command (`plugin list`, `plugin install`, `plugin info`, `plugin remove`).
+  - Tests: added test coverage across `plugin-rpc.test.ts`, `plugin-loader.test.ts`, `plugin.test.ts`, `plugin-sandbox.test.tsx`, and `module-host.test.ts`.
+
 ## 2026-10-11T23:10:00+05:30 — apt: install software like on Ubuntu
 
 - Changed:

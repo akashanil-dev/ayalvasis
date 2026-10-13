@@ -18,12 +18,15 @@ export type HostEvent =
 
 export interface ModuleHost {
   add(manifest: ModuleManifest, load: () => Promise<ModuleDefinition>): void;
+  validate(manifest: ModuleManifest, replacing?: string): void;
+  dispose(): Promise<void>;
   start(): Promise<void>;
   activate(id: string): Promise<void>;
   apps(): (AppContribution & { moduleId: string })[];
   openApp(appId: string): Promise<void>;
   status(id: string): ModuleStatus;
   error(id: string): Error | undefined;
+  uninstall(id: string): Promise<void>;
   on(listener: (event: HostEvent) => void): () => void;
 }
 
@@ -38,6 +41,7 @@ interface Record {
   /** Event subscriptions to cancel if activation fails. */
   subscriptions: (() => void)[];
   deactivate?: () => void | Promise<void>;
+  retiring?: boolean;
 }
 
 export function createModuleHost(options: { kernel: Kernel; shell: Shell; learning?: LearningBackend }): ModuleHost {
@@ -48,6 +52,15 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell; learni
   const builtins = new Set(options.shell.commands().map((command) => command.name));
 
   const host: ModuleHost = {
+    validate(manifest, replacing) {
+      validateManifest(manifest, new Map([...records].filter(([id]) => id !== replacing)),
+        new Map([...commandOwners].filter(([, id]) => id !== replacing)),
+        new Map([...appOwners].filter(([, id]) => id !== replacing)), builtins);
+    },
+    async dispose() {
+      for (const id of [...records.keys()].reverse()) await host.uninstall(id);
+      listeners.clear();
+    },
     add(manifest, load) {
       validateManifest(manifest, records, commandOwners, appOwners, builtins);
       const record: Record = {
@@ -84,10 +97,12 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell; learni
       return result;
     },
 
-    openApp(appId) {
+    async openApp(appId) {
       const owner = appOwners.get(appId);
-      if (!owner) return Promise.reject(new Error(`unknown app: ${appId}`));
-      return host.activate(owner);
+      if (!owner) throw new Error(`unknown app: ${appId}`);
+      const record = getRecord(owner);
+      await host.activate(owner);
+      if (record.retiring || records.get(owner) !== record) throw new Error(`app is being removed: ${appId}`);
     },
 
     status(id) {
@@ -96,6 +111,32 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell; learni
 
     error(id) {
       return getRecord(id).error;
+    },
+
+    async uninstall(id) {
+      const record = records.get(id);
+      if (!record) return;
+      record.retiring = true;
+      // Finish in-flight activation before revoking what it registered.
+      if (record.promise) await record.promise.catch(() => undefined);
+      if (record.deactivate) {
+        try {
+          await record.deactivate();
+        } catch (err) {
+          console.error(`[module:${id}] deactivate error:`, err);
+        }
+      }
+      cleanup(record);
+      for (const [cmd, owner] of commandOwners.entries()) {
+        if (owner === id) {
+          options.shell.unregister(cmd);
+          commandOwners.delete(cmd);
+        }
+      }
+      for (const [app, owner] of appOwners.entries()) {
+        if (owner === id) appOwners.delete(app);
+      }
+      records.delete(id);
     },
 
     on(listener) {
@@ -107,6 +148,7 @@ export function createModuleHost(options: { kernel: Kernel; shell: Shell; learni
   async function activateInternal(id: string, chain: string[]): Promise<void> {
     const record = records.get(id);
     if (!record) throw dependencyError([...chain, id], `missing module '${id}'`);
+    if (record.retiring) throw new Error(`module is being removed: ${id}`);
     if (record.status === 'active') return;
     if (record.status === 'failed') throw record.error;
     if (record.status === 'activating') {
@@ -210,7 +252,11 @@ function commandStub(
 ): ShellCommandDefinition {
   return {
     // Until the module is active, a command counts as there; then the module's own definition decides.
-    available: () => records.get(moduleId)?.commands.get(name)?.available?.() ?? true,
+    // If the module was uninstalled, it is no longer available.
+    available: () => {
+      const record = records.get(moduleId);
+      return record ? (record.commands.get(name)?.available?.() ?? true) : false;
+    },
     name,
     summary: records.get(moduleId)?.manifest.contributes.commands
       ?.find((command) => command.name === name)?.summary ?? name,
@@ -223,7 +269,7 @@ function commandStub(
         return 1;
       }
       const recordCommand = records.get(moduleId)?.commands.get(name);
-      if (!recordCommand) {
+      if (!recordCommand || records.get(moduleId)?.retiring) {
         ctx.stderr(`${name}: module '${moduleId}' did not provide this command\n`);
         return 1;
       }

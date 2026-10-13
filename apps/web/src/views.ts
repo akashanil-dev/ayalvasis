@@ -14,12 +14,24 @@ export const views: Record<string, () => Promise<ViewModule>> = {
   'learn-docker': () => import('@tuxos/module-learn-docker/view'),
   'chmod-arcade': () => import('@tuxos/module-chmod-arcade/view'),
   settings: () => import('@tuxos/module-settings/view'),
+  plugins: () => import('./plugins/PluginManager'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();
+export const dynamicViews = new Map<string, () => Promise<ViewModule>>();
+
+export function registerView(appId: string, loader: () => Promise<ViewModule>): void {
+  dynamicViews.set(appId, loader);
+  lazyViews.delete(appId);
+}
+
+export function unregisterView(appId: string): void {
+  dynamicViews.delete(appId);
+  lazyViews.delete(appId);
+}
 
 export function getLazyView(appId: string): LazyExoticComponent<ComponentType<AppViewProps>> | null {
-  const loader = views[appId];
+  const loader = dynamicViews.get(appId) ?? views[appId];
   if (!loader) return null;
   let component = lazyViews.get(appId);
   if (!component) {

@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

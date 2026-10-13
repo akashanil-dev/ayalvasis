@@ -55,6 +55,10 @@ export default function SettingsView({ system }: AppViewProps) {
 
     {system.ai() && <AiKeySection store={system.ai()!} />}
 
+    <h3>Plugins</h3>
+    <p className="settings-intro">Add useful tools to your desktop and manage their permissions.</p>
+    <button onClick={() => void system.openApp('plugins')}>Open Plugins</button>
+
     <h3>About this system</h3>
     <div className="about-system">
       <dl className="about-specs">
