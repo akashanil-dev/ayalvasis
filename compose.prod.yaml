@@ -1,0 +1,35 @@
+services:
+  db:
+    mem_limit: 1g
+    cpus: 1.0
+  odoo:
+    mem_limit: 3g
+    cpus: 2.0
+    pids_limit: 256
+  proxy:
+    image: ${CADDY_IMAGE:?Set CADDY_IMAGE}
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [frontend]
+    depends_on:
+      odoo:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:

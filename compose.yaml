@@ -1,0 +1,109 @@
+name: ${COMPOSE_PROJECT_NAME:?Run setup first}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app: &app
+  image: ${APP_IMAGE:?Set APP_IMAGE}
+  build:
+    context: .
+    args:
+      ODOO_IMAGE: ${ODOO_IMAGE:?Set ODOO_IMAGE}
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs:
+    - /tmp:rw,nosuid,nodev,size=256m,mode=1777
+  environment:
+    DB_HOST: db
+    DB_NAME: ${DB_NAME:?Set DB_NAME}
+    DB_USER: ${DB_USER:?Set DB_USER}
+    ODOO_WORKERS: ${ODOO_WORKERS:-0}
+    ODOO_PROXY_MODE: ${ODOO_PROXY_MODE:-False}
+    ADMIN_LOGIN: ${ADMIN_LOGIN:?Set ADMIN_LOGIN}
+  secrets: [db_password, master_password]
+  volumes:
+    - odoo_data:/var/lib/odoo
+  networks: [backend, frontend]
+  depends_on:
+    db:
+      condition: service_healthy
+  logging: *logging
+
+services:
+  db:
+    image: ${POSTGRES_IMAGE:?Set POSTGRES_IMAGE}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      APP_DB_NAME: ${DB_NAME:?Set DB_NAME}
+      APP_DB_USER: ${DB_USER:?Set DB_USER}
+    secrets: [postgres_password, db_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/10-init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    networks: [backend]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    shm_size: 128mb
+    logging: *logging
+
+  odoo:
+    <<: *app
+    restart: unless-stopped
+    stop_grace_period: 90s
+    healthcheck:
+      test: [CMD, python3, /opt/infra/healthcheck.py]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 60s
+
+  bootstrap:
+    <<: *app
+    profiles: [ops]
+    command: [initialize]
+    secrets: [db_password, master_password, admin_password]
+
+  storage:
+    image: ${APP_IMAGE:?Set APP_IMAGE}
+    profiles: [ops]
+    entrypoint: [python3, /opt/infra/storage.py]
+    command: [export]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - odoo_data:/var/lib/odoo
+    logging: *logging
+
+networks:
+  backend:
+    internal: true
+  frontend:
+
+volumes:
+  postgres_data:
+  odoo_data:
+
+secrets:
+  postgres_password:
+    file: ${SECRET_DIR:?Set SECRET_DIR}/postgres_password
+  db_password:
+    file: ${SECRET_DIR:?Set SECRET_DIR}/db_password
+  master_password:
+    file: ${SECRET_DIR:?Set SECRET_DIR}/master_password
+  admin_password:
+    file: ${SECRET_DIR:?Set SECRET_DIR}/admin_password

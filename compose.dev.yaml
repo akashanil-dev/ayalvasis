@@ -1,0 +1,9 @@
+services:
+  odoo:
+    ports:
+      - "127.0.0.1:${LOCAL_PORT:-8069}:8069"
+    volumes:
+      - ./addons:/mnt/extra-addons:ro
+  bootstrap:
+    volumes:
+      - ./addons:/mnt/extra-addons:ro
