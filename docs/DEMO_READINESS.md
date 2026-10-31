@@ -267,6 +267,123 @@ email was sent during the offline business rehearsal; the subsequent local
 signup/reset capture is documented separately above. Manual portal acceptance
 does not require SMTP.
 
+## Follow-up: built image and representative browser scale checks
+
+On revision `21051fd`, created a separate ignored snapshot
+`.state/scale-edson-20261031/`, project `ayalvasis-scale-edson-20261031`, database
+`ayalvasis_scale_edson_20261031`, and unused loopback port **57327**. Built
+`ayalvasis-odoo:review-21051fd` with cached dependencies, `--pull=false` and
+`--network=none`. Initialized fresh volumes and installed the addon using
+`IMAGE_ONLY=true`; the application runs code baked into the image, without the
+addon development bind mount. Startup and health checks passed. This verifies
+fresh-volume image startup on this machine, not initial image acquisition or a
+new host's operating-system setup. The presentation database was not used for
+load generation.
+
+Ran the existing `business_probe.py` to create real balanced seed invoices and
+verify signup/billing/discount contention. Disabled this fixture's scheduler,
+then ran the existing `performance_probe.py`. It added **10,000 subscriptions and
+100,000 posted invoices** by cloning balanced accounting rows. This is a read
+load fixture, not evidence of billing 100,000 real invoices. Twenty concurrent
+ORM dashboard callers with twelve database slots measured **p50 0.627s,
+p95 0.788s, maximum 0.813s**; its p95 acceptance check passed.
+
+Browser timing measured authenticated navigation or button action through real
+rendered records and two animation frames, over loopback with no CPU/network
+throttling. Login is excluded. Browser interactions were sequential, separate
+from the concurrent ORM probe. Results are small samples, not a percentile SLA:
+
+| Journey | Samples | Observed seconds |
+| --- | ---: | ---: |
+| Staff workspace, warm reload | 5 | 0.483–0.614 |
+| Staff next / previous page | 1 each | 0.309 / 0.289 |
+| Staff search | 5 | 0.265–0.300 |
+| Staff active-status filter | 1 | 0.200 |
+| Native contracts list, warm | 2 | 0.480–0.503 |
+| Native invoices list, warm | 2 | 1.183–1.384 |
+| Native billing periods list, warm | 2 | 1.149–1.233 |
+| Native plans list, warm | 2 | 1.032–1.150 |
+| Customer portal, warm reload | 5 | 1.416–1.466 |
+| Customer next / previous page | 1 each | 1.029 / 1.027 |
+| Workspace, fresh browser / warm server | 3 | 0.885–0.950 |
+| Portal, fresh browser / warm server | 3 | 1.485–1.518 |
+
+Actual first and second staff pages contained 25 distinct records each; returning
+restored the first page and disabled Previous. Customer pages contained 12
+distinct subscriptions each and returned correctly. Search/status filters,
+mobile portal document width and absence of browser runtime errors passed.
+
+**The strict cold-start two-second target is not met.** First-use observations
+were workspace **5.234s**, invoice list **12.782s**, billing periods **2.867s**,
+plans **2.200s**, and portal **23.623s**. These include first-use asset/view/cache
+preparation, which was not individually profiled. A fresh browser against the
+already warmed server was faster, as shown above. Preloading the demo pages is
+useful rehearsal preparation; it does not turn these results into proof that
+every page always responds within two seconds.
+
+### Native setup defect fixed and regression verified
+
+Native forms successfully saved new synthetic product `Native Demo Software`
+(service, sales price 100, cost 40), plan `Native Demo Monthly` (100/month,
+minimum quantity two), and seven-day quotation template `Native Demo Offer`.
+The first subscription save failed with
+`Contract workflow fields cannot be supplied directly.` The state field was
+editable in model metadata, so the native form included its default draft value,
+which the protected-field guard correctly rejected. The failed rehearsal stopped,
+and the user explicitly authorized fixing and continuing.
+
+Commit `0074643` makes state read-only in model metadata while retaining the
+server-side create/write guards. The actual browser retry now saves numbered
+**SUB/2026/00025**, ID **165**, as a draft: two seats at 100, tax 30, total 230.
+It is an additional synthetic record; ready quotation 93 was not modified.
+
+A new Odoo `Form` regression exercises staff template-based creation, numbering,
+terms, minimum quantity/template lines and rejection of direct state injection.
+Its first run failed a numbering assertion because the upstream accounting test
+fixture uses another company without the installed company's sequence. The test
+now provisions its own company-specific sequence. The full rerun passed:
+**39 backend tests, zero failures and zero errors**, in the separate project
+`ayalvasis-regression-edson-20261031`, database
+`ayalvasis_regression_edson_20261031`, port **34273**. Its source includes Akash's
+`8cc41a5` variant-role fix and Edson's `0074643` form fix.
+
+The fresh regression environment confirms the administrator has
+`product.group_product_variant`; ordinary staff and customers do not, and attempts
+by either to create product attributes are denied. The native Attributes & Variants
+tab now appears, and configuring a brand with two values creates two variants.
+The native surcharge editor saved **560** for the Odoo brand. Native forms then
+created a monthly plan priced at 100 with two seats minimum, a seven-day template,
+and a product-scoped ten-percent discount with a minimum purchase of 100,
+minimum quantity two and one-use limit. The customer accepted the quotation in
+the real portal; staff activated, generated and posted its invoice.
+
+Verified amounts: **2 × (100 + 560) = 1320** before discount and tax;
+**132 discount**, **1188 taxable base**, **178.20 tax (15%)**, **1366.20 total**.
+Inspected the native invoice image and retrieved the owned invoice PDF. This
+uses the existing generic-chart 15% sales tax; native creation of a new tax rule
+was not exercised. The attribute and its two named values were prepared through
+the ORM; product attribute assignment and surcharge configuration were native UI.
+The resulting synthetic regression records are subscription **41**, invoice
+**45**, variant **10**, exclusively in the port-34273 database. They are not
+presentation fixtures on port 8206.
+
+The browser probe was corrected to follow Odoo's surcharge form (rather than an
+inline cell), search by product name before choosing its variant, and skip an
+already-saved price rather than expecting a no-op save RPC. Those probe attempts
+are retained in ignored logs; the final full flow passed.
+
+The user began manual testing on **8206** and explicitly approved a brief
+upgrade/restart. The integrated form and variant-role update completed successfully;
+startup, health and least-privilege database checks passed, with records retained.
+Refresh the browser to load the updated administrator controls. Manual testing
+may consume the previously ready quotation: check its actual state and create a
+fresh quotation for recording if necessary. Automated checks
+now use the separate regression instance. Do not stop, upgrade or reseed 8206
+again while the user is testing without coordinating that interruption.
+
+Integrated CI for `0074643` is independently verified completed/success:
+[run 41191812575](https://github.com/akashanil-dev/ayalvasis/actions/runs/41191812575).
+
 ## Evidence and limits
 
 All runtime artifacts below are ignored under `.state/`, not committed:
@@ -280,6 +397,8 @@ All runtime artifacts below are ignored under `.state/`, not committed:
 | Invalid setup values | `demo-invalid-inputs.py`, `demo-invalid-inputs.log` |
 | Offline | `demo-offline-start.py`, `demo-offline-start.log`, `demo-offline-browser.cjs`, `demo-offline-browser.log` |
 | Restoration/ready fixture | `demo-restore-network.log`, `demo-ready-quote.log`, `demo-final-check.log` |
+| Scale/image follow-up | `scale-build.log`, `scale-init.log`, `scale-install.log`, `scale-seed.log`, `scale-browser.cjs`, `scale-browser.log`, `scale-browser-results.json` |
+| Native setup | `demo-native-setup.cjs`, `demo-native-setup.log` (original failure), `demo-native-retry.log`, `demo-tests-native-form.log` (sequence fixture assertion), `regression-tests.log`, `regression-prepare.log`, `regression-native-variants.log`, `regression-native-variant-flow.log`, `regression-native-variant-invoice.png`, `demo-manual-upgrade.log` |
 | Staff follow-up | `demo-staff-review.cjs`, `demo-staff-final.log`, `demo-staff-desktop.png`, `demo-staff-mobile.png`, `demo-staff-mobile-results.png` |
 | Signup/reset | `demo-signup-reset.cjs`, `demo-signup-reset.log`, `demo-signup-roles.log`, `demo-check-signup-config.log`, `demo-signup-reset-navigation-probe.log` (initial harness expectation) |
 | Visual checks | `demo-portal-desktop-after.png`, `demo-portal-320-after.png`, `demo-portal-long-content.png`, `demo-offline-paid-mobile.png` |
@@ -291,11 +410,11 @@ Playwright/Chromium, generated local secrets, and synthetic fixture IDs. They
 perform mutations: **do not rerun acceptance/payment scripts against their already
 accepted/paid records**. Create fresh fixtures for a repeat rehearsal.
 
-Remaining boundaries: CI is verified for `2799e41`, not future revisions; a clean
-machine/release image deployment is not covered by this source-mounted demo;
-external SMTP delivery and payment
-integrations are not covered; full end-to-end two-second page performance at scale
-has not been measured here. Existing backend tests cover additional lifecycle,
+Remaining boundaries: CI is verified through `0074643`, not future revisions; a clean
+machine setup is not covered; the separate built-image startup is documented above;
+external SMTP delivery and payment integrations are not covered; the representative
+warm browser measurements do not establish an every-page two-second guarantee,
+and measured first-use loads exceed it. Existing backend tests cover additional lifecycle,
 proration, tax, discount, authentication and permission behavior, but this review
 is not a complete manual acceptance of every PDF requirement. No production
 system or existing user database was tested or overwritten.
