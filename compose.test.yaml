@@ -1,0 +1,8 @@
+# Exercise the built release artifact without development bind mounts.
+services:
+  odoo:
+    volumes: !override
+      - odoo_data:/var/lib/odoo
+  bootstrap:
+    volumes: !override
+      - odoo_data:/var/lib/odoo

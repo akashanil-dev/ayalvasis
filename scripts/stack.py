@@ -58,6 +58,8 @@ class Stack:
         self.mode = mode
         self.base = ['docker', 'compose', '--env-file', str(env_file), '-f', str(ROOT / 'compose.yaml'),
                      '-f', str(ROOT / f'compose.{mode}.yaml')]
+        if self.values.get('IMAGE_ONLY') == 'true':
+            self.base += ['-f', str(ROOT / 'compose.test.yaml')]
         # Do not let unrelated exported shell variables override this deployment.
         self.environ = os.environ.copy()
         for key in self.values:
