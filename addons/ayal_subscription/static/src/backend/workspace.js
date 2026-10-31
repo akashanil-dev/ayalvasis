@@ -30,7 +30,17 @@ export class Workspace extends Component {
         }
     }
     search() { this.state.page = 0; return this.load(); }
-    page(delta) { this.state.page += delta; return this.load(); }
+    clearFilters() {
+        this.state.query = '';
+        this.state.filter = '';
+        return this.search();
+    }
+    page(delta) {
+        const next = this.state.page + delta;
+        if (this.state.loading || this.state.error || next < 0 || next * 25 >= this.state.count) return;
+        this.state.page = next;
+        return this.load();
+    }
     open(id) { return this.action.doAction({ type: 'ir.actions.act_window', res_model: 'ayal.subscription', res_id: id, views: [[false, 'form']] }); }
     create() { return this.open(false); }
     billing() { return this.action.doAction('ayal_subscription.periods_action'); }

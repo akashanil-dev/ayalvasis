@@ -1,0 +1,12 @@
+// Keep horizontal scrolling inside the results table on narrow screens.
+.ayal-workspace {
+    min-width: 0;
+    .ayal-card { min-width: 0; }
+    .ayal-metrics strong { overflow-wrap: anywhere; }
+    .table-responsive:focus-visible { outline: 3px solid #145da0; outline-offset: 3px; }
+    @media (max-width: 480px) {
+        .ayal-search { max-width: none; width: 100%; }
+        .ayal-metrics { grid-template-columns: minmax(0, 1fr); }
+        th, td { padding: .75rem; }
+    }
+}
