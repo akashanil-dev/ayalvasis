@@ -103,3 +103,31 @@ drill should additionally verify business data and the actual off-host storage p
 | Backup fails | Disk space, Docker access, lock conflicts, DB role and filestore permissions |
 | Restore rejected | Matching images/DB name, complete/checksummed backup, empty target |
 | Secrets changed but DB rejects login | Existing database password was not rotated with the file |
+
+
+## Subscription application operations
+
+Install the addon once with `python3 scripts/stack.py install`. For a reviewed
+application update, back up first, build the release image, run
+`python3 scripts/stack.py --mode prod upgrade`, then `up` and `check`. Upgrades stop
+HTTP/cron and do not reset credentials. Tests are disabled in production mode.
+
+The billing scheduler runs every five minutes. Each invocation is bounded to
+20 contracts and a 45-second scheduling budget; each contract processes at most
+24 overdue periods. A failed contract retains its cursor, records `billing_error`
+and waits 15 minutes before automatic retry. Fix the underlying accounting/plan
+configuration before using **Generate due invoices** to retry manually.
+
+`ayal.billing.last_run` in system parameters contains the most recent completed
+run's start/completion timestamps, generated count and failure count. Connect this
+and due/backlog/error counts to the chosen monitoring system before launch.
+
+Never clear billing-period rows to retry. Reissue a cancelled, never-posted invoice
+through **Billing periods**; use a native credit note for an issued invoice.
+Discount reservations and payment receipts are audit records. Do not reset their
+counters or delete them through SQL to bypass a business error.
+
+PDF rendering uses `report.url=http://127.0.0.1:8069` inside the Odoo container, so
+wkhtmltopdf can load styles independently of the host-published port or public DNS.
+The installation hook preserves an explicitly configured existing report URL.
+Set the public `web.base.url` separately for customer-facing email links.

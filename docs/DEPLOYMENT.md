@@ -49,6 +49,7 @@ package installation await the hosting choice and are not automated here.
 python3 scripts/stack.py --mode prod preflight
 python3 scripts/stack.py --mode prod build
 python3 scripts/stack.py --mode prod init
+python3 scripts/stack.py --mode prod install
 python3 scripts/stack.py --mode prod up
 python3 scripts/stack.py --mode prod check
 ```
@@ -56,7 +57,8 @@ python3 scripts/stack.py --mode prod check
 Preflight checks configuration, not DNS reachability, certificate issuance, host
 capacity, vulnerability status, SMTP delivery or application correctness. Initialization
 sets a generated administrator password before HTTP is permitted. Open signup is
-disabled until the project's registration rules have been implemented and tested.
+disabled by default. Enable it only after configuring SMTP, the public base URL and
+verifying the signup/reset journey in staging.
 
 ## Networking and TLS
 
@@ -96,18 +98,21 @@ resets existing credentials. The master password is different from the login pas
 - Configure authenticated SMTP, delivery testing and sender-domain DNS records.
 - Set and freeze Odoo's public base URL; verify password-reset and invoice links.
 - Configure the correct company, currency, chart of accounts and journals.
-- Implement and test the custom subscription module, portal record rules and password
-  requirements from the problem statement; base Odoo installation is not that application.
+- Install `ayal_subscription` and rerun its business/browser acceptance suite against
+  the exact release image; review the company, timezone, plan and tax configuration.
 - Confirm backup retention, encrypted off-host copies, alerts and a restore drill.
 - Set up external uptime/TLS monitoring and host disk, memory and backup-age alerts.
 - Load-test page response time and concurrent billing on the actual host. No
-  two-second performance claim has been validated by this infrastructure setup.
+  local benchmark substitutes for measurement on the selected production host.
 
 ## Deployment and rollback policy
 
 Deploy a unique image per release; retain the prior image plus a complete backup.
 Before an update, take a backup, stop traffic/background processing and run explicit
-reviewed module migrations. Do not auto-update modules every time the container starts.
+reviewed module migrations with `python3 scripts/stack.py --mode prod upgrade`, then
+start and verify with `up` and `check`. Do not auto-update modules every time the
+container starts. The addon targets Odoo 19; a major-version change requires a
+separate migration and validation effort.
 The initial build intentionally installs only standard foundations. Add module
 installation/migration commands when the business addon exists.
 
