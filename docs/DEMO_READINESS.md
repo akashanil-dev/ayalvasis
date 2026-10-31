@@ -491,6 +491,17 @@ Ignored evidence: `.state/tour-regression-tests.log`, `.state/tour-browser.cjs`,
 `.state/tour-browser.log`, `.state/tour-hoot.log`, `.state/tour-overflow.png`, and
 `.state/tour-*-desktop.png` / `.state/tour-*-mobile.png`. The first browser harness
 also needed waits for asynchronous OWL step rendering; that harness correction
-was separate from the reproduced navbar defect. Hosted CI for the tour revision
-is not yet claimed passed. Installation on the actively used port 8206 requires
-separate user approval for its brief restart; the rehearsal did not interrupt it.
+was separate from the reproduced navbar defect.
+
+Published tour code: `e8fb3d493f923d0d2a0d2aac1e5741515ddc97bf`.
+Its hosted validate-and-restore CI passed:
+[run 41196187702](https://github.com/akashanil-dev/ayalvasis/actions/runs/41196187702).
+The user then explicitly approved updating port 8206. The brief upgrade completed
+at approximately 16:51 IST, with a protected local database backup. Business record
+counts, account count, outgoing-mail settings, signup/reset/base-URL settings and
+scheduler state matched before/after; app health and least-privilege checks passed.
+Read-only browser checks verified admin and customer Take a tour / Skip entry
+points on the updated app, without accepting, billing or paying any record.
+Evidence: `.state/tour-demo-update.log` and `.state/tour-demo-readonly.log`.
+Refresh the app after the upgrade. The updated instance is again reserved for the
+user's manual testing; do not restart or run business-mutation probes against it.
