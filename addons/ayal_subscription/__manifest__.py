@@ -1,1 +1,27 @@
-{'name': 'Ayalvasis Subscriptions', 'summary': 'Subscription operations, recurring billing and customer self-service', 'version': '19.0.1.0.0', 'category': 'Sales/Subscriptions', 'author': 'Ayalvasis', 'license': 'LGPL-3', 'depends': ['base', 'web', 'mail', 'auth_signup', 'portal', 'product', 'sale_management', 'account'], 'data': ['security/groups.xml', 'security/ir.model.access.csv', 'security/rules.xml', 'data/sequences.xml', 'data/cron.xml', 'data/mail.xml', 'views/catalog.xml', 'views/subscription.xml', 'views/billing.xml', 'views/portal.xml', 'report/contract.xml', 'views/menus.xml'], 'assets': {'web.assets_frontend': ['ayal_subscription/static/src/shared/style.scss', 'ayal_subscription/static/src/portal/*']}, 'pre_init_hook': 'pre_init_hook', 'post_init_hook': 'post_init_hook', 'application': True, 'installable': True}
+{
+    'name': 'Ayalvasis Subscriptions',
+    'summary': 'Subscription operations, recurring billing and customer self-service',
+    'version': '19.0.1.0.0',
+    'category': 'Sales/Subscriptions',
+    'author': 'Ayalvasis',
+    'license': 'LGPL-3',
+    'depends': ['base', 'web', 'mail', 'auth_signup', 'portal', 'product', 'sale_management', 'account'],
+    'data': [
+        'security/groups.xml', 'security/ir.model.access.csv', 'security/rules.xml',
+        'data/sequences.xml', 'data/cron.xml', 'data/mail.xml',
+        'views/catalog.xml', 'views/subscription.xml', 'views/billing.xml',
+        'views/portal.xml', 'report/contract.xml', 'views/menus.xml',
+    ],
+    'assets': {
+        'web.assets_backend': ['ayal_subscription/static/src/shared/style.scss',
+                              'ayal_subscription/static/src/backend/*'],
+        'web.assets_frontend': ['ayal_subscription/static/src/shared/style.scss',
+                               'ayal_subscription/static/src/portal/*'],
+        'web.assets_unit_tests_setup': ['ayal_subscription/static/src/portal/*'],
+        'web.assets_unit_tests': ['ayal_subscription/static/tests/*.test.js'],
+    },
+    'pre_init_hook': 'pre_init_hook',
+    'post_init_hook': 'post_init_hook',
+    'application': True,
+    'installable': True,
+}
