@@ -54,9 +54,9 @@ quality at all viewport sizes or completion of the official problem statement.
 
 Remaining release checks:
 
-- Edson: publish business/portal readiness and the final demo record sequence.
-- Demo-machine operator: visually rehearse the staff workspace at desktop and
-  390px widths, including keyboard navigation and a failed-request retry.
+- Business/portal readiness and the final demo sequence are recorded in DEMO_READINESS.md.
+- Edson reports staff desktop/390px, keyboard, failure/retry and initial loading
+  verified on 2799e41; real multi-page staff navigation remains unexercised.
 - Both sessions: compare against the selected official problem statement once
   available and confirm final integrated CI after code changes.
 - Team leader: verify portal milestones, evaluator access and repository/video
@@ -70,7 +70,7 @@ Use the following checkpoints to show the Brightloop business scenario.
 
 | Requirement | Demonstration or evidence | Remaining boundary |
 | --- | --- | --- |
-| Customer signup and reset | Unique email/password rules; customer role and own records | Default setup is invitation-only. Configure free signup/reset in the isolated demo and verify the flow. Real mailbox delivery is not established. |
+| Customer signup and reset | Unique email/password rules; customer role and own records | Demo-only signup/reset and local SMTP capture passed per Edson. Defaults remain invitation-only; external mailbox delivery is unverified. |
 | Product, variants and plans | Show product price/cost access, variant surcharge, billing interval and lifecycle permissions | The existing browser rehearsal did not create products/plans through native forms. |
 | Quotation and lifecycle | Use a template; show terms, dates and quotation → confirmed → active | Preserve accepted terms; use fresh records for repeat recordings. |
 | Billing, tax and discounts | Generate invoice, inspect lines/tax/discount and repeat billing without duplication | One simple untaxed demo does not demonstrate every tax/discount policy. |
@@ -88,5 +88,6 @@ The integrated revision `2799e41` passed
 [hosted CI](https://github.com/akashanil-dev/ayalvasis/actions/runs/41188611670),
 including Edson's portal changes and the staff initial-loading fix. Edson also
 reported desktop/mobile staff search, filters, clear filters, error/retry and
-keyboard table navigation working in his isolated demo; final initial-loading
-observation and signup/reset evidence are tracked in issue #1.
+keyboard table navigation working in his isolated demo; initial loading and signup/reset with local SMTP capture subsequently passed,
+as recorded in DEMO_READINESS.md at e38033e. These are Edson-reported local
+observations, not a second independent rehearsal by Akash.
