@@ -404,6 +404,12 @@ class TestSubscription(AccountTestInvoicingCommon):
         self.assertTrue(broken.retry_after)
         self.assertEqual(len(healthy.period_ids), 1)
         self.assertTrue(self.env['ir.config_parameter'].get_param('ayal.billing.last_run'))
+        with patch('odoo.addons.ayal_subscription.models.subscription.today', return_value=date(2026, 1, 31)):
+            broken.action_bill()
+            broken.action_bill()
+        self.assertEqual(len(broken.period_ids), 1)
+        self.assertFalse(broken.billing_error)
+        self.assertFalse(broken.retry_after)
 
     def test_grouped_tax_and_product_description_are_frozen(self):
         child = self.env['account.tax'].create({'name': 'Grouped rate', 'amount': 10, 'type_tax_use': 'sale', 'tax_group_id': self.tax_sale_a.tax_group_id.id})
@@ -417,3 +423,61 @@ class TestSubscription(AccountTestInvoicingCommon):
         self.bill(rec, date(2026, 1, 31))
         self.assertIn(original_name, rec.period_ids.invoice_id.invoice_line_ids.name)
         self.assertEqual(rec.period_ids.invoice_id.amount_total, 110)
+
+    def test_payment_reference_retry_and_payload_conflict(self):
+        rec = self.contract()
+        self.bill(rec, date(2026, 1, 31))
+        invoice = rec.period_ids.invoice_id
+        invoice.action_post()
+        register = self.env['account.payment.register'].with_context(active_model='account.move', active_ids=invoice.ids)
+        wizard = register.create({'amount': 40, 'ayal_reference': ' Bank-Receipt-42 '})
+        payment = wizard._create_payments()
+        retry = register.create({'amount': 40, 'ayal_reference': 'bank-receipt-42',
+            'payment_date': wizard.payment_date, 'journal_id': wizard.journal_id.id,
+            'payment_method_line_id': wizard.payment_method_line_id.id, 'communication': wizard.communication})
+        self.assertEqual(retry._create_payments(), payment)
+        self.assertEqual(invoice.amount_residual, 60)
+        retry.amount = 41
+        with self.assertRaisesRegex(UserError, 'different payment'):
+            retry._create_payments()
+        self.assertEqual(invoice.amount_residual, 60)
+        self.assertEqual(self.env['ayal.payment.receipt'].search_count([('invoice_id', '=', invoice.id)]), 1)
+
+    def test_full_payment_retry_does_not_create_another_receipt(self):
+        rec = self.contract()
+        self.bill(rec, date(2026, 1, 31))
+        invoice = rec.period_ids.invoice_id
+        invoice.action_post()
+        wizard = self.env['account.payment.register'].with_context(active_model='account.move', active_ids=invoice.ids).create({'amount': 100, 'ayal_reference': 'full-receipt'})
+        payment = wizard._create_payments()
+        self.assertEqual(wizard._create_payments(), payment)
+        self.assertEqual(invoice.amount_residual, 0)
+        self.assertEqual(self.env['ayal.payment.receipt'].search_count([('invoice_id', '=', invoice.id)]), 1)
+
+    def test_invalid_manual_payments_preserve_balance(self):
+        rec = self.contract()
+        self.bill(rec, date(2026, 1, 31))
+        invoice = rec.period_ids.invoice_id
+        invoice.action_post()
+        for amount, reference in [(0, 'zero'), (-1, 'negative'), (101, 'excess'), (10, '   ')]:
+            with self.subTest(amount=amount, reference=reference):
+                with self.assertRaises(UserError), self.env.cr.savepoint():
+                    self._register_payment(invoice, amount=amount, ayal_reference=reference)
+                self.assertEqual(invoice.amount_residual, 100)
+        self.assertFalse(self.env['ayal.payment.receipt'].search([('invoice_id', '=', invoice.id)]))
+
+    def test_invalid_resume_dates_leave_paused_contract_unchanged(self):
+        rec = self.contract()
+        self.bill(rec, date(2026, 1, 31))
+        with patch('odoo.addons.ayal_subscription.models.subscription.today', return_value=date(2026, 2, 1)):
+            rec.action_pause()
+        self.bill(rec, date(2026, 2, 28))
+        original = (rec.anchor_date, rec.next_billing_date, rec.expiry_date)
+        with patch('odoo.addons.ayal_subscription.models.subscription.today', return_value=date(2026, 3, 1)):
+            for invalid, error in [('2026-02-30', ValueError), ('not-a-date', ValueError),
+                                   ('2026-02-28', UserError), ('2026-04-30', UserError)]:
+                with self.subTest(invalid=invalid), self.assertRaises(error):
+                    rec.action_resume(invalid)
+                self.assertEqual(rec.state, 'paused')
+                self.assertEqual((rec.anchor_date, rec.next_billing_date, rec.expiry_date), original)
+        self.assertEqual(len(rec.period_ids), 1)
