@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from unittest.mock import patch
 
 from odoo import Command
-from odoo.tests import tagged
+from odoo.tests import Form, tagged
 from odoo.tools import mute_logger
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
@@ -55,6 +55,43 @@ class TestSubscription(AccountTestInvoicingCommon):
         self.assertEqual(next_boundary(anchor, 'monthly', date(2026, 2, 28)), date(2026, 3, 31))
         self.assertEqual(boundary(date(2024, 2, 29), 'yearly', 4), date(2028, 2, 29))
         self.assertEqual(boundary(anchor, 'weekly', 1), date(2026, 2, 7))
+
+    def test_native_form_creates_draft_from_template_without_workflow_fields(self):
+        # The accounting fixture uses a separate company from module installation.
+        self.env['ir.sequence'].create({'name': 'Form test subscriptions',
+                                       'code': 'ayal.subscription', 'prefix': 'FORM/',
+                                       'company_id': self.env.company.id})
+        self.plan.min_quantity = 2
+        template = self.env['ayal.subscription.template'].create({
+            'name': 'Native form offer', 'plan_id': self.plan.id,
+            'validity_days': 7, 'terms': 'Review these terms before accepting.',
+            'line_ids': [Command.create({'product_id': self.product_b.id,
+                                        'quantity': 1, 'price_unit': 10})]})
+        model = self.env['ayal.subscription'].with_user(self.staff_user)
+        with patch('odoo.addons.ayal_subscription.models.subscription.today', return_value=date(2026, 1, 31)):
+            with Form(model, view='ayal_subscription.subscription_form') as form:
+                form.partner_id = self.customer
+                form.template_id = template
+                form.start_date = date(2026, 1, 31)
+                form.expiry_date = date(2026, 4, 29)
+        rec = form.record
+        self.assertEqual(rec.state, 'draft')
+        self.assertNotEqual(rec.name, 'New')
+        self.assertEqual(rec.plan_id, self.plan)
+        self.assertEqual(rec.terms, template.terms)
+        self.assertEqual(rec.quote_valid_until, date(2026, 2, 7))
+        self.assertEqual(sorted(rec.line_ids.mapped('quantity')), [1, 2])
+        self.assertEqual(set(rec.line_ids.product_id.ids), {self.product.id, self.product_b.id})
+        self.assertFalse(rec.snapshot)
+        self.assertFalse(rec.order_id)
+        # Read-only form metadata must not weaken server-side workflow protection.
+        for state in ('draft', 'active'):
+            with self.subTest(state=state), self.assertRaises(AccessError):
+                model.create({'partner_id': self.customer.id, 'plan_id': self.plan.id,
+                              'start_date': date(2026, 1, 31), 'expiry_date': date(2026, 4, 29),
+                              'state': state})
+        with self.assertRaises(AccessError):
+            rec.write({'state': 'active'})
 
     def test_password_policy(self):
         for value in ['shortA!', 'longlowercase!', 'ALLUPPERCASE!', 'NoSpecial1234']:

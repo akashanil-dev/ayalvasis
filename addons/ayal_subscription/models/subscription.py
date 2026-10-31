@@ -19,7 +19,7 @@ class Subscription(models.Model):
     currency_id = fields.Many2one(related='company_id.currency_id', store=True)
     partner_id = fields.Many2one('res.partner', required=True, check_company=True, index=True, tracking=True)
     plan_id = fields.Many2one('ayal.subscription.plan', required=True, check_company=True)
-    state = fields.Selection([(s, s.title()) for s in ('draft', 'quotation', 'confirmed', 'active', 'paused', 'closed')], default='draft', required=True, copy=False, tracking=True, index=True)
+    state = fields.Selection([(s, s.title()) for s in ('draft', 'quotation', 'confirmed', 'active', 'paused', 'closed')], default='draft', required=True, readonly=True, copy=False, tracking=True, index=True)
     start_date = fields.Date(required=True, default=fields.Date.context_today)
     expiry_date = fields.Date(required=True)
     quote_valid_until = fields.Date(required=True, default=lambda s: fields.Date.context_today(s) + timedelta(days=30))
