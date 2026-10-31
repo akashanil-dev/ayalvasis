@@ -1,0 +1,1 @@
+<odoo noupdate="1"><record id="cron_recurring_billing" model="ir.cron"><field name="name">Subscriptions: recurring billing</field><field name="model_id" ref="model_ayal_subscription"/><field name="state">code</field><field name="code">model._cron_bill()</field><field name="interval_number">5</field><field name="interval_type">minutes</field></record></odoo>

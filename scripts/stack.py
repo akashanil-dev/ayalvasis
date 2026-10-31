@@ -171,7 +171,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('dev', 'prod'), default='dev')
     parser.add_argument('--env-file', type=Path)
-    parser.add_argument('command', choices=('setup', 'validate', 'preflight', 'build', 'init', 'up', 'down', 'status', 'logs', 'check', 'backup', 'restore'))
+    parser.add_argument('command', choices=('setup', 'validate', 'preflight', 'build', 'init', 'up', 'down', 'status', 'logs', 'check', 'backup', 'restore', 'install', 'upgrade', 'test'))
     parser.add_argument('backup_path', nargs='?', type=Path)
     args = parser.parse_args()
     env_file = args.env_file or ROOT / ('.env.production' if args.mode == 'prod' else '.env')
@@ -181,7 +181,7 @@ def main():
         setup(env_file, args.mode)
         return
     stack = Stack(env_file, args.mode)
-    stack.validate(production=args.command == 'preflight' or (args.mode == 'prod' and args.command in ('up', 'init')))
+    stack.validate(production=args.command == 'preflight' or (args.mode == 'prod' and args.command in ('up', 'init', 'install', 'upgrade')))
     if args.command in ('validate', 'preflight'):
         print(f'{args.mode} configuration valid')
         return
@@ -191,6 +191,12 @@ def main():
         elif args.command == 'init':
             stack.database_up()
             stack.run('run', '--rm', '--no-deps', '-T', 'bootstrap')
+        elif args.command in ('install', 'upgrade', 'test'):
+            if args.command == 'test' and args.mode == 'prod':
+                raise ValueError('Run application tests only against a disposable development database')
+            stack.database_up()
+            stack.run('stop', 'odoo')
+            stack.run('run', '--rm', '--no-deps', '-T', 'bootstrap', args.command)
         elif args.command == 'up':
             services = ['odoo', 'proxy'] if args.mode == 'prod' else ['odoo']
             stack.run('up', '-d', '--wait', '--wait-timeout', '240', *services)

@@ -1,0 +1,4 @@
+<odoo>
+<template id="portal_subscriptions" name="My subscriptions"><t t-call="portal.portal_layout"><div class="container py-4"><owl-component name="ayal_subscription.Portal"/></div></t></template>
+<template id="portal_home" inherit_id="portal.portal_my_home"><xpath expr="//div[hasclass('o_portal_docs')]" position="inside"><t t-call="portal.portal_docs_entry"><t t-set="title">Subscriptions</t><t t-set="url" t-value="'/my/subscriptions'"/><t t-set="text">Review quotations, invoices and recurring services</t><t t-set="placeholder_count" t-value="'subscription_count'"/></t></xpath></template>
+</odoo>

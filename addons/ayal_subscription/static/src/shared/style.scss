@@ -1,0 +1,4 @@
+.ayal-portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(Min(100%, 320px), 1fr)); gap: 1.25rem; }
+.ayal-terms { white-space: pre-wrap; margin-top: .75rem; }
+.ayal-portal summary { cursor: pointer; padding: .5rem 0; }
+.ayal-portal button:focus-visible { outline: 3px solid #145da0; outline-offset: 3px; }

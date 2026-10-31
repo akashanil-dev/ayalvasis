@@ -73,8 +73,8 @@ def connect(options):
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else 'serve'
-    if mode not in ('serve', 'initialize', 'shell'):
-        raise ValueError('Expected serve, initialize or shell')
+    if mode not in ('serve', 'initialize', 'shell', 'install', 'upgrade', 'test'):
+        raise ValueError('Expected serve, initialize, shell, install, upgrade or test')
     path, options = configuration()
     # Odoo reads ODOO_RC during early import, before parsing the -c argument.
     os.environ['ODOO_RC'] = path
@@ -110,6 +110,22 @@ env.cr.commit()
 """
         subprocess.run(['odoo', 'shell', '-c', path, '--no-http'], input=script, text=True, check=True)
         print('Secure bootstrap complete. Administrator password is in the local secret file.')
+        return
+    if mode in ('install', 'upgrade', 'test'):
+        if not initialized:
+            raise RuntimeError('Initialize the database before installing application modules')
+        args = ['odoo', '-c', path, '--workers=0', '--max-cron-threads=0',
+                '--stop-after-init', '--no-http', '--without-demo=True',
+                '--limit-time-real=1200', '--limit-time-cpu=1200',
+                ('--init=' if mode == 'install' else '--update=') + 'ayal_subscription']
+        if mode == 'test':
+            args += ['--test-enable', '--test-tags=/ayal_subscription']
+        result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        print(result.stdout, end='')
+        summary = re.search(r'(\d+) failed, (\d+) error\(s\) of (\d+) tests', result.stdout)
+        failed_tests = mode == 'test' and (not summary or int(summary[1]) or int(summary[2]) or not int(summary[3]))
+        if result.returncode or failed_tests:
+            raise RuntimeError('Application installation or test execution failed; inspect the log')
         return
     args = ['odoo', '-c', path] if mode == 'serve' else ['odoo', 'shell', '-c', path, '--no-http']
     os.execvp(args[0], args)

@@ -1,0 +1,13 @@
+<odoo>
+<menuitem id="menu_root" name="Subscriptions" sequence="10" groups="group_staff"/>
+<menuitem id="menu_contracts" name="Contracts" parent="menu_root" action="subscriptions_action" sequence="2"/>
+<menuitem id="menu_periods" name="Billing periods" parent="menu_root" action="periods_action" sequence="3"/>
+<menuitem id="menu_invoices" name="Invoices" parent="menu_root" action="invoices_action" groups="group_finance" sequence="4"/>
+<menuitem id="menu_config" name="Configuration" parent="menu_root" groups="group_admin" sequence="20"/>
+<menuitem id="menu_plans" name="Plans" parent="menu_config" action="plans_action"/>
+<menuitem id="menu_discounts" name="Discounts" parent="menu_config" action="discounts_action"/>
+<menuitem id="menu_templates" name="Quotation templates" parent="menu_config" action="templates_action"/><record id="products_action" model="ir.actions.act_window"><field name="name">Products and variants</field><field name="res_model">product.template</field><field name="view_mode">list,form</field></record>
+<record id="taxes_action" model="ir.actions.act_window"><field name="name">Taxes</field><field name="res_model">account.tax</field><field name="view_mode">list,form</field></record>
+<menuitem id="menu_products" name="Products and variants" parent="menu_config" action="products_action"/>
+<menuitem id="menu_taxes" name="Taxes" parent="menu_config" action="taxes_action"/>
+<menuitem id="menu_add_staff" name="Add staff" parent="menu_config" action="staff_invite_action"/></odoo>
