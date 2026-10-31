@@ -1,9 +1,11 @@
 /** @odoo-module **/
 import { Component, onMounted, onWillUnmount, useEffect, useRef, useState } from '@odoo/owl';
 import { registry } from '@web/core/registry';
+import { GuidedTour } from './tour';
 
 export class SubscriptionPortal extends Component {
     static template = 'ayal_subscription.Portal';
+    static components = { GuidedTour };
     static props = ['*'];
     setup() {
         this.state = useState({ rows: [], count: 0, page: 0, loading: true, busy: false, error: '', errorSource: '', expired: false, notice: '', confirm: null });
@@ -37,6 +39,7 @@ export class SubscriptionPortal extends Component {
             const data = await response.json();
             if (generation !== this.generation) return;
             this.csrf = data.csrf;
+            this.state.tourIdentity = data.tour_identity;
             this.state.rows = data.rows;
             this.state.count = data.count;
             this.state.page = data.page;

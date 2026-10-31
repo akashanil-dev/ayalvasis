@@ -422,3 +422,75 @@ system or existing user database was tested or overwritten.
 Coordination and the extracted problem statement are recorded in
 [issue #1](https://github.com/akashanil-dev/ayalvasis/issues/1). The coding window
 ends at **17:00 IST on 31 October 2026**. Preserve ready quotation 93 for the demo.
+
+## Role-specific guided tours (31 October, before freeze)
+
+The user requested onboarding for each account's capabilities and approved the
+limited workspace/manifest integration after coordination in issue #1. The tour
+starts from **Subscriptions → Workspace → Take a tour** for internal users, or
+**My subscriptions → Take a tour** for customers. A first-visit invitation is
+nonblocking: customers and operators can keep using the page without opening it.
+
+| Capability | Guide |
+| --- | --- |
+| Customer | 8 steps: account/quotation request, agreement review, acceptance, service dates, invoices/manual-payment expectations, lifecycle requests, recovery and help |
+| Staff | 8 steps: search, drafts, quotation delivery, activation, generating/monitoring periods, lifecycle and error recovery |
+| Staff with billing permission | 11 steps: staff guide plus invoice posting, manual payments and financial totals |
+| Subscription administrator | 17 steps: operational/financial guide plus products/variants, plans/templates, discounts/taxes, quantity amendments, staff provisioning and customer/email setup |
+
+Role and finance capability come from the existing server-side groups. The tour
+adds no permissions. Customer accounts still cannot call the staff workspace.
+Admin mail guidance explicitly refers to the system administrator because the
+subscription-administrator role alone does not grant technical Odoo settings.
+
+Back, Next step, Finish tour, Skip tour and Escape are supported. The dialog traps
+keyboard focus and returns focus to Take a tour when closed. Visible workspace
+regions are highlighted; instructions name menu locations for other screens.
+This is a read-only instructional tour, not an automated multi-page workflow:
+it does not create, accept, bill or pay records. Missing cards/targets do not block
+an empty account from completing the guide.
+
+Skip/completion is stored locally by database/user ID, role and finance capability
+(version v1), without names, email addresses, credentials or tokens. Other accounts
+in the same browser receive their own invitation. Clearing browser data or using
+a new browser displays the invitation again. When browser storage is disabled,
+the guide still works but cannot remember dismissal. Replay is always available.
+
+Validation used only the separate `ayalvasis-regression-edson-20261031` project
+on port 34273:
+
+- **40 backend tests passed**, zero failures/errors. New coverage checks ordinary
+  staff, finance-enabled staff, subscription admin, account-specific persistence
+  identities and customer denial of the workspace endpoint.
+- **All 8 existing HOOT tests passed** with the new tour assets. Neither staff
+  tests nor `scripts/browser_smoke.cjs` were edited.
+- Real Chromium rehearsed every step for all four capability combinations at
+  desktop 1440×1000 and mobile 320×640: first-visit invitation, Skip persistence,
+  replay, Back/Next, completion persistence, Escape, focus trapping and returning
+  focus. Accounts shared a browser context to verify dismissal isolation.
+- Customer guide also passed a simulated empty data response and disabled browser
+  storage. Desktop/mobile screenshots were visually inspected. No page errors
+  occurred in the full role rehearsal.
+- The first 320px assertion exposed a **pre-existing** account-menu overflow
+  (323px page width), reproduced before/during/after the guide. Work paused and
+  the user explicitly authorized fixing it. A narrow subscription-page-only CSS
+  rule now truncates long account names while retaining the dropdown and My
+  Account action. The complete 320px rehearsal and long-name menu check passed
+  after the correction.
+- Python compilation, OWL XML parsing and staged whitespace checks passed.
+
+Reproduce manually using a fresh browser profile and an account with each role:
+open the appropriate page, dismiss the invitation, reload, start Take a tour,
+use Next/Back and Escape, replay and finish all steps, then reload again. Repeat
+at 320px and switch to another account. Verify ordinary staff have no financial
+or configuration steps, billing staff have financial but no configuration steps,
+and customers have no internal operations steps. Use the existing disposable
+fixtures or fresh synthetic ones; do not accept or pay the user's ready records.
+
+Ignored evidence: `.state/tour-regression-tests.log`, `.state/tour-browser.cjs`,
+`.state/tour-browser.log`, `.state/tour-hoot.log`, `.state/tour-overflow.png`, and
+`.state/tour-*-desktop.png` / `.state/tour-*-mobile.png`. The first browser harness
+also needed waits for asynchronous OWL step rendering; that harness correction
+was separate from the reproduced navbar defect. Hosted CI for the tour revision
+is not yet claimed passed. Installation on the actively used port 8206 requires
+separate user approval for its brief restart; the rehearsal did not interrupt it.

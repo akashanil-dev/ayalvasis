@@ -49,6 +49,24 @@ class TestSubscription(AccountTestInvoicingCommon):
         with patch('odoo.addons.ayal_subscription.models.subscription.today', return_value=day):
             rec._bill_due()
 
+    def test_workspace_tour_follows_account_capabilities(self):
+        staff_workspace = self.env['ayal.subscription'].with_user(self.staff_user).workspace()
+        self.assertEqual(staff_workspace['tour_role'], 'staff')
+        self.assertFalse(staff_workspace['finance'])
+        self.assertEqual(staff_workspace['tour_identity'], f'{self.env.cr.dbname}:{self.staff_user.id}')
+        admin_workspace = self.env['ayal.subscription'].with_user(self.env.ref('base.user_admin')).workspace()
+        self.assertEqual(admin_workspace['tour_role'], 'admin')
+        self.assertTrue(admin_workspace['finance'])
+        self.assertNotEqual(admin_workspace['tour_identity'], staff_workspace['tour_identity'])
+        billing_user = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Tour billing operator', 'login': 'tour.billing@example.test',
+            'group_ids': [Command.set([self.env.ref('ayal_subscription.group_finance').id])]})
+        billing_workspace = self.env['ayal.subscription'].with_user(billing_user).workspace()
+        self.assertEqual(billing_workspace['tour_role'], 'staff')
+        self.assertTrue(billing_workspace['finance'])
+        with self.assertRaises(AccessError):
+            self.env['ayal.subscription'].with_user(self.portal_user).workspace()
+
     def test_calendar_anchors(self):
         anchor = date(2026, 1, 31)
         self.assertEqual(boundary(anchor, 'monthly', 1), date(2026, 2, 28))

@@ -16,3 +16,19 @@
         .ayal-pagination span { flex: 1; min-width: 5rem; }
     }
 }
+
+// Keep the account menu usable beside the logo on narrow subscription pages.
+@media (max-width: 575px) {
+    body:has(.ayal-portal) #top_menu {
+        min-width: 0;
+        flex-shrink: 1;
+        > li { min-width: 0; max-width: 100%; }
+        .dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: .25rem;
+            span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            &::after { flex-shrink: 0; }
+        }
+    }
+}

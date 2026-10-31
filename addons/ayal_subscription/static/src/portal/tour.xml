@@ -1,0 +1,20 @@
+<templates xml:space="preserve">
+    <t t-name="ayal_subscription.GuidedTour">
+        <div t-if="state.invited &amp;&amp; !state.open" class="ayal-tour-welcome" role="region" aria-label="Welcome guide">
+            <span>New here? Take a tour of your available tools.</span>
+            <button type="button" class="btn btn-link" t-on-click="() => this.close()">Skip tour</button>
+        </div>
+        <button t-ref="launcher" type="button" class="btn btn-outline-secondary ayal-tour-launcher" t-on-click="start">Take a tour</button>
+        <div t-if="state.open" class="ayal-tour-overlay">
+            <section t-ref="dialog" class="ayal-tour-dialog" role="dialog" aria-modal="true" aria-labelledby="ayal-tour-title" aria-describedby="ayal-tour-description" t-on-keydown="keydown">
+                <div class="ayal-tour-top"><span class="ayal-eyebrow"><t t-esc="roleLabel"/> guide</span><button type="button" class="btn btn-link" t-on-click="() => this.close()">Skip tour</button></div>
+                <p class="text-muted" aria-live="polite">Step <t t-esc="state.index + 1"/> of <t t-esc="steps.length"/></p>
+                <h2 id="ayal-tour-title" t-ref="heading" tabindex="-1" class="h4" t-esc="step.title"/>
+                <p id="ayal-tour-description" t-esc="step.text"/>
+                <p class="ayal-tour-location"><strong>Where to find it</strong><br/><t t-esc="step.location"/></p>
+                <p class="small text-muted">Read-only guide: your records stay unchanged. Press Escape to skip.</p>
+                <div class="ayal-tour-actions"><button type="button" class="btn btn-outline-secondary" t-att-disabled="state.index === 0" t-on-click="back">Back</button><button type="button" class="btn btn-primary" t-on-click="next"><t t-esc="state.index === steps.length - 1 ? 'Finish tour' : 'Next step'"/></button></div>
+            </section>
+        </div>
+    </t>
+</templates>

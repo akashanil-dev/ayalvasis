@@ -53,7 +53,7 @@ class Portal(CustomerPortal):
                          'invoices': [{'id': m.id, 'name': m.name, 'total': m.amount_total,
                                        'due': m.amount_residual, 'status': m.payment_state,
                                        'url': '/my/subscriptions/%s/invoice/%s' % (rec.id, m.id)} for m in invoices]})
-        return request.make_json_response({'rows': rows, 'count': count, 'page': page, 'csrf': request.csrf_token()}, headers=[('Cache-Control', 'no-store')])
+        return request.make_json_response({'rows': rows, 'count': count, 'page': page, 'tour_identity': f'{request.env.cr.dbname}:{request.env.uid}', 'csrf': request.csrf_token()}, headers=[('Cache-Control', 'no-store')])
 
     @http.route('/my/subscriptions/<int:record_id>/<string:action>', type='http', auth='user', methods=['POST'], csrf=True)
     def change(self, record_id, action, **kw):

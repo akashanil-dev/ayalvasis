@@ -441,7 +441,9 @@ class Subscription(models.Model):
         return {'rows': [{'id': r.id, 'name': r.name, 'customer': r.partner_id.name, 'plan': r.plan_id.name,
                          'state': r.state, 'next': r.next_billing_date, 'total': r.amount_total,
                          'currency': r.currency_id.symbol} for r in rows], 'count': self.search_count(domain),
-                'metrics': metrics, 'finance': finance, 'currency': self.env.company.currency_id.name}
+                'metrics': metrics, 'finance': finance, 'currency': self.env.company.currency_id.name,
+                'tour_identity': f'{self.env.cr.dbname}:{self.env.uid}',
+                'tour_role': 'admin' if self.env.user.has_group('ayal_subscription.group_admin') else 'staff'}
 
 
 

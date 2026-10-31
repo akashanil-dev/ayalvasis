@@ -3,6 +3,7 @@
         <div class="ayal-portal">
             <p class="ayal-eyebrow">YOUR ACCOUNT</p>
             <h1>My subscriptions</h1>
+            <GuidedTour t-if="state.tourIdentity" role="'customer'" identity="state.tourIdentity"/>
             <p class="text-muted">Review your agreements, download invoices and manage recurring services.</p>
             <p><a class="btn btn-outline-primary" href="/my/invoices">All invoices and credit notes</a></p>
             <div t-if="state.error" class="alert alert-danger" role="alert">

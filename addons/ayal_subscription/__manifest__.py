@@ -14,7 +14,10 @@
     ],
     'assets': {
         'web.assets_backend': ['ayal_subscription/static/src/shared/style.scss',
-                              'ayal_subscription/static/src/backend/*'],
+                              'ayal_subscription/static/src/backend/*',
+                              'ayal_subscription/static/src/portal/tour.js',
+                              'ayal_subscription/static/src/portal/tour.xml',
+                              'ayal_subscription/static/src/portal/tour.scss'],
         'web.assets_frontend': ['ayal_subscription/static/src/shared/style.scss',
                                'ayal_subscription/static/src/portal/*'],
         'web.assets_unit_tests_setup': ['ayal_subscription/static/src/portal/*'],

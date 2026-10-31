@@ -1,10 +1,12 @@
 /** @odoo-module **/
 import { Component, onMounted, onWillUnmount, useState } from '@odoo/owl';
 import { registry } from '@web/core/registry';
+import { GuidedTour } from '@ayal_subscription/portal/tour';
 import { useService } from '@web/core/utils/hooks';
 
 export class Workspace extends Component {
     static template = 'ayal_subscription.Workspace';
+    static components = { GuidedTour };
     static props = ['*'];
     setup() {
         this.orm = useService('orm');
