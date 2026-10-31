@@ -1,0 +1,39 @@
+name: Infrastructure
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Unit checks
+        run: |
+          python3 -m unittest discover -s tests -v
+          python3 -m compileall -q scripts infra/odoo
+          sh -n infra/postgres/10-init.sh
+      - name: Generate ephemeral configuration
+        run: |
+          python3 scripts/stack.py setup
+          python3 scripts/stack.py --mode prod setup
+          python3 scripts/stack.py validate
+          python3 scripts/stack.py --mode prod validate
+      - name: Build application image
+        run: python3 scripts/stack.py build
+      - name: Validate reverse proxy configuration
+        run: |
+          docker compose --env-file .env.production -f compose.yaml -f compose.prod.yaml run --rm --no-deps -e DOMAIN=example.org -e ACME_EMAIL=ops@example.org proxy caddy validate --config /etc/caddy/Caddyfile
+      - name: Exercise startup, authentication and disaster recovery
+        run: python3 scripts/smoke.py
