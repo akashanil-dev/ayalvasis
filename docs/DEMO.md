@@ -37,3 +37,27 @@ recording. Use fictional customer data and keep passwords out of the recording.
 Local Docker daemon access was denied during Akash's staff-workspace changes.
 Actual Odoo rendering and HOOT/browser acceptance require CI or an accessible
 isolated Odoo environment. Syntax checks alone do not validate UI appearance.
+
+## Current handoff and automated evidence
+
+Coordinate final readiness and shared-file ownership in
+[GitHub issue #1](https://github.com/akashanil-dev/ayalvasis/issues/1).
+Edson's session should post its next SHA, business/portal findings and demo-machine
+rehearsal results there; neither session needs to wait for a new commit before
+reporting a blocker or completing independent checks.
+
+The staff fixes at `9221750` and test-runner correction at `fcfffe0` passed the
+[hosted acceptance run](https://github.com/akashanil-dev/ayalvasis/actions/runs/41187213613).
+This verifies the eight application HOOT tests and the existing browser,
+concurrency and recovery flow on that revision. It does not establish visual
+quality at all viewport sizes or completion of the official problem statement.
+
+Remaining release checks:
+
+- Edson: publish business/portal readiness and the final demo record sequence.
+- Demo-machine operator: visually rehearse the staff workspace at desktop and
+  390px widths, including keyboard navigation and a failed-request retry.
+- Both sessions: compare against the selected official problem statement once
+  available and confirm final integrated CI after code changes.
+- Team leader: verify portal milestones, evaluator access and repository/video
+  submission confirmations. Code readiness does not confirm these submissions.
