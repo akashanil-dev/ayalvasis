@@ -1,18 +1,39 @@
-# Team Ayalvasis
+# Team Ayalvasis · Subscription Management
 
-Ayalvasis is our team and repository name for the Odoo × Make-A-Ton 9.0
-hackathon at CUSAT, not the application name.
+Manage the subscription lifecycle from a customer quotation to recurring invoices,
+manual payments and customer self-service. Built for the Odoo × Make-A-Ton 9.0
+hackathon at CUSAT. **Ayalvasis is our team and repository name.**
 
-## Team members
+**Team:** [Akash A](https://github.com/akashanil-dev) ·
+[Edson](https://github.com/Edson-Edwin)
 
-- Akash A
-- Edson
+[Demo walkthrough](docs/DEMO.md) · [Verified readiness](docs/DEMO_READINESS.md) ·
+[Deployment](docs/DEPLOYMENT.md) · [Operations](docs/OPERATIONS.md)
 
-## Current implementation
+## What the application does
 
-Subscription management built on Odoo Community 19 and its bundled Owl framework.
-The application includes a staff workspace, customer portal, products and variants,
-plans, quotation templates, recurring billing, discounts, manual payments and reports.
+- Maintains products and variants, recurring plans, quotation templates and
+  conditional discounts.
+- Turns reviewed quotations into accepted agreements and active subscriptions.
+- Generates recurring invoices with taxes, calendar-aware periods and retry protection.
+- Records partial/full manual payments and updates invoice balances.
+- Gives customers access to their own agreements, invoices and permitted lifecycle actions.
+- Gives staff a searchable workspace and billing users financial summaries.
+- Provides role-specific guided tours with Skip, replay and keyboard/mobile support.
+
+## Architecture
+
+| Layer | Technology and responsibility |
+| --- | --- |
+| Application | Odoo Community 19; Python models/controllers enforce business rules and permissions |
+| Interface | Odoo's bundled Owl framework, XML templates and SCSS; staff workspace and customer portal |
+| Data and accounting | PostgreSQL 17; Odoo invoices, taxes, payments and reconciliation |
+| Runtime | Docker Compose; pinned base images, local secrets, readiness checks and backup/restore tooling |
+| Production entry point | Prepared Caddy reverse-proxy configuration; hosting is not provisioned |
+| Verification | Odoo backend tests, HOOT frontend tests, Playwright journeys and GitHub Actions |
+
+This is an Odoo addon, not a standalone Node application. The browser tooling is
+used for acceptance tests; Node is not the application server.
 
 Business rules run on the server. Accepted terms and payment schedules are frozen;
 quantity amendments preserve prior revisions. A unique service-period ledger and
@@ -40,10 +61,53 @@ credentials or initialize an existing database. After addon changes, run `upgrad
 and then `up`; installation/upgrades stop the application while changing its schema.
 Rebuild for infrastructure changes and every production release.
 
-Open [local Odoo](http://localhost:8069). The login is `ADMIN_LOGIN` in `.env`.
+For a fresh environment, `setup` generates `.env` and local secrets. If port 8069
+is already occupied, choose an unused `LOCAL_PORT` in `.env` before starting.
+Do not reuse another project's database, project name or credentials.
+
+Open [local Odoo](http://localhost:8069), or your configured `LOCAL_PORT`.
+The login is `ADMIN_LOGIN` in `.env`.
 Read the generated password locally from `.secrets/dev/admin_password`; do not copy
 it into Git, logs or chat. Development HTTP binds only to `127.0.0.1:8069` and the
 database has no host port.
+
+The team's retained manual-testing instance uses port **8206**, not the default
+8069. Its records and credentials are machine-local and are not shipped with a
+fresh clone. See [demo readiness](docs/DEMO_READINESS.md) before using that instance;
+do not reinitialize it or run mutation tests against its prepared records.
+
+## Roles and guided tours
+
+| Role | Capabilities | Tour entry point |
+| --- | --- | --- |
+| Customer | Own quotations, agreements, posted invoices and permitted pause/resume/close/renew requests | My subscriptions → Take a tour (8 steps) |
+| Staff | Search, prepare quotations, activate subscriptions, generate/monitor billing periods and manage lifecycle | Subscriptions → Workspace → Take a tour (8 steps) |
+| Billing staff | Staff tools plus invoice posting, manual payments and financial summaries | Workspace → Take a tour (11 steps) |
+| Subscription administrator | Billing tools plus products, plans, templates, discounts, taxes, staff provisioning and quantity amendments | Workspace → Take a tour (17 steps) |
+
+Tours follow server-side role capabilities. They explain workflows and highlight
+relevant page regions; they never create, accept or pay records. First visits show
+a nonblocking invitation. **Back, Next, Skip, Finish and replay** are available;
+Escape closes the guide. Dismissal is remembered per account/role in that browser.
+Clearing browser storage displays the invitation again.
+
+## Customer signup and account recovery
+
+1. If the administrator enables public signup, open `/web/signup` and create an
+   account with a unique email and a password of at least nine characters,
+   including uppercase, lowercase and a special character.
+2. Sign in at `/web/login` and open `/my/subscriptions`.
+3. Request a quotation from the team using the email on your account. Signup
+   creates a **customer account**, not a purchase or a staff account.
+4. Review the quotation's products, price, dates and terms, then accept it.
+   Staff handle activation and billing; posted invoices appear in your portal.
+5. Use `/web/reset_password` if needed. Delivery requires working outgoing SMTP;
+   a production base URL must be reachable from the recipient's device.
+
+There is no public checkout or online card-payment gateway. Payments are recorded
+by authorized billing staff. Public signup is disabled by default; it was enabled
+only in the documented local demo. Subscription administrators are distinct from
+Odoo system administrators who configure technical settings.
 
 ## Set up the business
 
@@ -113,6 +177,8 @@ PLAYWRIGHT_MODULE="$PWD/scripts/browser/node_modules/playwright" python3 scripts
 ```
 
 Application tests belong in development/disposable databases, never production.
+`stack.py test` stops the selected app; run `stack.py up` afterward. Do not run it
+against an instance someone is actively using for manual testing.
 The isolated smoke drill installs the built image without source bind mounts,
 runs Odoo tests, independent-transaction contention checks, HOOT and Chromium
 journeys, then restores database and filestore into a separate multi-worker stack.
@@ -122,6 +188,21 @@ The performance fixture clones balanced posted accounting rows to measure dashbo
 reads with 10,000 subscriptions and 100,000 invoices. It is not a billing-throughput
 benchmark or a promise about an unchosen production host. See the
 [validation record](docs/VALIDATION.md) for results and limits.
+
+### Latest verified evidence
+
+The guided-tour implementation at
+[`e8fb3d4`](https://github.com/akashanil-dev/ayalvasis/commit/e8fb3d493f923d0d2a0d2aac1e5741515ddc97bf)
+passed **40 backend tests**, **8 HOOT tests**, role-specific desktop/320px browser
+rehearsals and [hosted CI](https://github.com/akashanil-dev/ayalvasis/actions/runs/41196187702).
+Checks included account isolation, Skip/replay, keyboard navigation, empty results,
+blocked browser storage and a long customer name on mobile.
+
+The business rehearsal covered quotation acceptance → activation → invoice
+posting → partial/full manual payment → updated balance and customer PDF access.
+See [DEMO_READINESS.md](docs/DEMO_READINESS.md) for exact evidence, environments,
+reproduction steps and limitations. These results describe tested revisions,
+not a blanket claim of complete production readiness.
 
 ## Repository map
 
@@ -135,11 +216,21 @@ benchmark or a promise about an unchosen production host. See the
 | `scripts/smoke.py` | Isolated application and recovery acceptance drill |
 | `.github/workflows/infra.yml` | Infrastructure, business, HOOT and browser CI |
 | `docs/IMPLEMENTATION_PLAN.md` | Architecture, detailed policies and acceptance mapping |
+| `docs/DEMO.md` | Suggested functional-demo sequence |
+| `docs/DEMO_READINESS.md` | Rehearsal results, tested records and remaining limitations |
 
 `python3 scripts/stack.py down` retains data. PostgreSQL and the filestore must be
 backed up together. Backup briefly stops HTTP and cron for consistency.
 
-## Production boundary
+## Known limitations and production boundary
+
+- Warm representative dashboard journeys passed, but measured cold/first-use
+  loads exceeded the problem statement's two-second target.
+- Real external mailbox delivery is unverified. Local SMTP capture is not proof
+  of Gmail delivery; never commit SMTP passwords or reset tokens.
+- The large synthetic dataset measures reads, not mass invoice-generation throughput.
+- Clean-machine deployment, public evaluator access, recording and submission
+  confirmations remain separate checks.
 
 Deployment files are prepared; no hosting, DNS, public TLS or SMTP service has been
 provisioned. Configure real accounting, email, external monitoring and encrypted
