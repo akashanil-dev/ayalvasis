@@ -1,0 +1,74 @@
+/* Real browser acceptance checks. Run only against the disposable smoke stack. */
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+(async () => {
+ const base = process.env.AYAL_BASE_URL;
+ const evidence = JSON.parse(process.env.AYAL_EVIDENCE);
+ assert(base && new URL(base).hostname === '127.0.0.1', 'Local integration server required');
+ const browser = await chromium.launch({headless:true, ...(process.env.PLAYWRIGHT_CHROMIUM ? {executablePath:process.env.PLAYWRIGHT_CHROMIUM} : {}), args:['--no-sandbox']});
+ try {
+ const errors=[];
+ const context = await browser.newContext({viewport:{width:1440,height:1000}});
+ const page = await context.newPage();
+ page.on('pageerror', error => errors.push(error.message));
+ async function login(login,password) {
+   await context.clearCookies();
+   await page.goto(base+'/web/login');
+   await page.locator('input[name=login]').fill(login);
+   await page.locator('input[name=password]').fill(password);
+   await page.getByRole('button',{name:'Log in',exact:true}).click();
+   await page.waitForURL(url=>!url.pathname.includes('login'));
+ }
+ await login(process.env.AYAL_ADMIN_LOGIN,fs.readFileSync(process.env.AYAL_ADMIN_SECRET,'utf8').trim());
+ await page.goto(base+'/odoo/action-ayal_subscription.workspace_action');
+ await page.getByRole('heading',{name:'Subscriptions',exact:true}).waitFor({timeout:60000});
+ await page.getByRole('button',{name:'New subscription',exact:true}).waitFor();
+ await page.waitForFunction(()=>!document.body.innerText.includes('Loading subscriptions…'));
+ assert(!(await page.locator('body').innerText()).includes('Style error'));
+ await page.screenshot({path:'.state/workspace.png',fullPage:true});
+ await page.getByRole('button',{name:'New subscription',exact:true}).click();
+ await page.locator('.o_form_view').waitFor();
+ assert(!(await page.locator('body').innerText()).includes('Odoo Client Error'));
+ const hootLogs=[];
+ const collect=message=>hootLogs.push(message.text());
+ page.on('console',collect);
+ const hootDone=page.waitForEvent('console',{predicate:m=>/Test suite succeeded|Some tests failed/.test(m.text()),timeout:120000});
+ await page.goto(base+'/web/tests?filter=Ayal%20subscriptions&headless=true');
+ assert((await hootDone).text().includes('Test suite succeeded'));
+ assert(hootLogs.some(text=>text.includes('@ayal_subscription') && text.includes('passed: 4')), 'Expected all four application HOOT tests');
+ page.off('console',collect);
+ await login('smoke.a@example.test','SmokeCustomer!42');
+ await page.goto(base+'/my/subscriptions');
+ await page.getByRole('heading',{name:'My subscriptions'}).waitFor({timeout:60000});
+ await page.waitForFunction(()=>!document.body.innerText.includes('Loading your subscriptions…'));
+ const data = await (await context.request.get(base+'/my/subscriptions/data')).json();
+ assert(data.rows.some(row=>row.id===evidence.own_id));
+ assert(!data.rows.some(row=>row.id===evidence.other_id));
+ const forged = await context.request.post(base+`/my/subscriptions/${evidence.other_id}/pause`,{form:{csrf_token:data.csrf}});
+ assert.equal(forged.status(),404);
+ const noCsrf = await context.request.post(base+`/my/subscriptions/${evidence.own_id}/pause`,{form:{}});
+ assert.equal(noCsrf.status(),400);
+ const deniedPdf = await context.request.get(base+`/my/subscriptions/${evidence.other_id}/invoice/${evidence.other_invoice}`);
+ assert.equal(deniedPdf.status(),404);
+ const agreement = await context.request.get(base+`/my/subscriptions/${evidence.own_id}/agreement`);
+ assert.equal(agreement.status(),200);
+ assert((await agreement.body()).subarray(0,4).equals(Buffer.from('%PDF')));
+ fs.writeFileSync('.state/agreement.pdf',await agreement.body());
+ const pdf = await context.request.get(base+`/my/subscriptions/${evidence.own_id}/invoice/${evidence.own_invoice}`);
+ assert.equal(pdf.status(),200);
+ assert((await pdf.body()).subarray(0,4).equals(Buffer.from('%PDF')));
+ fs.writeFileSync('.state/invoice.pdf',await pdf.body());
+ await page.getByRole('button',{name:'Accept quotation',exact:true}).click();
+ await page.getByRole('button',{name:'Confirm request',exact:true}).click();
+ await page.getByText('Your request has been saved.',{exact:true}).waitFor();
+ await page.screenshot({path:'.state/portal.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'.state/portal-mobile.png',fullPage:true});
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth), 'Portal overflows mobile viewport');
+ assert(!(await page.locator('body').innerText()).includes('Style error'));
+ assert.equal((await context.request.get(base+'/my/invoices')).status(),200);
+ assert.deepEqual(errors,[],'Browser runtime errors');
+ console.log('PASS: Owl staff/portal assets, native contract form, customer ownership, CSRF, PDF ownership, quotation acceptance and mobile layout');
+ } finally { await browser.close(); }
+})().catch(error=>{console.error(error);process.exitCode=1;});

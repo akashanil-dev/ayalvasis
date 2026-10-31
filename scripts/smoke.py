@@ -26,7 +26,7 @@ def cli(path, *args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--business', action='store_true', help='Include application tests, concurrency and business restore evidence')
+    parser.add_argument('--business', action='store_true', help='Include application tests, concurrency, browser journeys and business restore evidence')
     parser.add_argument('--performance', action='store_true', help='Add 10,000-contract / 100,000-invoice synthetic read-load benchmark')
     args = parser.parse_args()
     if args.performance:
@@ -71,6 +71,11 @@ def main():
                    f"from pathlib import Path; import sys; p=Path('/var/lib/odoo/filestore/{values['DB_NAME']}/infra-probe'); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.stdin.buffer.read())",
                    input=payload)
         if args.business:
+            browser_env = dict(os.environ, AYAL_BASE_URL=f"http://127.0.0.1:{source.values['LOCAL_PORT']}",
+                               AYAL_EVIDENCE=source.sql("SELECT value FROM ir_config_parameter WHERE key='ayalvasis.integration_evidence';"),
+                               AYAL_ADMIN_LOGIN=values['ADMIN_LOGIN'],
+                               AYAL_ADMIN_SECRET=str(ROOT / values['SECRET_DIR'] / 'admin_password'))
+            subprocess.run(['node', str(ROOT / 'scripts/browser_smoke.cjs')], env=browser_env, check=True)
             source.run('run', '--rm', '--no-deps', '-T', 'bootstrap', 'shell',
                        input="env['ayal.subscription'].sudo()._cron_bill(); env.cr.commit()", text=True)
             if args.performance:
