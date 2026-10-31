@@ -124,7 +124,8 @@ Odoo system administrators who configure technical settings.
 4. Create a contract, review its products, dates, price and terms, then create a
    quotation. Send it through the mail queue or let the customer review it in
    [My subscriptions](http://localhost:8069/my/subscriptions).
-5. Accept the quotation. Contracts activate when their start date arrives. The
+5. Accept the quotation to confirm the contract. Once its start date arrives,
+   staff can select **Activate**, or due billing activates it automatically. The
    scheduler checks every five minutes; **Generate due invoices** runs a bounded
    catch-up batch. Invoices stay draft unless the accepted plan enables auto-post.
 6. Billing staff post invoices, send/print them and register partial or full payments.
@@ -239,3 +240,11 @@ host before launch. This is a single-host deployment, without a high-availabilit
 
 See [deployment](docs/DEPLOYMENT.md), [operations](docs/OPERATIONS.md),
 [implementation plan](docs/IMPLEMENTATION_PLAN.md) and [validation](docs/VALIDATION.md).
+
+## Source and history disclosure
+
+The initial eight handoff commits reconstruct existing code from source commit
+`968564e7ecd76113ecc0df51418c1e2800ced132`. Their commit messages retain
+`Reconstructed-History: true`, `Source-Commit` and `Handoff-Step` trailers.
+Those scheduled timestamps are reconstruction metadata, not evidence of actual
+hourly development or pushes.
