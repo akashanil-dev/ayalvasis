@@ -176,9 +176,67 @@ checked separately by automated tests.
 - **All eight HOOT tests passed** at
   `/web/tests?filter=Ayal%20subscriptions&headless=true`, including Akash's four
   staff navigation tests. `scripts/browser_smoke.cjs` was left untouched as
-  requested; Akash updated its assertion to eight tests in `fcfffe0`. Hosted CI
-  verification remains Akash's responsibility. Do not equate the isolated HOOT
-  result with a full smoke-script or CI pass.
+  requested; Akash updated its assertion to eight tests in `fcfffe0`. The later
+  integrated CI run on `2799e41` was independently verified as completed/success
+  through GitHub, including its `validate-and-restore` job:
+  [run 41188611670](https://github.com/akashanil-dev/ayalvasis/actions/runs/41188611670).
+  This CI result is separate from the isolated local HOOT evidence.
+
+### Staff review after Akash's loading fix
+
+Fast-forwarded the clean checkout to `2799e41` and copied the reviewed staff asset
+into the disposable snapshot. No staff source files were edited by Edson.
+
+- Initial loading is visible before the first RPC response. Search for Demo
+  Presenter and the quotation filter reduce two matching records to the ready
+  quotation; no-match guidance and Clear filters work.
+- Injected RPC failure hides results; Retry restores them. Reload loading and
+  pagination guards work. First/last controls are disabled on the current
+  single-page, 20-record dataset. Real multi-page staff navigation was not
+  exercised here; HOOT covers navigation behavior.
+- Inspected desktop 1440px and mobile 390px images. Horizontal overflow stays
+  within the results table, including the deliberately unbroken long plan name;
+  the table also requires horizontal scrolling on desktop for that fixture.
+  Keyboard table scrolling and search → status → Search tab order work.
+- No browser runtime errors were observed. Ready quotation 93 remains untouched.
+  Staff financial cards represent posted invoices, balances and reconciled
+  receipts; they are not a formal revenue-recognition report.
+
+### Public signup and local password-reset delivery
+
+Public signup is disabled by the bootstrap's default invitation policy. For this
+**disposable database only**, enabled `auth_signup.invitation_scope=b2c` and
+`auth_signup.reset_password=True`, with `web.base.url=http://127.0.0.1:8206` and
+`web.base.url.freeze=True`. Restarted the isolated Odoo worker after changing
+parameters through the shell, since its cached policy initially still returned
+404 for signup. Shared bootstrap defaults and the existing port-8069 database
+were not changed. Enable these demo settings deliberately if signup is shown on
+another demo installation.
+
+Configured one local mail server at `demo-smtp:1025`, without encryption, on the
+internal Docker backend network. The isolated helper container
+`ayalvasis-demo-edson-smtp` uses cached `python:3.11-alpine`, exposes no host port,
+and writes protected capture files only under ignored `.state/`. This proves
+local email generation and reset-link behavior, **not external mailbox delivery**.
+No real external email was sent. The helper and its files are local artifacts,
+not provisioned by cloning this repository. When no longer needed, remove only
+this helper with `docker rm -f ayalvasis-demo-edson-smtp`.
+
+The fresh synthetic-account browser rehearsal passed:
+
+- Short and insufficient-complexity passwords rejected; valid public signup
+  opens the customer portal; case-normalized duplicate signup rejected.
+- Exactly one normalized user exists, with portal access and no internal,
+  staff or administrator role. The new account has the expected empty portal.
+- Reset email captured locally, with a link to the local demo. Unknown email
+  receives the same generic acknowledgement.
+- Reset link changes the password; the new password works and the old one fails.
+  A consumed reset token cannot be replayed.
+
+One probe incorrectly expected a redirect after resetting the password. Odoo 19
+instead renders a success message on the same URL. After correcting that harness
+expectation, the complete flow passed with a fresh synthetic account. Passwords,
+email captures and token URLs remain protected local artifacts, never Git content.
 
 ### Offline startup and external services
 
@@ -203,9 +261,11 @@ checked separately by automated tests.
 This proves the rehearsed local workflow works with cached dependencies and
 blocked application/browser internet access. It does not prove cold setup on a
 machine without images or an air-gapped host installation. First image acquisition
-requires internet. SMTP, delivered password-reset/quotation email, external payment
-providers, public DNS/TLS and hosted deployment remain unverified. No email was
-sent during the rehearsal; manual portal acceptance does not require SMTP.
+requires internet. External SMTP delivery, delivered quotation email, external
+payment providers, public DNS/TLS and hosted deployment remain unverified. No
+email was sent during the offline business rehearsal; the subsequent local
+signup/reset capture is documented separately above. Manual portal acceptance
+does not require SMTP.
 
 ## Evidence and limits
 
@@ -220,6 +280,8 @@ All runtime artifacts below are ignored under `.state/`, not committed:
 | Invalid setup values | `demo-invalid-inputs.py`, `demo-invalid-inputs.log` |
 | Offline | `demo-offline-start.py`, `demo-offline-start.log`, `demo-offline-browser.cjs`, `demo-offline-browser.log` |
 | Restoration/ready fixture | `demo-restore-network.log`, `demo-ready-quote.log`, `demo-final-check.log` |
+| Staff follow-up | `demo-staff-review.cjs`, `demo-staff-final.log`, `demo-staff-desktop.png`, `demo-staff-mobile.png`, `demo-staff-mobile-results.png` |
+| Signup/reset | `demo-signup-reset.cjs`, `demo-signup-reset.log`, `demo-signup-roles.log`, `demo-check-signup-config.log`, `demo-signup-reset-navigation-probe.log` (initial harness expectation) |
 | Visual checks | `demo-portal-desktop-after.png`, `demo-portal-320-after.png`, `demo-portal-long-content.png`, `demo-offline-paid-mobile.png` |
 
 The backend command was
@@ -229,10 +291,15 @@ Playwright/Chromium, generated local secrets, and synthetic fixture IDs. They
 perform mutations: **do not rerun acceptance/payment scripts against their already
 accepted/paid records**. Create fresh fixtures for a repeat rehearsal.
 
-Remaining boundaries: hosted CI is Akash's verification; a clean machine/release
-image deployment is not covered by this source-mounted demo; real SMTP and payment
+Remaining boundaries: CI is verified for `2799e41`, not future revisions; a clean
+machine/release image deployment is not covered by this source-mounted demo;
+external SMTP delivery and payment
 integrations are not covered; full end-to-end two-second page performance at scale
 has not been measured here. Existing backend tests cover additional lifecycle,
 proration, tax, discount, authentication and permission behavior, but this review
 is not a complete manual acceptance of every PDF requirement. No production
 system or existing user database was tested or overwritten.
+
+Coordination and the extracted problem statement are recorded in
+[issue #1](https://github.com/akashanil-dev/ayalvasis/issues/1). The coding window
+ends at **17:00 IST on 31 October 2026**. Preserve ready quotation 93 for the demo.
