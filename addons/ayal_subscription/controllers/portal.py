@@ -30,17 +30,20 @@ class Portal(CustomerPortal):
     @http.route('/my/subscriptions/data', type='http', auth='user', methods=['GET'])
     def data(self, page=0, **kw):
         try:
-            offset = max(0, min(int(page), 10000)) * 12
-        except ValueError:
-            offset = 0
+            page = max(0, min(int(page), 10000))
+        except (TypeError, ValueError):
+            page = 0
         model = request.env['ayal.subscription'].sudo()
-        records = model.search(self._domain(), limit=12, offset=offset)
+        count = model.search_count(self._domain())
+        page = min(page, max(0, (count - 1) // 12))
+        records = model.search(self._domain(), limit=12, offset=page * 12)
         rows = []
         for rec in records:
             invoices = request.env['account.move'].sudo().search([('state', '=', 'posted'), '|', ('ayal_period_id.subscription_id', '=', rec.id), ('reversed_entry_id.ayal_period_id.subscription_id', '=', rec.id)], limit=12, order='invoice_date desc,id desc')
             rows.append({'id': rec.id, 'name': rec.name, 'plan': rec.snapshot.get('plan_name', rec.plan_id.name) if rec.snapshot else rec.plan_id.name, 'state': rec.state,
-                         'start': rec.start_date, 'expiry': rec.expiry_date, 'next': rec.next_billing_date,
-                         'total': rec.amount_total, 'currency': rec.currency_id.symbol, 'terms': rec.terms or '',
+                         'start': rec.start_date, 'expiry': rec.expiry_date,
+                         'next': rec.next_billing_date if rec.state in ('confirmed', 'active') else False,
+                         'total': rec.amount_total, 'currency': rec.currency_id.symbol, 'currency_code': rec.currency_id.name, 'terms': rec.terms or '',
                          'lines': [{'product': l.name, 'quantity': l.quantity, 'price': l.price_unit, 'taxes': ', '.join(l.tax_ids.mapped('name'))} for l in rec.line_ids],
                          'today': fields.Date.context_today(rec.with_context(tz=rec.company_id.partner_id.tz or 'UTC')),
                          'change_effective': rec._stop_preview(), 'pending': rec.pending_action, 'effective': rec.effective_date,
@@ -50,7 +53,7 @@ class Portal(CustomerPortal):
                          'invoices': [{'id': m.id, 'name': m.name, 'total': m.amount_total,
                                        'due': m.amount_residual, 'status': m.payment_state,
                                        'url': '/my/subscriptions/%s/invoice/%s' % (rec.id, m.id)} for m in invoices]})
-        return request.make_json_response({'rows': rows, 'count': model.search_count(self._domain()), 'csrf': request.csrf_token()}, headers=[('Cache-Control', 'no-store')])
+        return request.make_json_response({'rows': rows, 'count': count, 'page': page, 'csrf': request.csrf_token()}, headers=[('Cache-Control', 'no-store')])
 
     @http.route('/my/subscriptions/<int:record_id>/<string:action>', type='http', auth='user', methods=['POST'], csrf=True)
     def change(self, record_id, action, **kw):

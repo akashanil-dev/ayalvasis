@@ -1,0 +1,18 @@
+.ayal-portal {
+    .ayal-card {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .ayal-confirmation:focus-visible {
+        outline: 3px solid #145da0;
+        outline-offset: 3px;
+    }
+    .btn, summary { min-height: 44px; }
+    .ayal-pagination span { text-align: center; }
+    @media (max-width: 575px) {
+        .ayal-card { padding: 1rem; }
+        .ayal-confirmation .btn { flex: 1 1 100%; }
+        .ayal-pagination { flex-wrap: wrap; }
+        .ayal-pagination span { flex: 1; min-width: 5rem; }
+    }
+}
