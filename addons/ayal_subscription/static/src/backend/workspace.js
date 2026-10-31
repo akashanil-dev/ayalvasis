@@ -1,5 +1,5 @@
 /** @odoo-module **/
-import { Component, onWillStart, onWillUnmount, useState } from '@odoo/owl';
+import { Component, onMounted, onWillUnmount, useState } from '@odoo/owl';
 import { registry } from '@web/core/registry';
 import { useService } from '@web/core/utils/hooks';
 
@@ -11,7 +11,8 @@ export class Workspace extends Component {
         this.action = useService('action');
         this.state = useState({ rows: [], metrics: {}, count: 0, page: 0, query: '', filter: '', dateFrom: '', dateUntil: '', finance: false, currency: '', loading: true, error: '' });
         this.generation = 0;
-        onWillStart(() => this.load());
+        // Allow the initial loading state to render before awaiting the server.
+        onMounted(() => this.load());
         onWillUnmount(() => { this.generation++; });
     }
     async load() {
