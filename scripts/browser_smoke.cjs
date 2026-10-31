@@ -36,7 +36,7 @@ const assert = require('node:assert/strict');
  const hootDone=page.waitForEvent('console',{predicate:m=>/Test suite succeeded|Some tests failed/.test(m.text()),timeout:120000});
  await page.goto(base+'/web/tests?filter=Ayal%20subscriptions&headless=true');
  assert((await hootDone).text().includes('Test suite succeeded'));
- assert(hootLogs.some(text=>text.includes('@ayal_subscription') && text.includes('passed: 4')), 'Expected all four application HOOT tests');
+ assert(hootLogs.some(text=>text.includes('@ayal_subscription') && /\bpassed:\s*8\b/.test(text)), 'Expected all eight application HOOT tests (four existing and four staff navigation tests)');
  page.off('console',collect);
  await login('smoke.a@example.test','SmokeCustomer!42');
  await page.goto(base+'/my/subscriptions');
