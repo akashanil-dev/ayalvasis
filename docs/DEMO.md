@@ -56,7 +56,7 @@ Remaining release checks:
 
 - Business/portal readiness and the final demo sequence are recorded in DEMO_READINESS.md.
 - Edson reports staff desktop/390px, keyboard, failure/retry and initial loading
-  verified on 2799e41; real multi-page staff navigation remains unexercised.
+  verified on 2799e41; real multi-page navigation subsequently passed in the separate scale fixture.
 - Both sessions: compare against the selected official problem statement once
   available and confirm final integrated CI after code changes.
 - Team leader: verify portal milestones, evaluator access and repository/video
@@ -71,12 +71,12 @@ Use the following checkpoints to show the Brightloop business scenario.
 | Requirement | Demonstration or evidence | Remaining boundary |
 | --- | --- | --- |
 | Customer signup and reset | Unique email/password rules; customer role and own records | Demo-only signup/reset and local SMTP capture passed per Edson. Defaults remain invitation-only; external mailbox delivery is unverified. |
-| Product, variants and plans | Show product price/cost access, variant surcharge, billing interval and lifecycle permissions | The existing browser rehearsal did not create products/plans through native forms. |
+| Product, variants and plans | Show product price/cost access, variant surcharge, billing interval and lifecycle permissions | Native product/plan/template and variant surcharge setup passed; tax and attribute names used prepared fixtures. |
 | Quotation and lifecycle | Use a template; show terms, dates and quotation → confirmed → active | Preserve accepted terms; use fresh records for repeat recordings. |
 | Billing, tax and discounts | Generate invoice, inspect lines/tax/discount and repeat billing without duplication | One simple untaxed demo does not demonstrate every tax/discount policy. |
 | Payments | Record 40 then 60 against a USD 100 invoice with distinct references | Demo accounting configuration is described in DEMO_READINESS.md. |
 | Reporting | Show active count, posted invoices, outstanding/overdue and reconciled receipts; apply financial dates | Describe the actual accounting measures, not recognized revenue or MRR. |
-| Scale and responsiveness | Existing synthetic probe targets 10,000 contracts and 100,000 invoices | A dashboard read benchmark cannot prove every browser page responds within two seconds. |
+| Scale and responsiveness | Existing synthetic probe targets 10,000 contracts and 100,000 invoices | Representative warm browser journeys passed below two seconds; measured first-use loads exceeded the target. See DEMO_READINESS.md. |
 
 For Edson's retained demo only, start with **Demo Presenter / SUB/2026/00024**
 (subscription ID 93), provided it is still an unaccepted quotation. See
@@ -91,3 +91,27 @@ reported desktop/mobile staff search, filters, clear filters, error/retry and
 keyboard table navigation working in his isolated demo; initial loading and signup/reset with local SMTP capture subsequently passed,
 as recorded in DEMO_READINESS.md at e38033e. These are Edson-reported local
 observations, not a second independent rehearsal by Akash.
+
+## Final integration handoff
+
+The native draft-creation fix (`0074643`) and administrator variant-controls fix
+(`8cc41a5`) are integrated. The [code acceptance run](https://github.com/akashanil-dev/ayalvasis/actions/runs/41191812575)
+passed. Edson's follow-up report at `a1142f9` records 39 backend tests, native
+variant/quotation/discount/invoice rehearsal and representative browser timings
+at 10,000 subscriptions / 100,000 synthetic invoices.
+
+The measured native variant example is two seats at (100 + 560), less 10 percent,
+plus 15 percent tax: total **1366.20**. It exists in the separate regression
+instance, not the presentation database. Native draft creation is now covered
+by an Odoo Form regression with direct workflow-state injection still rejected.
+
+**Check presentation record state immediately before recording.** The user is
+manually testing the retained port-8206 environment; quotation 93 may have been
+accepted or billed. Do not reset it or interrupt that environment. Create a fresh
+quotation through the verified normal flow if needed.
+
+Known remaining limits: measured cold-start pages miss the two-second target;
+external mailbox delivery, clean-machine setup and actual evaluator/video/portal
+submissions are not verified. Warm-server rehearsal is useful preparation, not
+proof of a universal performance guarantee. Final manual recording and submission
+remain the team's next steps.
