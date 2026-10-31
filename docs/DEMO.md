@@ -61,3 +61,32 @@ Remaining release checks:
   available and confirm final integrated CI after code changes.
 - Team leader: verify portal milestones, evaluator access and repository/video
   submission confirmations. Code readiness does not confirm these submissions.
+
+## Rehearsal against the selected problem statement
+
+Edson supplied the extracted `Subscription_Management_System-1.pdf` in
+[the coordination thread](https://github.com/akashanil-dev/ayalvasis/issues/1).
+Use the following checkpoints to show the Brightloop business scenario.
+
+| Requirement | Demonstration or evidence | Remaining boundary |
+| --- | --- | --- |
+| Customer signup and reset | Unique email/password rules; customer role and own records | Default setup is invitation-only. Configure free signup/reset in the isolated demo and verify the flow. Real mailbox delivery is not established. |
+| Product, variants and plans | Show product price/cost access, variant surcharge, billing interval and lifecycle permissions | The existing browser rehearsal did not create products/plans through native forms. |
+| Quotation and lifecycle | Use a template; show terms, dates and quotation → confirmed → active | Preserve accepted terms; use fresh records for repeat recordings. |
+| Billing, tax and discounts | Generate invoice, inspect lines/tax/discount and repeat billing without duplication | One simple untaxed demo does not demonstrate every tax/discount policy. |
+| Payments | Record 40 then 60 against a USD 100 invoice with distinct references | Demo accounting configuration is described in DEMO_READINESS.md. |
+| Reporting | Show active count, posted invoices, outstanding/overdue and reconciled receipts; apply financial dates | Describe the actual accounting measures, not recognized revenue or MRR. |
+| Scale and responsiveness | Existing synthetic probe targets 10,000 contracts and 100,000 invoices | A dashboard read benchmark cannot prove every browser page responds within two seconds. |
+
+For Edson's retained demo only, start with **Demo Presenter / SUB/2026/00024**
+(subscription ID 93), provided it is still an unaccepted quotation. See
+[DEMO_READINESS.md](DEMO_READINESS.md) for the exact environment, explicit activation,
+posting and payment instructions. Those IDs and runtime files do not exist in a
+fresh clone. Do not use the already-paid rehearsal records to simulate a new flow.
+
+The integrated revision `2799e41` passed
+[hosted CI](https://github.com/akashanil-dev/ayalvasis/actions/runs/41188611670),
+including Edson's portal changes and the staff initial-loading fix. Edson also
+reported desktop/mobile staff search, filters, clear filters, error/retry and
+keyboard table navigation working in his isolated demo; final initial-loading
+observation and signup/reset evidence are tracked in issue #1.
